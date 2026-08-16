@@ -4,6 +4,7 @@ import { Btn, Field, inputCls, inputStyle, Modal } from "../components/primitive
 import { C, BLOCKS, LOGO_MARK, LOGO_FULL } from "../theme";
 
 export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode, login, register }) {
+  const isBn = lang === "bn";
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [showPw, setShowPw] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
   const [reg, setReg] = useState({ name: "", email: "", phone: "", block: "A", unit: "" });
