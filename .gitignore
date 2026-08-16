@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+firebase-debug.log
+firebase-debug.*.log
+.firebase/
+
+# Android build outputs (APK built by CI, not committed)
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
+android/app/release/
