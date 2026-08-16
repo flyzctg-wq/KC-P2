@@ -12,6 +12,7 @@ import { hasStoredConsent, loadAnalytics, trackEvent } from "./lib/analytics";
 import AuthScreen from "./components/AuthScreen";
 import Shell from "./components/Shell";
 import Router from "./Router";
+import SplashIntro from "./components/SplashIntro";
 
 export default function App() {
   const [db, setDb] = useState(null);
@@ -22,6 +23,7 @@ export default function App() {
   const [navOpen, setNavOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [authMode, setAuthMode] = useState("login");
+  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("kc_splash_done"));
   const t = STR[lang];
 
   const toast = useCallback((msg, type = "success") => {
@@ -336,6 +338,15 @@ export default function App() {
 
       <Toasts toasts={toasts} />
       <ConsentBanner />
+      {showSplash && (
+        <SplashIntro
+          lang={lang}
+          onFinish={() => {
+            sessionStorage.setItem("kc_splash_done", "1");
+            setShowSplash(false);
+          }}
+        />
+      )}
       <div style={{ position: "relative", zIndex: 1 }}>
         {!session ? (
           <AuthScreen db={db} lang={lang} setLang={setLang} t={t} authMode={authMode} setAuthMode={setAuthMode} login={login} register={register} />

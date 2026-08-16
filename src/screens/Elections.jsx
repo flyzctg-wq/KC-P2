@@ -6,22 +6,36 @@ import { C } from "../theme";
 import { supabase } from "../lib/supabase";
 import { trackEvent } from "../lib/analytics";
 
-export default function Elections({ session, db, persist, toast, logActivity }) {
+export default function Elections({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
+  const isBn = lang === "bn";
   const [openEl, setOpenEl] = useState(null);
   const sorted = [...db.elections].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
   const canVote = session.memberClass !== "New";
   const isCouncil = !!session.standingCouncil || (session.role === "admin" && (session.post === "President" || session.post === "General Secretary"));
 
+  const statusMap = {
+    active: isBn ? "চলমান ভোটগ্রহণ" : "Live election",
+    closed: isBn ? "সমাপ্ত" : "Closed",
+    nomination: isBn ? "মনোনয়ন চলছে" : "Nominations open",
+    upcoming: isBn ? "আসন্ন" : "Upcoming",
+  };
+
   return (
     <div>
-      <SectionTitle>Elections</SectionTitle>
-      {!canVote && <div className="mb-4 p-3 rounded-xl text-xs flex items-center gap-2" style={{ backgroundColor: C.errorContainer, color: C.onErrorContainer }}><AlertCircle size={14} /> New members gain voting rights after admin approval upgrades their class.</div>}
+      <SectionTitle>{isBn ? "ক্লাব নির্বাচন ও ভোটিং" : "Elections"}</SectionTitle>
+      {!canVote && (
+        <div className="mb-4 p-3 rounded-xl text-xs flex items-center gap-2" style={{ backgroundColor: C.errorContainer, color: C.onErrorContainer }}>
+          <AlertCircle size={14} /> {isBn ? "নতুন সদস্যরা অ্যাডমিন অনুমোদনের পর ভোটাধিকার লাভ করেন।" : "New members gain voting rights after admin approval upgrades their class."}
+        </div>
+      )}
       <div className="flex flex-col gap-3">
         {sorted.map(el => (
           <Card key={el.id} className="p-4 cursor-pointer" onClick={() => setOpenEl(el)}>
             <div className="flex items-center justify-between">
               <div>
-                <Badge tone={el.status === "active" ? "success" : el.status === "closed" ? "neutral" : el.status === "nomination" ? "warning" : "info"}>{el.status === "nomination" ? "nominations open" : el.status}</Badge>
+                <Badge tone={el.status === "active" ? "success" : el.status === "closed" ? "neutral" : el.status === "nomination" ? "warning" : "info"}>
+                  {statusMap[el.status] || el.status}
+                </Badge>
                 <h3 className="font-bold text-sm mt-2">{el.title}</h3>
                 <p className="text-xs mt-1" style={{ color: C.onSurfaceVariant }}>{el.positions.join(" · ")}</p>
               </div>
@@ -32,11 +46,11 @@ export default function Elections({ session, db, persist, toast, logActivity }) 
       </div>
       <Modal open={!!openEl} onClose={() => setOpenEl(null)} title={openEl?.title || ""} width="max-w-lg">
         {openEl && openEl.status === "nomination" ? (
-          <NominationView election={openEl} session={session} db={db} persist={persist} toast={toast} logActivity={logActivity} />
+          <NominationView election={openEl} session={session} db={db} persist={persist} toast={toast} logActivity={logActivity} lang={lang} isBn={isBn} />
         ) : openEl && (
           <div>
-            <BallotView election={openEl} session={session} db={db} persist={persist} toast={toast} logActivity={logActivity} canVote={canVote} />
-            {isCouncil && <ElectionOversight election={openEl} db={db} />}
+            <BallotView election={openEl} session={session} db={db} persist={persist} toast={toast} logActivity={logActivity} canVote={canVote} lang={lang} isBn={isBn} />
+            {isCouncil && <ElectionOversight election={openEl} db={db} lang={lang} isBn={isBn} />}
           </div>
         )}
       </Modal>
@@ -44,7 +58,7 @@ export default function Elections({ session, db, persist, toast, logActivity }) 
   );
 }
 
-export function BallotView({ election, session, db, persist, toast, logActivity, canVote }) {
+export function BallotView({ election, session, db, persist, toast, logActivity, canVote, lang = "en", isBn = false }) {
   const myVotes = db.votes.filter(v => v.electionId === election.id && v.voterId === session.id);
   const [choice, setChoice] = useState({});
 
@@ -52,10 +66,13 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
     const candId = choice[position];
     if (!candId) return;
     const { error } = await supabase.rpc("cast_vote", { p_election_id: election.id, p_position: position, p_candidate_id: candId });
-    if (error) { toast(error.message || "Could not cast vote.", "error"); return; }
-    persist(d => logActivity(d, session.name, `Voted for ${position} in ${election.title}`)); // realtime refetch also picks this up
+    if (error) {
+      toast(error.message || (isBn ? "ভোট গ্রহণ করা যায়নি।" : "Could not cast vote."), "error");
+      return;
+    }
+    persist(d => logActivity(d, session.name, `Voted for ${position} in ${election.title}`));
     trackEvent("vote_cast", { election_id: election.id, position });
-    toast(`Vote recorded for ${position}.`);
+    toast(isBn ? `${position} পদের জন্য আপনার ভোট সফলভাবে গৃহীত হয়েছে।` : `Vote recorded for ${position}.`);
   };
 
   const results = (position) => {
@@ -82,17 +99,32 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
                     )}
                     <Avatar name={c.name} size={32} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm">{c.name} <span className="font-normal text-xs" style={{ color: C.outline }}>· Block {c.block}</span></p>
+                      <p className="font-bold text-sm">{c.name} <span className="font-normal text-xs" style={{ color: C.outline }}>· {isBn ? `ব্লক ${c.block}` : `Block ${c.block}`}</span></p>
                       <p className="text-xs mt-0.5" style={{ color: C.onSurfaceVariant }}>{c.manifesto}</p>
-                      {showResults && <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ backgroundColor: C.surfaceContainerHigh }}><div className="h-full rounded-full" style={{ width: `${c.pct}%`, backgroundColor: C.primary }} /></div>}
-                      {showResults && <p className="text-[11px] font-bold mt-1" style={{ color: C.primary }}>{c.count} votes · {c.pct}%</p>}
+                      {showResults && (
+                        <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ backgroundColor: C.surfaceContainerHigh }}>
+                          <div className="h-full rounded-full" style={{ width: `${c.pct}%`, backgroundColor: C.primary }} />
+                        </div>
+                      )}
+                      {showResults && (
+                        <p className="text-[11px] font-bold mt-1" style={{ color: C.primary }}>
+                          {c.count} {isBn ? "ভোট" : "votes"} · {c.pct}%
+                        </p>
+                      )}
                     </div>
                   </label>
                 </div>
               ))}
             </div>
-            {!showResults && (already ? <p className="text-xs font-semibold mt-2 flex items-center gap-1.5" style={{ color: C.primary }}><CheckCircle2 size={13} /> Vote submitted for {pos}</p> :
-              canVote && election.status === "active" && <Btn size="sm" className="mt-2.5" onClick={() => submitVote(pos)} disabled={!choice[pos]}>Submit vote</Btn>)}
+            {!showResults && (already ? (
+              <p className="text-xs font-semibold mt-2 flex items-center gap-1.5" style={{ color: C.primary }}>
+                <CheckCircle2 size={13} /> {isBn ? `${pos} পদের জন্য ভোট প্রদান সম্পন্ন হয়েছে` : `Vote submitted for ${pos}`}
+              </p>
+            ) : canVote && election.status === "active" && (
+              <Btn size="sm" className="mt-2.5" onClick={() => submitVote(pos)} disabled={!choice[pos]}>
+                {isBn ? "ভোট প্রদান করুন" : "Submit vote"}
+              </Btn>
+            ))}
           </div>
         );
       })}

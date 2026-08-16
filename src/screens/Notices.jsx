@@ -4,7 +4,8 @@ import { Btn, Card, Badge, inputCls, inputStyle, Avatar, SectionTitle } from "..
 import { C } from "../theme";
 import { uid, nowISO, fmtDateTime } from "../utils";
 
-export default function Notices({ session, db, persist, toast, logActivity }) {
+export default function Notices({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
+  const isBn = lang === "bn";
   const [open, setOpen] = useState(null);
   const sorted = [...db.notices].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -21,26 +22,40 @@ export default function Notices({ session, db, persist, toast, logActivity }) {
     persist(d => ({ ...d, notices: d.notices.map(n => n.id === id ? { ...n, comments: [...n.comments, { id: uid("c"), userId: session.id, userName: session.name, text, date: nowISO() }] } : n) }));
   };
 
+  const categoryMap = {
+    Urgent: isBn ? "জরুরি" : "Urgent",
+    Financial: isBn ? "আর্থিক" : "Financial",
+    General: isBn ? "সাধারণ" : "General",
+    Meeting: isBn ? "সভা/মিটিং" : "Meeting",
+    Event: isBn ? "অনুষ্ঠান" : "Event",
+  };
+
   return (
     <div>
-      <SectionTitle>Notices</SectionTitle>
+      <SectionTitle>{isBn ? "ক্লাব নোটিশ বোর্ড" : "Notices"}</SectionTitle>
       <div className="flex flex-col gap-3">
         {sorted.map(n => {
           const liked = n.reactions.like.includes(session.id);
           return (
             <Card key={n.id} className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Badge tone={n.category === "Urgent" ? "danger" : n.category === "Financial" ? "warning" : "info"}>{n.category}</Badge>
+                <Badge tone={n.category === "Urgent" ? "danger" : n.category === "Financial" ? "warning" : "info"}>
+                  {categoryMap[n.category] || n.category}
+                </Badge>
                 <span className="text-[11px]" style={{ color: C.outline }}>{fmtDateTime(n.date)}</span>
               </div>
               <h3 className="font-bold text-sm mb-1">{n.title}</h3>
               <p className="text-sm mb-3" style={{ color: C.onSurfaceVariant }}>{n.body}</p>
               <div className="flex items-center gap-4 text-xs font-semibold" style={{ color: C.onSurfaceVariant }}>
-                <button onClick={() => react(n.id)} className="flex items-center gap-1.5" style={liked ? { color: C.primary } : {}}><ThumbsUp size={14} fill={liked ? C.primary : "none"} /> {n.reactions.like.length}</button>
-                <button onClick={() => setOpen(open === n.id ? null : n.id)} className="flex items-center gap-1.5"><MessageSquare size={14} /> {n.comments.length}</button>
+                <button onClick={() => react(n.id)} className="flex items-center gap-1.5 cursor-pointer" style={liked ? { color: C.primary } : {}}>
+                  <ThumbsUp size={14} fill={liked ? C.primary : "none"} /> {n.reactions.like.length} {isBn ? "পছন্দ" : "Likes"}
+                </button>
+                <button onClick={() => setOpen(open === n.id ? null : n.id)} className="flex items-center gap-1.5 cursor-pointer">
+                  <MessageSquare size={14} /> {n.comments.length} {isBn ? "মন্তব্য" : "Comments"}
+                </button>
                 <span className="ml-auto text-[11px]" style={{ color: C.outline }}>— {n.authorName}</span>
               </div>
-              {open === n.id && <CommentBox notice={n} onSend={(txt) => comment(n.id, txt)} />}
+              {open === n.id && <CommentBox notice={n} onSend={(txt) => comment(n.id, txt)} lang={lang} isBn={isBn} />}
             </Card>
           );
         })}
@@ -49,7 +64,7 @@ export default function Notices({ session, db, persist, toast, logActivity }) {
   );
 }
 
-export function CommentBox({ notice, onSend }) {
+export function CommentBox({ notice, onSend, lang = "en", isBn = false }) {
   const [text, setText] = useState("");
   return (
     <div className="mt-3 pt-3 border-t" style={{ borderColor: C.outlineVariant }}>
@@ -62,8 +77,17 @@ export function CommentBox({ notice, onSend }) {
         </div>
       ))}
       <div className="flex gap-2 mt-2">
-        <input value={text} onChange={e => setText(e.target.value)} placeholder="Add a comment…" style={inputStyle()} className={inputCls} onKeyDown={e => { if (e.key === "Enter") { onSend(text); setText(""); } }} />
-        <Btn size="sm" icon={Send} onClick={() => { onSend(text); setText(""); }}>Send</Btn>
+        <input
+          style={inputStyle()}
+          className={inputCls}
+          placeholder={isBn ? "একটি মন্তব্য লিখুন..." : "Write a comment..."}
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { onSend(text); setText(""); } }}
+        />
+        <Btn size="sm" icon={Send} onClick={() => { onSend(text); setText(""); }}>
+          {isBn ? "পাঠান" : "Send"}
+        </Btn>
       </div>
     </div>
   );
