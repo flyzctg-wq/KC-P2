@@ -1,13 +1,16 @@
-﻿name: Android APK Build
+﻿name: Android APK Build & Release
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
-    name: Build Android APK
+    name: Build Signed Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -34,8 +37,8 @@ jobs:
 
       - name: Create .env file from secrets
         run: |
-          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
-          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
+          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL || 'https://rohbgdxkzlvbrvmckzeg.supabase.co' }}" >> .env
+          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_tTOX1deF-abINLa7h50-Sw_e1QkuUuB' }}" >> .env
 
       - name: Build web bundle (Vite)
         run: npm run build
@@ -46,23 +49,38 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x android/gradlew
 
-      - name: Build Debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Generate Signing Keystore
+        run: |
+          keytool -genkey -v -keystore android/app/kunjachaya.keystore \
+            -alias kunjachaya -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass kunjachaya123 -keypass kunjachaya123 \
+            -dname "CN=Kunjachaya Club, OU=Mobile, O=Kunjachaya, L=Chattogram, C=BD"
 
-      - name: Upload APK artifact
+      - name: Build Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Sign Release APK
+        run: |
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
+          $BUILD_TOOLS/zipalign -v -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/kunjachaya-aligned.apk || cp android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/kunjachaya-aligned.apk
+          $BUILD_TOOLS/apksigner sign --ks android/app/kunjachaya.keystore --ks-pass pass:kunjachaya123 --key-pass pass:kunjachaya123 --out Kunjachaya-Club.apk android/app/build/outputs/apk/release/kunjachaya-aligned.apk
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kunjachaya-club-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Kunjachaya-Club-APK
+          path: Kunjachaya-Club.apk
           retention-days: 30
 
-      - name: Create GitHub Release with APK
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publish Direct APK to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/debug/app-debug.apk
-          name: "Kunjachaya Club ${{ github.ref_name }}"
-          body: "Auto-built Android APK."
+          tag_name: latest-build
+          name: "Kunjachaya Club App (Latest APK)"
+          body: "Official Android App for Kunjachaya Club. Download the direct .apk file below."
+          files: Kunjachaya-Club.apk
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
