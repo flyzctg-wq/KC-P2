@@ -55,53 +55,178 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
 
           {authMode === "login" ? (
             <div>
-              <h2 className="text-2xl font-extrabold mb-1 heading">Welcome back</h2>
-              <p className="text-sm mb-6" style={{ color: C.onSurfaceVariant }}>Log in to your resident or committee account.</p>
-              <Field label="Email"><input style={inputStyle()} className={inputCls} value={email} onChange={e => setEmail(e.target.value)} placeholder="you@kunjachaya.club" onKeyDown={e => e.key === "Enter" && handleLogin()} /></Field>
-              <Field label="Password">
+              <h2 className="text-2xl font-extrabold mb-1 heading">{isBn ? "স্বাগতম" : "Welcome back"}</h2>
+              <p className="text-sm mb-6" style={{ color: C.onSurfaceVariant }}>
+                {isBn ? "আপনার সদস্য অথবা কার্যনির্বাহী অ্যাকাউন্টে লগইন করুন।" : "Log in to your resident or committee account."}
+              </p>
+              <Field label={isBn ? "ইমেইল অ্যাড্রেস" : "Email"}>
+                <input
+                  style={inputStyle()}
+                  className={inputCls}
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@kunjachaya.club"
+                  onKeyDown={e => e.key === "Enter" && handleLogin()}
+                />
+              </Field>
+              <Field label={isBn ? "পাসওয়ার্ড" : "Password"}>
                 <div className="relative">
-                  <input style={inputStyle()} className={inputCls + " pr-10"} type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleLogin()} />
-                  <button type="button" onClick={() => setShowPw(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: C.outline }}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                  <input
+                    style={inputStyle()}
+                    className={inputCls + " pr-10"}
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    onKeyDown={e => e.key === "Enter" && handleLogin()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(s => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    style={{ color: C.outline }}
+                  >
+                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </Field>
-              <button type="button" onClick={() => { setForgot(true); setResetSent(false); setResetEmail(email); }} className="text-xs font-semibold mb-4 block" style={{ color: C.primary }}>Forgot password?</button>
+              <button
+                type="button"
+                onClick={() => { setForgot(true); setResetSent(false); setResetEmail(email); }}
+                className="text-xs font-semibold mb-4 block"
+                style={{ color: C.primary }}
+              >
+                {isBn ? "পাসওয়ার্ড ভুলে গেছেন?" : "Forgot password?"}
+              </button>
               <Btn full onClick={handleLogin} disabled={loggingIn}>
-                {loggingIn ? <><Loader2 size={15} className="animate-spin" /> Signing in…</> : "Log in"}
+                {loggingIn ? <><Loader2 size={15} className="animate-spin" /> {isBn ? "লগইন হচ্ছে…" : "Signing in…"}</> : (isBn ? "লগইন করুন" : "Log in")}
               </Btn>
-              <div className="mt-5 p-3 rounded-xl text-xs leading-relaxed" style={{ backgroundColor: C.surfaceContainerLow, color: C.onSurfaceVariant }}>
-                <p className="font-semibold mb-1" style={{ color: C.onSurface }}>New here?</p>
-                Create an account above, or ask a committee member for an invite. Demo credentials are documented in the project README for local testing only — never shown in a deployed build.
+              <div className="mt-5 p-3.5 rounded-xl text-xs leading-relaxed" style={{ backgroundColor: C.surfaceContainerLow, color: C.onSurfaceVariant }}>
+                <p className="font-bold mb-1" style={{ color: C.onSurface }}>{isBn ? "নতুন সদস্য?" : "New here?"}</p>
+                {isBn
+                  ? "উপরের 'নিবন্ধন' ট্যাব থেকে ইমেইল ও মোবাইল নম্বর দিয়ে আবেদন করুন, অথবা সভাপতি / সাধারণ সম্পাদকের সরাসরি আমন্ত্রণ লিংক গ্রহণ করুন।"
+                  : "Register with your email and mobile phone above, or ask the President / General Secretary for an official invitation."}
               </div>
             </div>
           ) : (
             <div>
-              <h2 className="text-2xl font-extrabold mb-1 heading">Join the club</h2>
-              <p className="text-sm mb-6" style={{ color: C.onSurfaceVariant }}>New accounts require committee approval (Article 10).</p>
-              <Field label="Full name"><input style={inputStyle()} className={inputCls} value={reg.name} onChange={e => setReg({ ...reg, name: e.target.value })} /></Field>
-              <Field label="Email"><input style={inputStyle()} className={inputCls} value={reg.email} onChange={e => setReg({ ...reg, email: e.target.value })} /></Field>
-              <Field label="Password"><input style={inputStyle()} className={inputCls} type="password" value={reg.password} onChange={e => setReg({ ...reg, password: e.target.value })} /></Field>
-              <Field label="Phone"><input style={inputStyle()} className={inputCls} value={reg.phone} onChange={e => setReg({ ...reg, phone: e.target.value })} placeholder="+880 1XXX-XXXXXX" /></Field>
+              <h2 className="text-2xl font-extrabold mb-1 heading">{isBn ? "সদস্যপদের আবেদন" : "Join the club"}</h2>
+              <p className="text-sm mb-5" style={{ color: C.onSurfaceVariant }}>
+                {isBn ? "ইমেইল ও মোবাইল নম্বর দিয়ে আবেদন করুন (ধারা-১০ অনুযায়ী অনুমোদিত হবে)।" : "Register with email & mobile (requires Article 10 approval)."}
+              </p>
+
+              <Field label={isBn ? "পূর্ণ নাম (Full Name)" : "Full name"}>
+                <input
+                  style={inputStyle()}
+                  className={inputCls}
+                  placeholder={isBn ? "আপনার পুরো নাম লিখুন" : "e.g. Khalid Hasan"}
+                  value={reg.name}
+                  onChange={e => setReg({ ...reg, name: e.target.value })}
+                />
+              </Field>
+
+              <Field label={isBn ? "ইমেইল অ্যাড্রেস (Email Address)" : "Email address"}>
+                <input
+                  style={inputStyle()}
+                  className={inputCls}
+                  type="email"
+                  placeholder="name@example.com"
+                  value={reg.email}
+                  onChange={e => setReg({ ...reg, email: e.target.value })}
+                />
+              </Field>
+
+              <Field label={isBn ? "মোবাইল ফোন নম্বর (Mobile Phone Number)" : "Mobile phone number"}>
+                <div className="relative">
+                  <input
+                    style={inputStyle()}
+                    className={inputCls}
+                    type="tel"
+                    placeholder="01XXXXXXXXX"
+                    value={reg.phone}
+                    onChange={e => setReg({ ...reg, phone: e.target.value })}
+                  />
+                </div>
+              </Field>
+
+              <Field label={isBn ? "লগইন পাসওয়ার্ড (Password - কমপক্ষে ৬ অক্ষর)" : "Password (min 6 chars)"}>
+                <input
+                  style={inputStyle()}
+                  className={inputCls}
+                  type="password"
+                  placeholder="••••••••"
+                  value={reg.password}
+                  onChange={e => setReg({ ...reg, password: e.target.value })}
+                />
+              </Field>
+
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Block"><select style={inputStyle()} className={inputCls} value={reg.block} onChange={e => setReg({ ...reg, block: e.target.value })}>{BLOCKS.map(b => <option key={b}>{b}</option>)}</select></Field>
-                <Field label="Unit no."><input style={inputStyle()} className={inputCls} value={reg.unit} onChange={e => setReg({ ...reg, unit: e.target.value })} placeholder={`${reg.block}-01`} /></Field>
+                <Field label={isBn ? "ব্লক (Block)" : "Block"}>
+                  <select style={inputStyle()} className={inputCls} value={reg.block} onChange={e => setReg({ ...reg, block: e.target.value })}>
+                    {BLOCKS.map(b => <option key={b} value={b}>{isBn ? `ব্লক ${b}` : `Block ${b}`}</option>)}
+                  </select>
+                </Field>
+                <Field label={isBn ? "ফ্ল্যাট / ইউনিট নং" : "Unit / Flat no."}>
+                  <input
+                    style={inputStyle()}
+                    className={inputCls}
+                    value={reg.unit}
+                    onChange={e => setReg({ ...reg, unit: e.target.value })}
+                    placeholder={isBn ? "যেমন: A-302" : "e.g. A-302"}
+                  />
+                </Field>
               </div>
-              <Btn full onClick={() => register(reg)} disabled={!reg.name || !reg.email || !reg.password}>Create account</Btn>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={isBn ? "রক্তের গ্রুপ (ঐচ্ছিক)" : "Blood Group"}>
+                  <select style={inputStyle()} className={inputCls} value={reg.bloodGroup || ""} onChange={e => setReg({ ...reg, bloodGroup: e.target.value })}>
+                    <option value="">{isBn ? "-- নির্বাচন করুন --" : "-- Select --"}</option>
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                  </select>
+                </Field>
+                <Field label={isBn ? "জাতীয় পরিচয়পত্র / NID" : "NID Number"}>
+                  <input
+                    style={inputStyle()}
+                    className={inputCls}
+                    value={reg.idNumber || ""}
+                    onChange={e => setReg({ ...reg, idNumber: e.target.value })}
+                    placeholder={isBn ? "NID নম্বর (ঐচ্ছিক)" : "NID no."}
+                  />
+                </Field>
+              </div>
+
+              <Btn
+                full
+                onClick={() => register(reg)}
+                disabled={!reg.name.trim() || !reg.email.trim() || !reg.password || !reg.phone.trim()}
+              >
+                {isBn ? "সদস্যপদের আবেদন দাখিল করুন" : "Submit Membership Request"}
+              </Btn>
             </div>
           )}
         </div>
       </div>
-      <Modal open={forgot} onClose={() => setForgot(false)} title="Reset password">
+      <Modal open={forgot} onClose={() => setForgot(false)} title={isBn ? "পাসওয়ার্ড রিসেট" : "Reset password"}>
         {resetSent ? (
           <div className="text-center py-4">
             <CheckCircle2 size={32} style={{ color: C.primary }} className="mx-auto mb-3" />
-            <p className="text-sm font-semibold mb-1">Check your email</p>
-            <p className="text-xs" style={{ color: C.onSurfaceVariant }}>If an account exists for {resetEmail}, a reset link has been sent.</p>
+            <p className="text-sm font-semibold mb-1">{isBn ? "আপনার ইমেইল চেক করুন" : "Check your email"}</p>
+            <p className="text-xs" style={{ color: C.onSurfaceVariant }}>
+              {isBn ? `${resetEmail} ঠিকানায় পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে।` : `If an account exists for ${resetEmail}, a reset link has been sent.`}
+            </p>
           </div>
         ) : (
           <div>
-            <p className="text-xs mb-4" style={{ color: C.onSurfaceVariant }}>Enter your account email and we'll send a reset link.</p>
-            <Field label="Email"><input style={inputStyle()} className={inputCls} value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="you@kunjachaya.club" /></Field>
-            <Btn full icon={KeyRound} onClick={() => setResetSent(true)} disabled={!resetEmail.trim()}>Send reset link</Btn>
+            <p className="text-xs mb-4" style={{ color: C.onSurfaceVariant }}>
+              {isBn ? "আপনার নিবন্ধিত ইমেইল দিন, আমরা একটি রিসেট লিংক পাঠাব।" : "Enter your account email and we'll send a reset link."}
+            </p>
+            <Field label={isBn ? "ইমেইল" : "Email"}>
+              <input style={inputStyle()} className={inputCls} value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="you@kunjachaya.club" />
+            </Field>
+            <Btn full icon={KeyRound} onClick={() => setResetSent(true)} disabled={!resetEmail.trim()}>
+              {isBn ? "রিসেট লিংক পাঠান" : "Send reset link"}
+            </Btn>
           </div>
         )}
       </Modal>

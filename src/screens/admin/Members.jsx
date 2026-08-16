@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { Check, XCircle, Shield, Edit3, UserCheck } from "lucide-react";
+import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
-import { C, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
+import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
+import { uid, nowISO } from "../../utils";
 
 export default function AdminMembers({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [tab, setTab] = useState("pending");
   const [roleModal, setRoleModal] = useState(null);
+  const [inviteModal, setInviteModal] = useState(false);
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
   const canManage = session.role === "admin" && (session.permissions?.canManageMembers || isTopTier);
   const pending = db.users.filter(u => u.status === "pending");
@@ -23,16 +25,43 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
 
   return (
     <div>
-      <SectionTitle>{isBn ? "সদস্য ব্যবস্থাপনা" : "Members"}</SectionTitle>
+      <SectionTitle
+        action={
+          isTopTier ? (
+            <Btn size="sm" icon={UserPlus} onClick={() => setInviteModal(true)}>
+              {isBn ? "সদস্য আমন্ত্রণ পাঠান" : "Invite member"}
+            </Btn>
+          ) : null
+        }
+      >
+        {isBn ? "সদস্য ব্যবস্থাপনা ও নিবন্ধন" : "Members"}
+      </SectionTitle>
+
       {!canManage && (
         <div className="mb-4 p-3 rounded-xl text-xs flex items-center gap-2" style={{ backgroundColor: C.errorContainer, color: C.onErrorContainer }}>
           <Shield size={14} /> {isBn ? "শুধুমাত্র দর্শন — আপনার canManageMembers অনুমতি নেই।" : "View-only — you lack canManageMembers permission."}
         </div>
       )}
+
+      {/* Top-Tier Authority Banner */}
+      <div className="mb-5 p-3 rounded-xl text-xs flex items-center justify-between gap-3 border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
+        <div className="flex items-center gap-2">
+          <Shield size={15} style={{ color: C.primary }} />
+          <span>
+            {isBn
+              ? "সরাসরি সদস্য আমন্ত্রণ ও নির্বাহী নিয়োগের ক্ষমতা সংবিধানের ধারা-১০ ও ১৭ অনুসারে শুধুমাত্র সভাপতি ও সাধারণ সম্পাদকের জন্য সংরক্ষিত।"
+              : "Direct member invitations and officer appointments are restricted to the President & General Secretary (Articles 10 & 17)."}
+          </span>
+        </div>
+        {isTopTier && (
+          <Badge tone="success">{isBn ? "শীর্ষ নেতৃত্ব সক্রিয়" : "Top-Tier Active"}</Badge>
+        )}
+      </div>
+
       <div className="flex rounded-full p-1 mb-5 w-fit" style={{ backgroundColor: C.surfaceContainer }}>
         {[
-          { key: "pending", label: isBn ? "অপেক্ষমাণ" : "Pending", count: pending.length },
-          { key: "active", label: isBn ? "সক্রিয়" : "Active", count: activeUsers.length },
+          { key: "pending", label: isBn ? "অপেক্ষমাণ আবেদন" : "Pending", count: pending.length },
+          { key: "active", label: isBn ? "সক্রিয় সদস্য" : "Active", count: activeUsers.length },
         ].map(tb => (
           <button
             key={tb.key}
@@ -44,15 +73,23 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
           </button>
         ))}
       </div>
+
       {tab === "pending" ? (
         <div className="flex flex-col gap-2.5">
           {pending.map(u => (
             <Card key={u.id} className="p-4 flex items-center gap-3">
-              <Avatar name={u.name} />
+              <Avatar name={u.name} photoUrl={u.photoUrl} />
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">{u.name}</p>
-                <p className="text-xs" style={{ color: C.onSurfaceVariant }}>
-                  {u.email} · {isBn ? "ব্লক" : "Block"} {u.block}, {u.unit} · {u.phone}
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-sm">{u.name}</p>
+                  {u.invitedBy && (
+                    <Badge tone="info">
+                      {isBn ? `${u.invitedBy} কর্তৃক আমন্ত্রিত` : `Invited by ${u.invitedBy}`}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs mt-0.5" style={{ color: C.onSurfaceVariant }}>
+                  <span className="font-semibold">{u.email}</span> · {isBn ? "ফোন:" : "Phone:"} <span className="font-semibold">{u.phone || "—"}</span> · {isBn ? "ব্লক" : "Block"} {u.block}, {u.unit}
                 </p>
               </div>
               {canManage && (
@@ -67,7 +104,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
             <Empty
               icon={UserCheck}
               title={isBn ? "কোনো অপেক্ষমাণ আবেদন নেই" : "No pending approvals"}
-              subtitle={isBn ? "নতুন নিবন্ধন এখানে প্রদর্শিত হবে।" : "New registrations will appear here."}
+              subtitle={isBn ? "নতুন ইমেইল বা ফোন নম্বরের নিবন্ধন এখানে অনুমোদনের জন্য প্রদর্শিত হবে।" : "New registrations will appear here for review."}
             />
           )}
         </div>
@@ -83,7 +120,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-sm truncate">{u.name}</p>
                 <p className="text-xs truncate" style={{ color: C.onSurfaceVariant }}>
-                  {isBn ? "ব্লক" : "Block"} {u.block} · {u.memberClass}
+                  {u.phone ? `${u.phone} · ` : ""}{isBn ? "ব্লক" : "Block"} {u.block} · {u.memberClass}
                 </p>
                 {u.post && <Badge tone="success">{u.post}</Badge>}
               </div>
@@ -92,8 +129,23 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
           ))}
         </div>
       )}
-      <Modal open={!!roleModal} onClose={() => setRoleModal(null)} title={isBn ? "সদস্য তথ্য সম্পাদনা" : "Manage member"}>
+
+      {/* Role Editor Modal */}
+      <Modal open={!!roleModal} onClose={() => setRoleModal(null)} title={isBn ? "সদস্য তথ্য ও পদবী সম্পাদনা" : "Manage member"}>
         {roleModal && <RoleEditor user={roleModal} onClose={() => setRoleModal(null)} persist={persist} logActivity={logActivity} session={session} toast={toast} lang={lang} isBn={isBn} />}
+      </Modal>
+
+      {/* President / General Secretary Exclusive Invitation Modal */}
+      <Modal open={inviteModal} onClose={() => setInviteModal(false)} title={isBn ? "নতুন সদস্যকে অফিশিয়াল আমন্ত্রণ পাঠান" : "Invite New Member"} width="max-w-lg">
+        <InviteMemberModal
+          onClose={() => setInviteModal(false)}
+          persist={persist}
+          logActivity={logActivity}
+          session={session}
+          toast={toast}
+          lang={lang}
+          isBn={isBn}
+        />
       </Modal>
     </div>
   );
@@ -216,3 +268,245 @@ export function RoleEditor({ user, onClose, persist, logActivity, session, toast
     </div>
   );
 }
+
+export function InviteMemberModal({ onClose, persist, logActivity, session, toast, isBn = false }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [block, setBlock] = useState("A");
+  const [unit, setUnit] = useState("");
+  const [memberClass, setMemberClass] = useState("General");
+  const [directApprove, setDirectApprove] = useState(true);
+  const [note, setNote] = useState("");
+  const [createdInvite, setCreatedInvite] = useState(null);
+
+  const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
+
+  if (!isTopTier) {
+    return (
+      <div className="p-4 text-center">
+        <Shield size={36} className="mx-auto mb-2 text-rose-500" />
+        <p className="font-bold text-sm text-rose-600 mb-1">
+          {isBn ? "অনুমতি সংরক্ষিত" : "Restricted Authority"}
+        </p>
+        <p className="text-xs text-slate-500">
+          {isBn
+            ? "সংবিধানের ধারা-১০ ও ১৭ অনুসারে শুধুমাত্র সভাপতি ও সাধারণ সম্পাদক সরাসরি সদস্য আমন্ত্রণ পাঠাতে পারেন।"
+            : "Only the President and General Secretary can issue official member invitations."}
+        </p>
+      </div>
+    );
+  }
+
+  const handleSend = () => {
+    if (!name.trim() || !email.trim() || !phone.trim()) {
+      toast(isBn ? "অনুগ্রহ করে নাম, ইমেইল এবং মোবাইল নম্বর পূরণ করুন।" : "Please provide name, email, and mobile phone.", "error");
+      return;
+    }
+
+    const inviteCode = uid("kc_inv");
+    const newUser = {
+      id: uid("u"),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone.trim(),
+      block,
+      unit: unit.trim() || `${block}-01`,
+      role: "resident",
+      post: null,
+      status: directApprove ? "active" : "pending",
+      memberClass,
+      bloodGroup: "",
+      donor: false,
+      joinedDate: nowISO(),
+      invitedBy: `${session.name} (${session.post})`,
+      inviteCode,
+      permissions: {},
+    };
+
+    persist(d => logActivity({
+      ...d,
+      users: [...d.users.filter(u => u.email.toLowerCase() !== email.trim().toLowerCase()), newUser]
+    }, session.name, `Issued official invitation to ${name} (${phone}) as ${memberClass}`));
+
+    toast(isBn ? `${name}-এর জন্য অফিশিয়াল আমন্ত্রণ সফলভাবে তৈরি হয়েছে!` : `Official invitation created for ${name}!`);
+
+    const inviteLink = `${window.location.origin}/?invite=${inviteCode}&email=${encodeURIComponent(email.trim())}`;
+    const inviteText = isBn
+      ? `সম্মানিত ${name},\nকুঞ্জছায়া ক্লাবের সভাপতি/সাধারণ সম্পাদকের পক্ষ থেকে আপনাকে ক্লাবের প্ল্যাটফর্মে যোগদানের সাদর আমন্ত্রণ জানানো হচ্ছে।\nসদস্যপদ শ্রেণি: ${memberClass}\nব্লক: ${block}, ইউনিট: ${unit}\n\nআপনার অ্যাকাউন্টে লগইন/অ্যাক্সেস করতে নিচের লিংকে ক্লিক করুন:\n${inviteLink}`
+      : `Dear ${name},\nYou have been officially invited by the ${session.post} to join Kunjachaya Club.\nMembership Class: ${memberClass}\nBlock: ${block}, Unit: ${unit}\n\nAccess your account here:\n${inviteLink}`;
+
+    setCreatedInvite({
+      inviteCode,
+      inviteLink,
+      inviteText,
+      name,
+      email,
+      phone: phone.replace(/[^0-9+]/g, ""),
+    });
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard?.writeText(text);
+    toast(isBn ? "ক্লিপবোর্ডে কপি করা হয়েছে!" : "Copied to clipboard!");
+  };
+
+  return (
+    <div className="space-y-4">
+      {!createdInvite ? (
+        <>
+          <div className="p-3 rounded-xl text-xs flex items-center gap-2" style={{ backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer }}>
+            <Shield size={16} className="shrink-0" />
+            <span>
+              {isBn
+                ? `আপনি ${session.post} হিসেবে এই সদস্যকে সরাসরি আমন্ত্রণ ও প্রাক-অনুমোদন প্রদান করছেন।`
+                : `Issuing official invitation as ${session.post}.`}
+            </span>
+          </div>
+
+          <Field label={isBn ? "সদস্যের পুরো নাম (Full Name)" : "Full Name"}>
+            <input
+              style={inputStyle()}
+              className={inputCls}
+              placeholder={isBn ? "যেমন: মোহাম্মদ রফিকুল ইসলাম" : "e.g. Rafiqul Islam"}
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={isBn ? "ইমেইল অ্যাড্রেস" : "Email"}>
+              <input
+                style={inputStyle()}
+                className={inputCls}
+                type="email"
+                placeholder="rafiq@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </Field>
+            <Field label={isBn ? "মোবাইল ফোন নম্বর" : "Mobile Phone"}>
+              <input
+                style={inputStyle()}
+                className={inputCls}
+                type="tel"
+                placeholder="018XXXXXXXX"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={isBn ? "ব্লক (Block)" : "Block"}>
+              <select style={inputStyle()} className={inputCls} value={block} onChange={e => setBlock(e.target.value)}>
+                {BLOCKS.map(b => <option key={b} value={b}>{isBn ? `ব্লক ${b}` : `Block ${b}`}</option>)}
+              </select>
+            </Field>
+            <Field label={isBn ? "ফ্ল্যাট / ইউনিট নং" : "Unit / Flat"}>
+              <input
+                style={inputStyle()}
+                className={inputCls}
+                placeholder={isBn ? "যেমন: A-401" : "e.g. A-401"}
+                value={unit}
+                onChange={e => setUnit(e.target.value)}
+              />
+            </Field>
+          </div>
+
+          <Field label={isBn ? "সদস্যপদ শ্রেণি (ধারা-৬)" : "Membership Class (Article 6)"}>
+            <select style={inputStyle()} className={inputCls} value={memberClass} onChange={e => setMemberClass(e.target.value)}>
+              {MEMBER_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+
+          <div className="p-3 rounded-xl border" style={{ borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow }}>
+            <label className="flex items-center gap-2.5 text-xs font-semibold cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={directApprove}
+                onChange={e => setDirectApprove(e.target.checked)}
+                className="rounded"
+              />
+              <div>
+                <span style={{ color: C.onSurface }}>
+                  {isBn ? "সরাসরি সক্রিয় অনুমোদন (Direct Pre-Approval)" : "Direct Pre-Approval"}
+                </span>
+                <span className="block text-[10px] font-normal" style={{ color: C.onSurfaceVariant }}>
+                  {isBn ? "সদস্যকে অপেক্ষমাণ না রেখে সাথে সাথে পূর্ণ সদস্য সুবিধা প্রদান করুন" : "Grants active membership immediately without waiting in pending queue"}
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <Btn full icon={Send} onClick={handleSend} disabled={!name.trim() || !email.trim() || !phone.trim()}>
+            {isBn ? "আমন্ত্রণ তৈরি ও লিংক তৈরি করুন" : "Generate & Issue Invitation"}
+          </Btn>
+        </>
+      ) : (
+        <div className="space-y-4 text-center py-2">
+          <CheckCircle2 size={44} style={{ color: C.primary }} className="mx-auto animate-bounce" />
+          <div>
+            <h3 className="font-extrabold text-base heading">
+              {isBn ? "আমন্ত্রণ সফলভাবে প্রস্তুত!" : "Invitation Ready!"}
+            </h3>
+            <p className="text-xs mt-1" style={{ color: C.onSurfaceVariant }}>
+              {isBn
+                ? `${createdInvite.name}-এর জন্য অফিশিয়াল আমন্ত্রণ লিংক তৈরি করা হয়েছে। নিচের মাধ্যমে পাঠাতে পারেন:`
+                : `Official invitation link generated for ${createdInvite.name}. Share via:`}
+            </p>
+          </div>
+
+          {/* Invitation Message Box */}
+          <div className="p-3 rounded-xl text-left text-xs whitespace-pre-wrap border max-h-40 overflow-y-auto" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
+            {createdInvite.inviteText}
+          </div>
+
+          {/* Action Share Buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Btn
+              variant="outline"
+              size="sm"
+              icon={Copy}
+              onClick={() => copyToClipboard(createdInvite.inviteText)}
+            >
+              {isBn ? "বার্তা কপি করুন" : "Copy Message"}
+            </Btn>
+
+            <Btn
+              variant="outline"
+              size="sm"
+              icon={Copy}
+              onClick={() => copyToClipboard(createdInvite.inviteLink)}
+            >
+              {isBn ? "শুধুমাত্র লিংক কপি" : "Copy Link"}
+            </Btn>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href={`https://wa.me/${createdInvite.phone.startsWith("88") ? createdInvite.phone : "88" + createdInvite.phone}?text=${encodeURIComponent(createdInvite.inviteText)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+            >
+              <MessageCircle size={15} /> WhatsApp
+            </a>
+
+            <a
+              href={`mailto:${createdInvite.email}?subject=${encodeURIComponent("Kunjachaya Club - Official Membership Invitation")}&body=${encodeURIComponent(createdInvite.inviteText)}`}
+              className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-colors"
+            >
+              <Mail size={15} /> {isBn ? "ইমেইল পাঠান" : "Send Email"}
+            </a>
+          </div>
+
+          <Btn full variant="outline" onClick={onClose}>
+            {isBn ? "সম্পন্ন / বন্ধ করুন" : "Done / Close"}
+          </Btn>
+        </div>
+      )}
+    </div>
+  );
+}
+

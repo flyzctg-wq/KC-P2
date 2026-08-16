@@ -8,15 +8,87 @@
 
 import { supabase } from "./supabase";
 
-export async function signUpResident({ name, email, password, phone, block, unit }) {
-  const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
+export async function signUpResident({ name, email, password, phone, block, unit, bloodGroup, idNumber }) {
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: {
+      data: {
+        name,
+        phone: phone?.trim() || "",
+        block,
+        unit,
+        blood_group: bloodGroup || "",
+        id_number: idNumber || "",
+      },
+    },
+  });
   if (error) throw new Error(error.message);
-  return {
-    id: data.user.id,
-    name, email: email.trim(), phone, block, unit,
-    role: "resident", post: null, status: "pending",
-    memberClass: "New", joinedDate: new Date().toISOString(), permissions: {},
+
+  const userId = data.user.id;
+  const newProfile = {
+    id: userId,
+    name,
+    email: email.trim(),
+    phone: phone?.trim() || "",
+    block,
+    unit,
+    role: "resident",
+    post: null,
+    status: "pending",
+    memberClass: "New",
+    bloodGroup: bloodGroup || "",
+    donor: false,
+    joinedDate: new Date().toISOString(),
+    permissions: {
+      formDetails: {
+        idType: "NID",
+        idNumber: idNumber || "",
+        dob: "",
+        gender: "male",
+        profession: "",
+        education: "",
+        religion: "Islam",
+        houseNo: "",
+        roadNo: "",
+        area: "কুঞ্জছায়া আবাসিক এলাকা",
+        floorNo: "",
+        holdingNo: "",
+        wardNo: "২নং জালালাবাদ",
+        thana: "বায়েজীদ বোস্তামী",
+        district: "চট্টগ্রাম",
+        altPhone: "",
+        fatherName: "",
+        motherName: "",
+        spouseName: "",
+        photoUrl: "",
+        pledgeAccepted: true,
+      },
+    },
   };
+
+  // Attempt direct profiles table sync as well
+  try {
+    await supabase.from("profiles").upsert({
+      id: userId,
+      name,
+      email: email.trim(),
+      phone: phone?.trim() || "",
+      block,
+      unit,
+      role: "resident",
+      post: null,
+      status: "pending",
+      member_class: "New",
+      blood_group: bloodGroup || "",
+      donor: false,
+      permissions: newProfile.permissions,
+    });
+  } catch (err) {
+    console.warn("Profile sync error on signup:", err);
+  }
+
+  return newProfile;
 }
 
 export async function signInWithPassword(email, password) {
