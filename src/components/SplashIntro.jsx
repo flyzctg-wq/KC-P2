@@ -32,9 +32,9 @@ export default function SplashIntro({ onFinish, lang = "en" }) {
     imagesRef.current = imgs;
   }, []);
 
-  // Play animation once at least 15 frames or all loaded
+  // Play animation once frames start loading
   useEffect(() => {
-    if (loadedCount < 10) return;
+    if (loadedCount < 8) return;
 
     let frame = 1;
     let animationTimer = null;
@@ -44,17 +44,18 @@ export default function SplashIntro({ onFinish, lang = "en" }) {
       frame++;
       if (frame <= TOTAL_FRAMES) {
         setCurrentFrame(frame);
-        // Draw to canvas for ultra smooth 60fps rendering
+        // Draw to canvas in centered container
         const canvas = canvasRef.current;
         const img = imagesRef.current[frame - 1];
         if (canvas && img && img.complete) {
           const ctx = canvas.getContext("2d");
-          canvas.width = window.innerWidth;
-          canvas.height = window.innerHeight;
-          // Scale to cover
-          const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
-          const x = (canvas.width / 2) - (img.width / 2) * scale;
-          const y = (canvas.height / 2) - (img.height / 2) * scale;
+          const w = canvas.width;
+          const h = canvas.height;
+          ctx.clearRect(0, 0, w, h);
+          // Scale to fit / contain cleanly inside the 30% center box
+          const scale = Math.min(w / img.width, h / img.height);
+          const x = (w - img.width * scale) / 2;
+          const y = (h - img.height * scale) / 2;
           ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
         }
       } else {
@@ -68,7 +69,7 @@ export default function SplashIntro({ onFinish, lang = "en" }) {
     }, intervalMs);
 
     return () => clearInterval(animationTimer);
-  }, [loadedCount >= 10]);
+  }, [loadedCount >= 8]);
 
   const handleSkip = () => {
     setFading(true);
@@ -80,36 +81,60 @@ export default function SplashIntro({ onFinish, lang = "en" }) {
   return (
     <div
       onClick={handleSkip}
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-[#154212] transition-opacity duration-500 select-none cursor-pointer ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500 select-none cursor-pointer ${
         fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
-      style={{ overflow: "hidden" }}
+      style={{ backgroundColor: "rgb(21, 66, 18)", overflow: "hidden" }}
     >
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full object-cover"
-        style={{ display: loadedCount >= 10 ? "block" : "none" }}
-      />
+      {/* Centered 30% area intro box */}
+      <div className="relative flex flex-col items-center justify-center p-4">
+        {/* Soft atmospheric backlight */}
+        <div
+          className="absolute -inset-4 rounded-full blur-2xl opacity-40 pointer-events-none"
+          style={{ backgroundColor: "rgba(74, 222, 128, 0.25)" }}
+        />
 
-      {/* Fallback image display while canvas initializes */}
-      {loadedCount < 10 && (
-        <div className="flex flex-col items-center justify-center p-6 text-center text-white">
-          <img
-            src={frameUrl(1)}
-            alt="Kunjachaya Splash"
-            className="w-48 h-48 object-contain rounded-2xl mb-4 shadow-2xl animate-pulse"
+        <div
+          className="relative w-[30vw] min-w-[260px] max-w-[420px] aspect-square rounded-3xl overflow-hidden flex items-center justify-center shadow-2xl"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.2)",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            width={480}
+            height={480}
+            className="w-full h-full object-contain"
+            style={{ display: loadedCount >= 8 ? "block" : "none" }}
           />
-          <div className="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden mb-2">
-            <div
-              className="h-full bg-emerald-400 transition-all duration-200 rounded-full"
-              style={{ width: `${Math.round((loadedCount / TOTAL_FRAMES) * 100)}%` }}
-            />
-          </div>
-          <p className="text-xs text-white/70">
-            {isBn ? "কুঞ্জছায়া ক্লাব লোড হচ্ছে..." : "Loading Kunjachaya Club..."}
-          </p>
+
+          {/* Fallback image & progress while loading first frames */}
+          {loadedCount < 8 && (
+            <div className="flex flex-col items-center justify-center p-6 text-center text-white">
+              <img
+                src={frameUrl(1)}
+                alt="Kunjachaya Splash"
+                className="w-32 h-32 object-contain rounded-2xl mb-3 shadow-xl animate-pulse"
+              />
+              <div className="w-32 h-1.5 bg-white/20 rounded-full overflow-hidden mb-2">
+                <div
+                  className="h-full bg-emerald-400 transition-all duration-200 rounded-full"
+                  style={{ width: `${Math.round((loadedCount / TOTAL_FRAMES) * 100)}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-white/70">
+                {isBn ? "লোড হচ্ছে..." : "Loading..."}
+              </p>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Club subtitle */}
+        <p className="mt-4 text-xs font-semibold text-white/80 tracking-wider text-center">
+          {isBn ? "কুঞ্জছায়া ক্লাব • চট্টগ্রাম" : "KUNJACHAYA CLUB • CHATTOGRAM"}
+        </p>
+      </div>
 
       {/* Skip button */}
       <button
