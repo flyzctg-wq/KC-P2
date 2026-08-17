@@ -93,7 +93,7 @@ jobs:
           $BUILD_TOOLS/zipalign -v -p 4 $UNSIGNED $ALIGNED || cp $UNSIGNED $ALIGNED
           $BUILD_TOOLS/apksigner sign \
             --ks android/app/kunjachaya.keystore \
-            --ks-alias kunjachaya \
+            --ks-key-alias kunjachaya \
             --ks-pass pass:$KS_PASS \
             --key-pass pass:$KEY_PASS \
             --out Kunjachaya-Club.apk \
