@@ -64,11 +64,33 @@ export default function App() {
         // Auto-restore active Supabase auth session if present in localStorage
         const { data: { session: sbSession } } = await supabase.auth.getSession();
         if (sbSession?.user) {
-          const { data: profileRow } = await supabase
+          let { data: profileRow } = await supabase
             .from("profiles")
             .select("*")
             .eq("id", sbSession.user.id)
-            .single();
+            .maybeSingle();
+
+          if (!profileRow) {
+            const { data: inserted } = await supabase
+              .from("profiles")
+              .upsert({
+                id: sbSession.user.id,
+                name: sbSession.user.email?.split("@")[0] || "Resident Member",
+                email: sbSession.user.email || "",
+                phone: "",
+                block: "A",
+                unit: "A-01",
+                member_class: "General",
+                role: "resident",
+                post: null,
+                status: "active",
+                permissions: {},
+              })
+              .select()
+              .maybeSingle();
+            if (inserted) profileRow = inserted;
+          }
+
           if (profileRow && profileRow.status === "active") {
             const form = profileRow.permissions?.formDetails || {};
             const u = {
@@ -168,14 +190,50 @@ export default function App() {
       const uidMatch = await signInWithPassword(email, password);
       // Fetch this user's own profile directly — RLS always allows
       // auth.uid() = id so this works even before the full db loads.
-      const { data: profileRow, error: profileErr } = await supabase
+      let { data: profileRow, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", uidMatch)
-        .single();
-      if (profileErr || !profileRow) {
-        toast("No profile found for this account. Contact an admin.", "error");
-        return;
+        .maybeSingle();
+
+      // If user was created manually via Supabase dashboard without a profile row,
+      // self-heal and create the profile record now.
+      if (!profileRow) {
+        const { data: inserted, error: insErr } = await supabase
+          .from("profiles")
+          .upsert({
+            id: uidMatch,
+            name: email.split("@")[0] || "Resident Member",
+            email: email.trim(),
+            phone: "",
+            block: "A",
+            unit: "A-01",
+            member_class: "General",
+            role: "resident",
+            post: null,
+            status: "active",
+            permissions: {},
+          })
+          .select()
+          .maybeSingle();
+
+        if (inserted) {
+          profileRow = inserted;
+        } else {
+          profileRow = {
+            id: uidMatch,
+            name: email.split("@")[0] || "Resident Member",
+            email: email.trim(),
+            phone: "",
+            block: "A",
+            unit: "A-01",
+            member_class: "General",
+            role: "resident",
+            post: null,
+            status: "active",
+            permissions: {},
+          };
+        }
       }
       const form = profileRow.permissions?.formDetails || {};
       const u = {
