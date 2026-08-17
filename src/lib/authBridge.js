@@ -7,12 +7,16 @@
 // client or in Postgres.
 
 import { supabase } from "./supabase";
+import { getAppBaseUrl } from "../utils";
 
 export async function signUpResident({ name, email, password, phone, block, unit, bloodGroup, idNumber, status = "pending", memberClass = "New", invitedBy = null, inviteCode = null }) {
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
     options: {
+      // Always redirect to the live Vercel app — never localhost — even if the
+      // Supabase dashboard Site URL is still set to localhost.
+      emailRedirectTo: `${getAppBaseUrl()}/`,
       data: {
         name,
         phone: phone?.trim() || "",
