@@ -1,14 +1,49 @@
-import React, { useState } from "react";
-import { Check, CheckCircle2, Phone, Eye, EyeOff, Send, Globe, KeyRound, Loader2 } from "lucide-react";
-import { Btn, Field, inputCls, inputStyle, Modal } from "../components/primitives";
+import React, { useState, useEffect } from "react";
+import { Check, CheckCircle2, Phone, Eye, EyeOff, Send, Globe, KeyRound, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import { Btn, Field, inputCls, inputStyle, Modal, Badge } from "../components/primitives";
 import { C, BLOCKS, LOGO_MARK, LOGO_FULL } from "../theme";
 
 export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode, login, register }) {
   const isBn = lang === "bn";
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [showPw, setShowPw] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
-  const [reg, setReg] = useState({ name: "", email: "", phone: "", block: "A", unit: "" });
+  const [reg, setReg] = useState({ name: "", email: "", phone: "", block: "A", unit: "", password: "", bloodGroup: "", idNumber: "" });
   const [forgot, setForgot] = useState(false); const [resetEmail, setResetEmail] = useState(""); const [resetSent, setResetSent] = useState(false);
+  const [inviteData, setInviteData] = useState(null);
+
+  // Auto-detect invitation links (?invite=...&email=...)
+  useEffect(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const inviteCode = searchParams.get("invite");
+      const urlEmail = searchParams.get("email");
+
+      if (inviteCode || urlEmail) {
+        setAuthMode("register");
+        const matchingUser = db?.users?.find(u =>
+          (inviteCode && u.inviteCode === inviteCode) ||
+          (urlEmail && u.email?.toLowerCase() === urlEmail.toLowerCase())
+        );
+
+        if (matchingUser) {
+          setInviteData(matchingUser);
+          setReg(prev => ({
+            ...prev,
+            name: matchingUser.name || prev.name,
+            email: matchingUser.email || urlEmail || prev.email,
+            phone: matchingUser.phone || prev.phone,
+            block: matchingUser.block || prev.block,
+            unit: matchingUser.unit || prev.unit,
+            bloodGroup: matchingUser.bloodGroup || prev.bloodGroup,
+          }));
+        } else if (urlEmail) {
+          setReg(prev => ({ ...prev, email: decodeURIComponent(urlEmail).trim() }));
+        }
+      }
+    } catch (e) {
+      console.warn("Invite URL parse error:", e);
+    }
+  }, [db, setAuthMode]);
 
   const handleLogin = async () => {
     if (loggingIn) return;
@@ -112,10 +147,27 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
             </div>
           ) : (
             <div>
-              <h2 className="text-2xl font-extrabold mb-1 heading">{isBn ? "সদস্যপদের আবেদন" : "Join the club"}</h2>
-              <p className="text-sm mb-5" style={{ color: C.onSurfaceVariant }}>
-                {isBn ? "ইমেইল ও মোবাইল নম্বর দিয়ে আবেদন করুন (ধারা-১০ অনুযায়ী অনুমোদিত হবে)।" : "Register with email & mobile (requires Article 10 approval)."}
+              <h2 className="text-2xl font-extrabold mb-1 heading">{isBn ? "সদস্যপদের আবেদন ও সেটআপ" : "Join the club"}</h2>
+              <p className="text-sm mb-4" style={{ color: C.onSurfaceVariant }}>
+                {isBn ? "ইমেইল ও মোবাইল নম্বর দিয়ে আবেদন বা আমন্ত্রণ সম্পন্ন করুন।" : "Register with email & mobile (requires Article 10 approval)."}
               </p>
+
+              {/* Official Invitation Banner */}
+              {inviteData && (
+                <div className="mb-4 p-3 rounded-xl border flex items-start gap-2.5 text-xs" style={{ backgroundColor: C.secondaryContainer, borderColor: C.secondary, color: C.onSecondaryContainer }}>
+                  <ShieldCheck size={18} className="shrink-0 mt-0.5" style={{ color: C.secondary }} />
+                  <div>
+                    <p className="font-bold">
+                      {isBn ? "অফিশিয়াল আমন্ত্রণ সনাক্ত হয়েছে" : "Official Invitation Detected"}
+                    </p>
+                    <p className="mt-0.5 opacity-90">
+                      {isBn
+                        ? `${inviteData.invitedBy || "শীর্ষ নেতৃত্ব"} কর্তৃক আপনাকে সদস্যপদের আমন্ত্রণ পাঠানো হয়েছে। একটি পাসওয়ার্ড দিয়ে অ্যাকাউন্ট সক্রিয় করুন।`
+                        : `You have been officially invited by ${inviteData.invitedBy || "Leadership"}. Set a password to activate your account.`}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <Field label={isBn ? "পূর্ণ নাম (Full Name)" : "Full name"}>
                 <input

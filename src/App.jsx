@@ -199,20 +199,57 @@ export default function App() {
   };
 
   const register = async (fields) => {
-    if (db.users?.some(u => u.email?.toLowerCase() === fields.email?.trim().toLowerCase())) {
-      toast(lang === "bn" ? "এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে।" : "An account with this email already exists.", "error");
-      return;
-    }
+    const emailNorm = fields.email?.trim().toLowerCase();
+    const existingUser = db?.users?.find(u => u.email?.toLowerCase() === emailNorm);
+
     try {
-      const newUser = await signUpResident(fields);
+      const newUser = await signUpResident({
+        ...fields,
+        name: fields.name?.trim() || existingUser?.name || "",
+        phone: fields.phone?.trim() || existingUser?.phone || "",
+        block: fields.block || existingUser?.block || "A",
+        unit: fields.unit?.trim() || existingUser?.unit || "",
+        status: existingUser?.status || "pending",
+        memberClass: existingUser?.memberClass || "New",
+        invitedBy: existingUser?.invitedBy || null,
+        inviteCode: existingUser?.inviteCode || null,
+      });
+
       setDb(prev => ({
         ...prev,
-        users: [...(prev.users || []).filter(u => u.email?.toLowerCase() !== fields.email?.trim().toLowerCase()), newUser]
+        users: [
+          ...(prev.users || []).filter(u => u.email?.toLowerCase() !== emailNorm && u.id !== existingUser?.id),
+          newUser
+        ]
       }));
-      toast(lang === "bn" ? "নিবন্ধন সম্পন্ন হয়েছে! সভাপতি / সাধারণ সম্পাদকের অনুমোদনের পর লগইন করতে পারবেন।" : "Account created! Await admin approval before logging in.");
+
+      if (newUser.status === "active") {
+        toast(
+          lang === "bn"
+            ? "আমন্ত্রিত সক্রিয় সদস্যপদ সম্পন্ন হয়েছে! অনুগ্রহ করে এখন লগইন করুন।"
+            : "Official invitation setup complete! You have active membership. Please log in."
+        );
+      } else {
+        toast(
+          lang === "bn"
+            ? "নিবন্ধন সম্পন্ন হয়েছে! সভাপতি / সাধারণ সম্পাদকের অনুমোদনের পর লগইন করতে পারবেন।"
+            : "Registration submitted! Await admin approval before logging in."
+        );
+      }
       setAuthMode("login");
     } catch (e) {
-      toast(e.message || (lang === "bn" ? "অ্যাকাউন্ট তৈরি করা যায়নি।" : "Could not create account."), "error");
+      const msg = e.message || "";
+      if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("already exists") || msg.toLowerCase().includes("unique constraint")) {
+        toast(
+          lang === "bn"
+            ? "এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট তৈরি করা হয়েছে। অনুগ্রহ করে পাসওয়ার্ড দিয়ে লগইন করুন।"
+            : "An account with this email is already registered. Please log in with your password.",
+          "error"
+        );
+        setAuthMode("login");
+      } else {
+        toast(msg || (lang === "bn" ? "অ্যাকাউন্ট তৈরি করা যায়নি।" : "Could not create account."), "error");
+      }
     }
   };
 

@@ -8,7 +8,7 @@
 
 import { supabase } from "./supabase";
 
-export async function signUpResident({ name, email, password, phone, block, unit, bloodGroup, idNumber }) {
+export async function signUpResident({ name, email, password, phone, block, unit, bloodGroup, idNumber, status = "pending", memberClass = "New", invitedBy = null, inviteCode = null }) {
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
@@ -25,7 +25,11 @@ export async function signUpResident({ name, email, password, phone, block, unit
   });
   if (error) throw new Error(error.message);
 
-  const userId = data.user.id;
+  const userId = data.user?.id || (await supabase.auth.getSession())?.data?.session?.user?.id;
+  if (!userId) {
+    throw new Error("Unable to create user session. Please check if email confirmation is enabled.");
+  }
+
   const newProfile = {
     id: userId,
     name,
@@ -35,11 +39,13 @@ export async function signUpResident({ name, email, password, phone, block, unit
     unit,
     role: "resident",
     post: null,
-    status: "pending",
-    memberClass: "New",
+    status: status || "pending",
+    memberClass: memberClass || "New",
     bloodGroup: bloodGroup || "",
     donor: false,
     joinedDate: new Date().toISOString(),
+    invitedBy: invitedBy || null,
+    inviteCode: inviteCode || null,
     permissions: {
       formDetails: {
         idType: "NID",
@@ -78,8 +84,8 @@ export async function signUpResident({ name, email, password, phone, block, unit
       unit,
       role: "resident",
       post: null,
-      status: "pending",
-      member_class: "New",
+      status: status || "pending",
+      member_class: memberClass || "New",
       blood_group: bloodGroup || "",
       donor: false,
       permissions: newProfile.permissions,
