@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Check, CheckCircle2, Phone, Eye, EyeOff, Send, Globe, KeyRound, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import { Check, CheckCircle2, Phone, Eye, EyeOff, Send, Globe, KeyRound, Loader2, Sparkles, ShieldCheck, AlertCircle } from "lucide-react";
 import { Btn, Field, inputCls, inputStyle, Modal, Badge } from "../components/primitives";
 import { C, BLOCKS, LOGO_MARK, LOGO_FULL } from "../theme";
+import { resetPassword } from "../lib/authBridge";
 
 export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode, login, register }) {
   const isBn = lang === "bn";
@@ -9,6 +10,8 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
   const [loggingIn, setLoggingIn] = useState(false);
   const [reg, setReg] = useState({ name: "", email: "", phone: "", block: "A", unit: "", password: "", bloodGroup: "", idNumber: "" });
   const [forgot, setForgot] = useState(false); const [resetEmail, setResetEmail] = useState(""); const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
   const [inviteData, setInviteData] = useState(null);
 
   // Auto-detect invitation links (?invite=...&email=...)
@@ -260,13 +263,13 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
           )}
         </div>
       </div>
-      <Modal open={forgot} onClose={() => setForgot(false)} title={isBn ? "পাসওয়ার্ড রিসেট" : "Reset password"}>
+      <Modal open={forgot} onClose={() => { setForgot(false); setResetSent(false); setResetError(""); }} title={isBn ? "পাসওয়ার্ড রিসেট" : "Reset password"}>
         {resetSent ? (
           <div className="text-center py-4">
             <CheckCircle2 size={32} style={{ color: C.primary }} className="mx-auto mb-3" />
             <p className="text-sm font-semibold mb-1">{isBn ? "আপনার ইমেইল চেক করুন" : "Check your email"}</p>
             <p className="text-xs" style={{ color: C.onSurfaceVariant }}>
-              {isBn ? `${resetEmail} ঠিকানায় পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে।` : `If an account exists for ${resetEmail}, a reset link has been sent.`}
+              {isBn ? `${resetEmail} ঠিকানায় অফিশিয়াল পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে।` : `If an account exists for ${resetEmail}, a password reset link has been sent.`}
             </p>
           </div>
         ) : (
@@ -274,11 +277,43 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
             <p className="text-xs mb-4" style={{ color: C.onSurfaceVariant }}>
               {isBn ? "আপনার নিবন্ধিত ইমেইল দিন, আমরা একটি রিসেট লিংক পাঠাব।" : "Enter your account email and we'll send a reset link."}
             </p>
+            {resetError && (
+              <div className="flex items-center gap-2 p-2.5 mb-3 rounded-lg text-xs bg-red-50 text-red-600 border border-red-200">
+                <AlertCircle size={14} className="shrink-0" />
+                <span>{resetError}</span>
+              </div>
+            )}
             <Field label={isBn ? "ইমেইল" : "Email"}>
-              <input style={inputStyle()} className={inputCls} value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="you@kunjachaya.club" />
+              <input
+                type="email"
+                style={inputStyle()}
+                className={inputCls}
+                value={resetEmail}
+                onChange={e => setResetEmail(e.target.value)}
+                placeholder="you@kunjachaya.club"
+              />
             </Field>
-            <Btn full icon={KeyRound} onClick={() => setResetSent(true)} disabled={!resetEmail.trim()}>
-              {isBn ? "রিসেট লিংক পাঠান" : "Send reset link"}
+            <Btn
+              full
+              icon={resetLoading ? Loader2 : KeyRound}
+              onClick={async () => {
+                if (!resetEmail.trim() || resetLoading) return;
+                setResetLoading(true);
+                setResetError("");
+                try {
+                  await resetPassword(resetEmail);
+                  setResetSent(true);
+                } catch (err) {
+                  setResetError(err.message || "Failed to send reset link");
+                } finally {
+                  setResetLoading(false);
+                }
+              }}
+              disabled={!resetEmail.trim() || resetLoading}
+            >
+              {resetLoading
+                ? (isBn ? "পাঠানো হচ্ছে..." : "Sending...")
+                : (isBn ? "রিসেট লিংক পাঠান" : "Send reset link")}
             </Btn>
           </div>
         )}

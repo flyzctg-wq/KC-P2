@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { loadDB, saveDB, subscribeDB } from "./lib/store";
 import { syncChanges } from "./lib/write";
-import { signUpResident, signInWithPassword, signOutUser } from "./lib/authBridge";
+import { signUpResident, signInWithPassword, signOutUser, updateUserPassword } from "./lib/authBridge";
 import { supabase } from "./lib/supabase";
-import { Loader2 } from "lucide-react";
+import { Loader2, KeyRound, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { C, STR, LOGO_MARK } from "./theme";
 import { uid, nowISO } from "./utils";
-import { Toasts } from "./components/primitives";
+import { Toasts, Modal, Btn, Field, inputCls, inputStyle } from "./components/primitives";
 import ConsentBanner from "./components/ConsentBanner";
 import { hasStoredConsent, loadAnalytics, trackEvent } from "./lib/analytics";
 import AuthScreen from "./components/AuthScreen";
@@ -24,6 +24,10 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [authMode, setAuthMode] = useState("login");
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("kc_splash_done"));
+  const [recoveryModal, setRecoveryModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [savingNewPw, setSavingNewPw] = useState(false);
   const t = STR[lang];
 
   const toast = useCallback((msg, type = "success") => {
@@ -126,7 +130,18 @@ export default function App() {
       setDb(d);
       unsub = subscribeDB((fresh) => setDb(fresh));
     })();
-    return () => { if (unsub) unsub(); };
+
+    // Listen for auth events including password recovery redirect
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryModal(true);
+      }
+    });
+
+    return () => {
+      if (unsub) unsub();
+      if (authSub) authSub.unsubscribe();
+    };
   }, []);
 
   const persist = useCallback((updater) => {
@@ -427,6 +442,59 @@ export default function App() {
           </Shell>
         )}
       </div>
+
+      {/* Password Recovery Modal */}
+      <Modal open={recoveryModal} onClose={() => setRecoveryModal(false)} title={lang === "bn" ? "নতুন পাসওয়ার্ড সেট করুন" : "Set New Password"}>
+        <div className="space-y-4 py-2">
+          <p className="text-xs" style={{ color: C.onSurfaceVariant }}>
+            {lang === "bn"
+              ? "আপনার অ্যাকাউন্টের জন্য একটি নতুন নিরাপদ পাসওয়ার্ড নির্ধারণ করুন:"
+              : "Enter a new secure password for your account:"}
+          </p>
+          <Field label={lang === "bn" ? "নতুন পাসওয়ার্ড" : "New Password"}>
+            <div className="relative">
+              <input
+                type={showNewPw ? "text" : "password"}
+                style={inputStyle()}
+                className={`${inputCls} pr-10`}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+                onClick={() => setShowNewPw(!showNewPw)}
+              >
+                {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </Field>
+          <Btn
+            full
+            icon={savingNewPw ? Loader2 : KeyRound}
+            onClick={async () => {
+              if (!newPassword || newPassword.length < 6 || savingNewPw) return;
+              setSavingNewPw(true);
+              try {
+                await updateUserPassword(newPassword);
+                toast(lang === "bn" ? "পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!" : "Password updated successfully!");
+                setRecoveryModal(false);
+                setNewPassword("");
+              } catch (err) {
+                toast(err.message || "Failed to update password", "error");
+              } finally {
+                setSavingNewPw(false);
+              }
+            }}
+            disabled={!newPassword || newPassword.length < 6 || savingNewPw}
+          >
+            {savingNewPw
+              ? (lang === "bn" ? "সংরক্ষণ হচ্ছে..." : "Saving...")
+              : (lang === "bn" ? "পাসওয়ার্ড নিশ্চিত করুন" : "Confirm Password")}
+          </Btn>
+        </div>
+      </Modal>
     </div>
   );
 }

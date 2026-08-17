@@ -107,6 +107,20 @@ export async function signInWithPassword(email, password) {
   return data.user.id;
 }
 
+export async function resetPassword(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: `${getAppBaseUrl()}/`,
+  });
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+export async function updateUserPassword(newPassword) {
+  const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+  return data.user;
+}
+
 export async function signOutUser() {
   await supabase.auth.signOut();
 }
