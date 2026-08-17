@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2 } from "lucide-react";
+import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2, Loader2 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
 import { uid, nowISO, getAppBaseUrl, cleanPhone } from "../../utils";
@@ -459,7 +459,7 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
     );
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!name.trim() || !email.trim() || !phone.trim()) {
       toast(isBn ? "অনুগ্রহ করে নাম, ইমেইল এবং মোবাইল নম্বর পূরণ করুন।" : "Please provide name, email, and mobile phone.", "error");
       return;
@@ -498,6 +498,28 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
       ? `সম্মানিত ${name},\nকুঞ্জছায়া ক্লাবের সভাপতি/সাধারণ সম্পাদকের পক্ষ থেকে আপনাকে ক্লাবের প্ল্যাটফর্মে যোগদানের সাদর আমন্ত্রণ জানানো হচ্ছে।\nসদস্যপদ শ্রেণি: ${memberClass}\nব্লক: ${block}, ইউনিট: ${unit}\n\nআপনার অ্যাকাউন্টে লগইন/অ্যাক্সেস করতে নিচের লিংকে ক্লিক করুন:\n${inviteLink}`
       : `Dear ${name},\nYou have been officially invited by the ${session.post} to join Kunjachaya Club.\nMembership Class: ${memberClass}\nBlock: ${block}, Unit: ${unit}\n\nAccess your account here:\n${inviteLink}`;
 
+    // Auto-send email via Edge Function
+    let emailSent = false;
+    let emailError = null;
+    try {
+      const { error } = await supabase.functions.invoke("send-invite", {
+        body: {
+          email: email.trim(),
+          name: name.trim(),
+          inviteLink,
+          invitedBy: `${session.name} (${session.post})`,
+          block,
+          unit: unit.trim() || `${block}-01`,
+          memberClass,
+        },
+      });
+      if (error) throw error;
+      emailSent = true;
+    } catch (err) {
+      emailError = String(err);
+      console.warn("Auto-email failed:", err);
+    }
+
     setCreatedInvite({
       inviteCode,
       inviteLink,
@@ -505,6 +527,8 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
       name,
       email,
       phone: cleanPhone(phone),
+      emailSent,
+      emailError,
     });
   };
 
@@ -614,10 +638,22 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
             </h3>
             <p className="text-xs mt-1" style={{ color: C.onSurfaceVariant }}>
               {isBn
-                ? `${createdInvite.name}-এর জন্য অফিশিয়াল আমন্ত্রণ লিংক তৈরি করা হয়েছে। নিচের মাধ্যমে পাঠাতে পারেন:`
-                : `Official invitation link generated for ${createdInvite.name}. Share via:`}
+                ? `${createdInvite.name}-এর জন্য অফিশিয়াল আমন্ত্রণ লিংক তৈরি করা হয়েছে।`
+                : `Official invitation link generated for ${createdInvite.name}.`}
             </p>
           </div>
+
+          {/* Email send status indicator */}
+          {createdInvite.emailSent ? (
+            <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold" style={{ background: "#f0faf4", color: "#1a6b3a", border: "1px solid #a8d5b5" }}>
+              <Mail size={14} /> {isBn ? `✅ ইমেইল পাঠানো হয়েছে → ${createdInvite.email}` : `✅ Email sent to ${createdInvite.email}`}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs" style={{ background: "#fff8f0", color: "#b45309", border: "1px solid #fcd34d" }}>
+              <AlertTriangle size={13} />
+              <span>{isBn ? "ইমেইল স্বয়ংক্রিয়ভাবে পাঠানো যায়নি। নিচে ম্যানুয়ালি পাঠান।" : "Auto-email failed. Share manually below."}</span>
+            </div>
+          )}
 
           {/* Invitation Message Box */}
           <div className="p-3 rounded-xl text-left text-xs whitespace-pre-wrap border max-h-40 overflow-y-auto" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
