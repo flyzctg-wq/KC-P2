@@ -63,19 +63,23 @@ jobs:
       - name: Decode keystore (from secret) or generate a fresh one
         run: |
           DECODED=false
+          KS_PASS="${{ secrets.KEYSTORE_PASSWORD || 'kunjachaya123' }}"
+
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "Attempting to restore keystore from KEYSTORE_BASE64 secret…"
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '\r\n ' | base64 --decode > android/app/kunjachaya.keystore 2>/dev/null || true
-            if [ -s android/app/kunjachaya.keystore ]; then
-              echo "Keystore successfully restored from secret!"
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/kunjachaya.keystore 2>/dev/null || true
+            
+            # Verify the keystore is structurally intact and valid
+            if [ -s android/app/kunjachaya.keystore ] && keytool -list -keystore android/app/kunjachaya.keystore -storepass "$KS_PASS" >/dev/null 2>&1; then
+              echo "Keystore verified and successfully restored from secret!"
               DECODED=true
             else
-              echo "Warning: KEYSTORE_BASE64 secret was present but could not be decoded. Falling back to keytool generation."
+              echo "Warning: KEYSTORE_BASE64 secret was present but resulted in a corrupted/invalid keystore. Falling back to fresh keytool generation."
             fi
           fi
 
           if [ "$DECODED" = "false" ]; then
-            echo "Generating a fresh keystore with keytool…"
+            echo "Generating a fresh, valid keystore with keytool…"
             rm -f android/app/kunjachaya.keystore
             keytool -genkey -v \
               -keystore android/app/kunjachaya.keystore \
