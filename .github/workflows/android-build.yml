@@ -62,11 +62,21 @@ jobs:
       # ── 10. Generate / restore signing keystore ───────────────────────────────
       - name: Decode keystore (from secret) or generate a fresh one
         run: |
+          DECODED=false
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "Restoring keystore from secret…"
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/kunjachaya.keystore
-          else
-            echo "No KEYSTORE_BASE64 secret found – generating a one-time debug keystore…"
+            echo "Attempting to restore keystore from KEYSTORE_BASE64 secret…"
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '\r\n ' | base64 --decode > android/app/kunjachaya.keystore 2>/dev/null || true
+            if [ -s android/app/kunjachaya.keystore ]; then
+              echo "Keystore successfully restored from secret!"
+              DECODED=true
+            else
+              echo "Warning: KEYSTORE_BASE64 secret was present but could not be decoded. Falling back to keytool generation."
+            fi
+          fi
+
+          if [ "$DECODED" = "false" ]; then
+            echo "Generating a fresh keystore with keytool…"
+            rm -f android/app/kunjachaya.keystore
             keytool -genkey -v \
               -keystore android/app/kunjachaya.keystore \
               -alias kunjachaya \
