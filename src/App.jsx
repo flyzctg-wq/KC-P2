@@ -184,28 +184,35 @@ export default function App() {
         bio: form.bio || "",
         pledgeAccepted: form.pledgeAccepted ?? true,
       };
-      if (u.status === "pending") { toast("Your account is pending admin approval.", "error"); return; }
+      if (u.status === "pending") {
+        toast(lang === "bn" ? "আপনার অ্যাকাউন্টটি অপেক্ষমাণ রয়েছে। সভাপতি / সাধারণ সম্পাদকের অনুমোদনের পর লগইন করতে পারবেন।" : "Your account is pending admin approval (Article 10).", "error");
+        return;
+      }
       // Load full DB in background after profile is confirmed
       loadDB().then(d => setDb(d));
       setSession(u); setView(u.role === "admin" ? "a-dashboard" : "r-home");
-      toast(`Welcome back, ${u.name.split(" ")[0]}!`);
+      toast(lang === "bn" ? `স্বাগতম, ${u.name.split(" ")[0]}!` : `Welcome back, ${u.name.split(" ")[0]}!`);
       trackEvent("login", { role: u.role });
     } catch (e) {
-      toast(e.message || "Invalid email or password.", "error");
+      toast(e.message || (lang === "bn" ? "ভুল ইমেইল বা পাসওয়ার্ড।" : "Invalid email or password."), "error");
     }
   };
 
   const register = async (fields) => {
-    if (db.users.some(u => u.email.toLowerCase() === fields.email.trim().toLowerCase())) {
-      toast("An account with this email already exists.", "error"); return;
+    if (db.users?.some(u => u.email?.toLowerCase() === fields.email?.trim().toLowerCase())) {
+      toast(lang === "bn" ? "এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে।" : "An account with this email already exists.", "error");
+      return;
     }
     try {
       const newUser = await signUpResident(fields);
-      persist(d => logActivity({ ...d, users: [...d.users, newUser] }, fields.name, "Registered — pending approval"));
-      toast("Account created! Await admin approval before logging in.");
+      setDb(prev => ({
+        ...prev,
+        users: [...(prev.users || []).filter(u => u.email?.toLowerCase() !== fields.email?.trim().toLowerCase()), newUser]
+      }));
+      toast(lang === "bn" ? "নিবন্ধন সম্পন্ন হয়েছে! সভাপতি / সাধারণ সম্পাদকের অনুমোদনের পর লগইন করতে পারবেন।" : "Account created! Await admin approval before logging in.");
       setAuthMode("login");
     } catch (e) {
-      toast(e.message || "Could not create account.", "error");
+      toast(e.message || (lang === "bn" ? "অ্যাকাউন্ট তৈরি করা যায়নি।" : "Could not create account."), "error");
     }
   };
 

@@ -1,26 +1,50 @@
 import React, { useState } from "react";
-import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2 } from "lucide-react";
+import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
-import { uid, nowISO } from "../../utils";
+import { uid, nowISO, getAppBaseUrl, cleanPhone } from "../../utils";
 
 export default function AdminMembers({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [tab, setTab] = useState("pending");
   const [roleModal, setRoleModal] = useState(null);
   const [inviteModal, setInviteModal] = useState(false);
+  const [kickOutTarget, setKickOutTarget] = useState(null);
+
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
   const canManage = session.role === "admin" && (session.permissions?.canManageMembers || isTopTier);
   const pending = db.users.filter(u => u.status === "pending");
   const activeUsers = db.users.filter(u => u.status === "active");
 
+  const canKickOutUser = (targetUser) => {
+    if (!targetUser || targetUser.id === session.id) return false;
+    if (isTopTier) return true;
+    if (canManage) {
+      const isTargetTopTier = targetUser.post === "President" || targetUser.post === "General Secretary";
+      if (isTargetTopTier) return false;
+      return targetUser.role !== "admin" || !targetUser.post;
+    }
+    return false;
+  };
+
   const approve = (u) => {
     persist(d => logActivity({ ...d, users: d.users.map(x => x.id === u.id ? { ...x, status: "active", memberClass: "General" } : x) }, session.name, `Approved membership: ${u.name}`));
     toast(isBn ? `${u.name}-এর সদস্যপদ অনুমোদিত হয়েছে।` : `Approved membership for ${u.name}.`);
   };
+
   const reject = (u) => {
     persist(d => logActivity({ ...d, users: d.users.filter(x => x.id !== u.id) }, session.name, `Rejected membership: ${u.name}`));
     toast(isBn ? `${u.name}-এর আবেদন বাতিল করা হয়েছে।` : `Rejected application for ${u.name}.`);
+  };
+
+  const confirmKickOut = (u) => {
+    persist(d => logActivity({
+      ...d,
+      users: d.users.filter(x => x.id !== u.id)
+    }, session.name, `Kicked out member: ${u.name} (${u.phone || u.email || "No phone"}) [${u.memberClass || "Resident"}]`));
+    toast(isBn ? `${u.name}-এর সদস্যপদ বাতিল ও বহিষ্কার করা হয়েছে।` : `${u.name} has been removed from club membership.`);
+    setKickOutTarget(null);
+    if (roleModal?.id === u.id) setRoleModal(null);
   };
 
   return (
@@ -77,23 +101,25 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
       {tab === "pending" ? (
         <div className="flex flex-col gap-2.5">
           {pending.map(u => (
-            <Card key={u.id} className="p-4 flex items-center gap-3">
-              <Avatar name={u.name} photoUrl={u.photoUrl} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-sm">{u.name}</p>
-                  {u.invitedBy && (
-                    <Badge tone="info">
-                      {isBn ? `${u.invitedBy} কর্তৃক আমন্ত্রিত` : `Invited by ${u.invitedBy}`}
-                    </Badge>
-                  )}
+            <Card key={u.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar name={u.name} photoUrl={u.photoUrl} size={44} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-sm">{u.name}</p>
+                    {u.invitedBy && (
+                      <Badge tone="info">
+                        {isBn ? `${u.invitedBy} কর্তৃক আমন্ত্রিত` : `Invited by ${u.invitedBy}`}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs mt-0.5" style={{ color: C.onSurfaceVariant }}>
+                    <span className="font-semibold">{u.email}</span> · {isBn ? "ফোন:" : "Phone:"} <span className="font-semibold">{u.phone || "—"}</span> · {isBn ? "ব্লক" : "Block"} {u.block}, {u.unit}
+                  </p>
                 </div>
-                <p className="text-xs mt-0.5" style={{ color: C.onSurfaceVariant }}>
-                  <span className="font-semibold">{u.email}</span> · {isBn ? "ফোন:" : "Phone:"} <span className="font-semibold">{u.phone || "—"}</span> · {isBn ? "ব্লক" : "Block"} {u.block}, {u.unit}
-                </p>
               </div>
               {canManage && (
-                <div className="flex gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                   <Btn size="sm" variant="outline" icon={XCircle} onClick={() => reject(u)}>{isBn ? "বাতিল" : "Reject"}</Btn>
                   <Btn size="sm" icon={Check} onClick={() => approve(u)}>{isBn ? "অনুমোদন" : "Approve"}</Btn>
                 </div>
@@ -113,18 +139,49 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
           {activeUsers.map(u => (
             <Card
               key={u.id}
-              className="p-4 flex items-center gap-3 cursor-pointer"
-              onClick={() => canManage && setRoleModal(u)}
+              className="p-4 flex items-center justify-between gap-3"
             >
-              <Avatar name={u.name} photoUrl={u.photoUrl} />
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-sm truncate">{u.name}</p>
-                <p className="text-xs truncate" style={{ color: C.onSurfaceVariant }}>
-                  {u.phone ? `${u.phone} · ` : ""}{isBn ? "ব্লক" : "Block"} {u.block} · {u.memberClass}
-                </p>
-                {u.post && <Badge tone="success">{u.post}</Badge>}
+              <div
+                className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                onClick={() => canManage && setRoleModal(u)}
+              >
+                <Avatar name={u.name} photoUrl={u.photoUrl} size={42} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-bold text-sm truncate">{u.name}</p>
+                    {u.post && <Badge tone="success">{u.post}</Badge>}
+                  </div>
+                  <p className="text-xs truncate mt-0.5" style={{ color: C.onSurfaceVariant }}>
+                    {u.phone ? <span className="font-medium">{u.phone} · </span> : ""}{isBn ? "ব্লক" : "Block"} {u.block} ({u.unit}) · {u.memberClass}
+                  </p>
+                  <p className="text-[11px] truncate opacity-70" style={{ color: C.outline }}>
+                    {u.email}
+                  </p>
+                </div>
               </div>
-              {canManage && <Edit3 size={14} style={{ color: C.outline }} />}
+
+              <div className="flex items-center gap-1 shrink-0">
+                {canManage && (
+                  <button
+                    onClick={() => setRoleModal(u)}
+                    className="p-2 rounded-lg hover:bg-black/5 text-xs font-semibold"
+                    style={{ color: C.primary }}
+                    title={isBn ? "সম্পাদনা" : "Manage"}
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                )}
+                {canKickOutUser(u) && (
+                  <button
+                    onClick={() => setKickOutTarget(u)}
+                    className="p-2 rounded-lg hover:bg-rose-50 text-xs font-semibold"
+                    style={{ color: C.error }}
+                    title={isBn ? "সদস্যপদ বাতিল / বহিষ্কার" : "Kick out"}
+                  >
+                    <UserX size={16} />
+                  </button>
+                )}
+              </div>
             </Card>
           ))}
         </div>
@@ -132,7 +189,57 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
 
       {/* Role Editor Modal */}
       <Modal open={!!roleModal} onClose={() => setRoleModal(null)} title={isBn ? "সদস্য তথ্য ও পদবী সম্পাদনা" : "Manage member"}>
-        {roleModal && <RoleEditor user={roleModal} onClose={() => setRoleModal(null)} persist={persist} logActivity={logActivity} session={session} toast={toast} lang={lang} isBn={isBn} />}
+        {roleModal && (
+          <RoleEditor
+            user={roleModal}
+            onClose={() => setRoleModal(null)}
+            persist={persist}
+            logActivity={logActivity}
+            session={session}
+            toast={toast}
+            lang={lang}
+            isBn={isBn}
+            onKickOut={() => setKickOutTarget(roleModal)}
+            canKickOut={canKickOutUser(roleModal)}
+          />
+        )}
+      </Modal>
+
+      {/* Kick Out Confirmation Modal */}
+      <Modal open={!!kickOutTarget} onClose={() => setKickOutTarget(null)} title={isBn ? "সদস্যপদ বাতিল / বহিষ্কার নিশ্চিতকরণ" : "Kick Out Member Confirmation"}>
+        {kickOutTarget && (
+          <div className="space-y-4 py-2">
+            <div className="p-4 rounded-xl flex items-start gap-3" style={{ backgroundColor: C.errorContainer, color: C.onErrorContainer }}>
+              <AlertTriangle size={24} className="shrink-0 mt-0.5 text-rose-600" />
+              <div className="text-xs space-y-1">
+                <p className="font-bold text-sm text-rose-800">
+                  {isBn ? `আপনি কি ${kickOutTarget.name}-কে ক্লাব থেকে বহিষ্কার করতে চান?` : `Are you sure you want to remove ${kickOutTarget.name}?`}
+                </p>
+                <p className="leading-relaxed">
+                  {isBn
+                    ? "সদস্যপদ বাতিল করলে তিনি আর ক্লাবের অ্যাপে লগইন করতে পারবেন না এবং তার সমস্ত অ্যাক্সেস বন্ধ হয়ে যাবে।"
+                    : "Removing this member will revoke their access to the Kunjachaya Club portal and delete their active membership status."}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl text-xs space-y-1.5 border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
+              <div className="flex justify-between"><span className="opacity-70">{isBn ? "নাম:" : "Name:"}</span> <span className="font-bold">{kickOutTarget.name}</span></div>
+              <div className="flex justify-between"><span className="opacity-70">{isBn ? "ইমেইল:" : "Email:"}</span> <span className="font-semibold">{kickOutTarget.email}</span></div>
+              <div className="flex justify-between"><span className="opacity-70">{isBn ? "মোবাইল:" : "Mobile:"}</span> <span className="font-semibold">{kickOutTarget.phone || "—"}</span></div>
+              <div className="flex justify-between"><span className="opacity-70">{isBn ? "পদবী/শ্রেণি:" : "Post/Class:"}</span> <span className="font-semibold">{kickOutTarget.post || kickOutTarget.memberClass}</span></div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <Btn full variant="outline" onClick={() => setKickOutTarget(null)}>
+                {isBn ? "বাতিল করুন" : "Cancel"}
+              </Btn>
+              <Btn full variant="danger" icon={Trash2} onClick={() => confirmKickOut(kickOutTarget)}>
+                {isBn ? "হ্যাঁ, বহিষ্কার করুন" : "Yes, Kick Out"}
+              </Btn>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* President / General Secretary Exclusive Invitation Modal */}
@@ -151,7 +258,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
   );
 }
 
-export function RoleEditor({ user, onClose, persist, logActivity, session, toast, isBn = false }) {
+export function RoleEditor({ user, onClose, persist, logActivity, session, toast, isBn = false, onKickOut, canKickOut = false }) {
   const [memberClass, setMemberClass] = useState(user.memberClass);
   const [post, setPost] = useState(user.post || "");
   const [role, setRole] = useState(user.role);
@@ -264,7 +371,14 @@ export function RoleEditor({ user, onClose, persist, logActivity, session, toast
         </p>
       )}
 
-      <Btn full onClick={save}>{isBn ? "সংরক্ষণ করুন" : "Save changes"}</Btn>
+      <div className="flex flex-col gap-2 pt-2">
+        <Btn full onClick={save}>{isBn ? "সংরক্ষণ করুন" : "Save changes"}</Btn>
+        {canKickOut && (
+          <Btn full variant="danger" icon={UserX} onClick={onKickOut}>
+            {isBn ? "সদস্যপদ বাতিল / বহিষ্কার করুন" : "Kick Out Member"}
+          </Btn>
+        )}
+      </div>
     </div>
   );
 }
@@ -331,7 +445,8 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
 
     toast(isBn ? `${name}-এর জন্য অফিশিয়াল আমন্ত্রণ সফলভাবে তৈরি হয়েছে!` : `Official invitation created for ${name}!`);
 
-    const inviteLink = `${window.location.origin}/?invite=${inviteCode}&email=${encodeURIComponent(email.trim())}`;
+    const baseUrl = getAppBaseUrl();
+    const inviteLink = `${baseUrl}/?invite=${inviteCode}&email=${encodeURIComponent(email.trim())}`;
     const inviteText = isBn
       ? `সম্মানিত ${name},\nকুঞ্জছায়া ক্লাবের সভাপতি/সাধারণ সম্পাদকের পক্ষ থেকে আপনাকে ক্লাবের প্ল্যাটফর্মে যোগদানের সাদর আমন্ত্রণ জানানো হচ্ছে।\nসদস্যপদ শ্রেণি: ${memberClass}\nব্লক: ${block}, ইউনিট: ${unit}\n\nআপনার অ্যাকাউন্টে লগইন/অ্যাক্সেস করতে নিচের লিংকে ক্লিক করুন:\n${inviteLink}`
       : `Dear ${name},\nYou have been officially invited by the ${session.post} to join Kunjachaya Club.\nMembership Class: ${memberClass}\nBlock: ${block}, Unit: ${unit}\n\nAccess your account here:\n${inviteLink}`;
@@ -342,7 +457,7 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
       inviteText,
       name,
       email,
-      phone: phone.replace(/[^0-9+]/g, ""),
+      phone: cleanPhone(phone),
     });
   };
 
@@ -485,7 +600,7 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
 
           <div className="grid grid-cols-2 gap-2">
             <a
-              href={`https://wa.me/${createdInvite.phone.startsWith("88") ? createdInvite.phone : "88" + createdInvite.phone}?text=${encodeURIComponent(createdInvite.inviteText)}`}
+              href={`https://wa.me/${createdInvite.phone}?text=${encodeURIComponent(createdInvite.inviteText)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"

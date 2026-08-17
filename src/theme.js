@@ -40,6 +40,7 @@ export const STR = {
   en: {
     appName: "Kunjachaya Club", tagline: "Community, governed together",
     home: "Home", directory: "Directory", notices: "Notices", dues: "Dues",
+    financials: "Financials & Dues",
     elections: "Elections", tickets: "Support", profile: "Profile",
     dashboard: "Dashboard", members: "Members", activity: "Activity Log",
     login: "Log in", register: "Create account", logout: "Log out",
@@ -57,10 +58,14 @@ export const STR = {
     details: "Details", actions: "Actions", date: "Date", amount: "Amount",
     category: "Category", description: "Description", title: "Title",
     noRecords: "No records found", welcomeBack: "Welcome back",
+    call: "Call", whatsapp: "WhatsApp", email: "Email",
+    kickOut: "Kick Out Member", kickOutConfirm: "Are you sure you want to remove/kick out this member?",
+    viewProfile: "Quick View", phone: "Phone",
   },
   bn: {
     appName: "কুঞ্জছায়া ক্লাব", tagline: "একসাথে পরিচালিত সম্প্রদায়",
     home: "হোম", directory: "ডিরেক্টরি", notices: "নোটিশ", dues: "চাঁদা",
+    financials: "চাঁদা ও আর্থিক",
     elections: "নির্বাচন", tickets: "সহায়তা", profile: "প্রোফাইল",
     dashboard: "ড্যাশবোর্ড", members: "সদস্য", activity: "কার্যক্রম লগ",
     login: "লগ ইন", register: "অ্যাকাউন্ট তৈরি করুন", logout: "লগ আউট",
@@ -78,6 +83,9 @@ export const STR = {
     details: "বিস্তারিত", actions: "কার্যক্রম", date: "তারিখ", amount: "পরিমাণ",
     category: "শ্রেণি", description: "বিবরণ", title: "শিরোনাম",
     noRecords: "কোনো তথ্য পাওয়া যায়নি", welcomeBack: "স্বাগতম",
+    call: "কল", whatsapp: "হোয়াটসঅ্যাপ", email: "ইমেইল",
+    kickOut: "সদস্যপদ বাতিল / বহিষ্কার", kickOutConfirm: "আপনি কি নিশ্চিতভাবে এই সদস্যকে বহিষ্কার / বাতিল করতে চান?",
+    viewProfile: "দ্রুত দেখুন", phone: "ফোন",
   },
 };
 
