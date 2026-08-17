@@ -16,12 +16,18 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
   const pending = db.users.filter(u => u.status === "pending");
   const activeUsers = db.users.filter(u => u.status === "active");
 
+  // A user is "top-tier" if they hold the President or General Secretary post
+  const isTopTierPost = (u) => u?.post === "President" || u?.post === "General Secretary";
+
   const canKickOutUser = (targetUser) => {
     if (!targetUser || targetUser.id === session.id) return false;
+    // Top-tier leaders cannot kick each other (mutual protection)
+    if (isTopTier && isTopTierPost(targetUser)) return false;
+    // Top-tier can kick anyone else
     if (isTopTier) return true;
+    // Admins with canManageMembers can only kick non-officer residents
     if (canManage) {
-      const isTargetTopTier = targetUser.post === "President" || targetUser.post === "General Secretary";
-      if (isTargetTopTier) return false;
+      if (isTopTierPost(targetUser)) return false;
       return targetUser.role !== "admin" || !targetUser.post;
     }
     return false;
@@ -265,6 +271,8 @@ export function RoleEditor({ user, onClose, persist, logActivity, session, toast
   const [perms, setPerms] = useState(user.permissions || {});
   const [standingCouncil, setStandingCouncil] = useState(!!user.standingCouncil);
   const isTopTier = session.post === "President" || session.post === "General Secretary";
+  // Target is the other top-tier leader — their post is immutable (mutual protection)
+  const isTargetTopTier = user.post === "President" || user.post === "General Secretary";
 
   const handlePostChange = (newPost) => {
     setPost(newPost);
@@ -321,10 +329,21 @@ export function RoleEditor({ user, onClose, persist, logActivity, session, toast
           </Field>
 
           <Field label={isBn ? "কার্যনির্বাহী পরিষদের পদবী (ধারা-১৪)" : "Executive Committee Post (Article 14)"}>
-            <select style={inputStyle()} className={inputCls} value={post} onChange={e => handlePostChange(e.target.value)}>
-              <option value="">{isBn ? "-- কোনো নির্বাহী পদ নেই --" : "-- No Executive Post --"}</option>
-              {COMMITTEE_POSTS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+            {isTargetTopTier ? (
+              // President / General Secretary post is locked — cannot be changed by the other top-tier leader
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold" style={{ borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow, color: C.primary }}>
+                <Shield size={14} style={{ color: C.primary }} />
+                <span>{post}</span>
+                <span className="ml-auto text-[10px] font-normal opacity-60">
+                  {isBn ? "সংবিধান ধারা-১৪ — পদবী পরিবর্তন সংরক্ষিত" : "Article 14 — Post is protected & immutable"}
+                </span>
+              </div>
+            ) : (
+              <select style={inputStyle()} className={inputCls} value={post} onChange={e => handlePostChange(e.target.value)}>
+                <option value="">{isBn ? "-- কোনো নির্বাহী পদ নেই --" : "-- No Executive Post --"}</option>
+                {COMMITTEE_POSTS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            )}
           </Field>
 
           {role === "admin" && (
