@@ -200,7 +200,7 @@ cd KC-P2
 ### 2. Configure Environment Variables
 Create `.env` in `kunjachaya-mobile/`:
 ```env
-VITE_SUPABASE_URL=https://rohbgdxkzlvbrvmckzeg.supabase.co
+VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_APP_URL=https://kc-p2.vercel.app
 ```

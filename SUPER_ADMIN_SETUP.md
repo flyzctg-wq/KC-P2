@@ -1,6 +1,6 @@
-# 👑 Kunjachaya Club — Super Admin & First-Officer Bootstrap Guide (SUPER_ADMIN_SETUP.md)
+# 👑 Kunjachaya Club — Initial Officer & Super Admin Setup Guide (SUPER_ADMIN_SETUP.md)
 
-> Guide for bootstrapping the **Initial President** and **General Secretary** accounts for a fresh Kunjachaya Club (KC-P2) deployment.
+> Guide for bootstrapping the **Initial President** and **General Secretary** administrative accounts for a fresh Kunjachaya Club deployment.
 
 ---
 
@@ -9,55 +9,47 @@
 Under the Kunjachaya Constitution (ধারা-১০, ১৪, ১৭), the **President** and **General Secretary** are the top-tier authority holders who can:
 - Issue official pre-approved member invitations.
 - Approve or reject pending membership registrations.
-- Assign executive posts and committee permissions to other residents.
+- Assign executive committee posts and administrative permissions.
 - Manage constitutional amendments and standing council affairs.
 
 ---
 
 ## 🚀 Bootstrap Methods
 
-### Method 1: Automated Node.js Seed Script (Recommended)
+### Method 1: Automated Node.js Script (Recommended)
 
-From the project root:
+From the `kunjachaya-supabase/` directory:
 
 ```bash
 cd kunjachaya-supabase
 npm install @supabase/supabase-js
 ```
 
-Run the seed script with your Supabase credentials:
+Run the seed script by supplying your own Supabase project credentials through environment variables (never commit real credentials to version control):
 
 ```bash
-SUPABASE_URL="https://rohbgdxkzlvbrvmckzeg.supabase.co" \
-SUPABASE_SERVICE_ROLE_KEY="your_service_role_key_here" \
+SUPABASE_URL="https://your-project.supabase.co" \
+SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key" \
 node scripts/seed.js
 ```
 
-This automatically creates the following demo accounts:
-
-| Name | Role / Post | Email | Default Password |
-|---|---|---|---|
-| **Rahim Chowdhury** | President (Top-Tier) | `admin@kunjachaya.club` | `admin123` |
-| **Nasrin Akter** | Treasurer | `treasurer@kunjachaya.club` | `treasurer123` |
-| **Tanvir Islam** | General Resident | `tanvir@kunjachaya.club` | `resident123` |
-| **Farhana Yasmin** | General Resident | `farhana@kunjachaya.club` | `resident123` |
-| **Kamal Hossain** | Life Member | `kamal@kunjachaya.club` | `resident123` |
+> ⚠️ **Security Notice**: Always use strong, unique passwords for production accounts. Avoid using default credentials in live environments.
 
 ---
 
 ### Method 2: Manual Supabase Dashboard Setup
 
-If bootstrapping a custom real user (e.g. `yourname@gmail.com`):
+To create and configure an administrator account directly:
 
 #### Step 1: Create Supabase Auth User
-1. Go to **Supabase Dashboard → Authentication → Users**.
+1. Open your **Supabase Project Dashboard → Authentication → Users**.
 2. Click **Add user** → **Create user**.
-3. Enter Email: `yourname@gmail.com` and a secure password.
+3. Enter your official administrator email and a strong password.
 4. Toggle **Auto Confirm User?** to `ON`.
-5. Copy the generated **User UID** (e.g. `a1b2c3d4-...`).
+5. Copy the generated **User UID** (UUID format, e.g. `a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
 
 #### Step 2: Insert President Profile in SQL Editor
-Go to **Supabase Dashboard → SQL Editor** and execute:
+Go to **Supabase Dashboard → SQL Editor** and execute the following query, replacing `'PASTE_USER_UID_HERE'`, `'Your Full Name'`, and `'yourname@example.com'` with your details:
 
 ```sql
 INSERT INTO public.profiles (
@@ -79,7 +71,7 @@ INSERT INTO public.profiles (
 ) VALUES (
   'PASTE_USER_UID_HERE',
   'Your Full Name',
-  'yourname@gmail.com',
+  'yourname@example.com',
   '+880 1700-000000',
   'A',
   'A-01',
@@ -102,12 +94,12 @@ ON CONFLICT (id) DO UPDATE SET
 ```
 
 #### Step 3: Insert General Secretary Profile
-Execute the same SQL for your General Secretary user with `post = 'General Secretary'`.
+Execute the query again for your General Secretary user with `post = 'General Secretary'`.
 
 ---
 
-## 🔒 Security Posture
+## 🔒 Security Posture & Safeguards
 
-- The client application never writes plain-text passwords.
-- All credentials are bcrypt hashed by Supabase Auth (GoTrue).
-- Top-tier roles automatically receive mutual protection to prevent unauthorized removal.
+- **No Plaintext Passwords**: Client apps never store or transmit plaintext passwords; authentication is handled via secure bcrypt hashing and JWT session tokens managed by Supabase GoTrue Auth.
+- **Row-Level Security (RLS)**: Database policies strictly enforce role separation across all tables.
+- **Mutual Top-Tier Protection**: The system prevents top-tier administrators from kicking out one another or modifying each other's executive posts.

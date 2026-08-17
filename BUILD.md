@@ -32,8 +32,8 @@ In the `kunjachaya-mobile/` directory, create your `.env` file based on `.env.ex
 
 ```env
 # Supabase PostgreSQL & Auth Credentials
-VITE_SUPABASE_URL=https://rohbgdxkzlvbrvmckzeg.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_tTOX1deF-abINLa7h50-Sw_e1QkuUuB
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Production Web Domain (used for generating official invitation links)
 VITE_APP_URL=https://kc-p2.vercel.app
