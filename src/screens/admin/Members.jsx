@@ -3,6 +3,7 @@ import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, Message
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
 import { uid, nowISO, getAppBaseUrl, cleanPhone } from "../../utils";
+import { supabase } from "../../lib/supabase";
 
 export default function AdminMembers({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -38,15 +39,42 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
     toast(isBn ? `${u.name}-এর সদস্যপদ অনুমোদিত হয়েছে।` : `Approved membership for ${u.name}.`);
   };
 
-  const reject = (u) => {
+  const reject = async (u) => {
+    try {
+      await supabase.from("profiles").delete().eq("id", u.id);
+    } catch (e) {
+      console.warn("Reject profile delete error:", e);
+    }
     persist(d => logActivity({ ...d, users: d.users.filter(x => x.id !== u.id) }, session.name, `Rejected membership: ${u.name}`));
     toast(isBn ? `${u.name}-এর আবেদন বাতিল করা হয়েছে।` : `Rejected application for ${u.name}.`);
   };
 
-  const confirmKickOut = (u) => {
+  const confirmKickOut = async (u) => {
+    try {
+      // 1. Delete all referencing child records in Supabase to satisfy foreign key constraints
+      await supabase.from("dues").delete().eq("resident_id", u.id);
+      await supabase.from("tickets").delete().eq("resident_id", u.id);
+      await supabase.from("notice_comments").delete().eq("user_id", u.id);
+      await supabase.from("chat_messages").delete().eq("user_id", u.id);
+      await supabase.from("event_rsvps").delete().eq("user_id", u.id);
+      await supabase.from("agm_attendees").delete().eq("user_id", u.id);
+      await supabase.from("agm_proxies").delete().eq("granter_id", u.id);
+      await supabase.from("agm_proxies").delete().eq("grantee_id", u.id);
+      await supabase.from("amendment_votes").delete().eq("voter_id", u.id);
+      await supabase.from("budget_votes").delete().eq("voter_id", u.id);
+      await supabase.from("nominations").delete().eq("user_id", u.id);
+
+      // 2. Delete the profile record directly
+      await supabase.from("profiles").delete().eq("id", u.id);
+    } catch (err) {
+      console.warn("Direct cascade deletion error on kick-out:", err);
+    }
+
     persist(d => logActivity({
       ...d,
-      users: d.users.filter(x => x.id !== u.id)
+      users: d.users.filter(x => x.id !== u.id),
+      dues: (d.dues || []).filter(x => x.residentId !== u.id),
+      tickets: (d.tickets || []).filter(x => x.residentId !== u.id),
     }, session.name, `Kicked out member: ${u.name} (${u.phone || u.email || "No phone"}) [${u.memberClass || "Resident"}]`));
     toast(isBn ? `${u.name}-এর সদস্যপদ বাতিল ও বহিষ্কার করা হয়েছে।` : `${u.name} has been removed from club membership.`);
     setKickOutTarget(null);

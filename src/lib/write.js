@@ -19,10 +19,9 @@ import { supabase } from "./supabase";
 
 const changed = (a, b) => JSON.stringify(a) !== JSON.stringify(b);
 
-/** Diffs two arrays of {id, ...} objects and applies insert/update/delete via toRow(). */
 async function syncTable(table, prevArr = [], nextArr = [], toRow) {
-  const prevById = new Map(prevArr.map(r => [r.id, r]));
-  const nextById = new Map(nextArr.map(r => [r.id, r]));
+  const prevById = new Map((prevArr || []).map(r => [r.id, r]));
+  const nextById = new Map((nextArr || []).map(r => [r.id, r]));
 
   const inserts = [], updates = [];
   for (const [id, row] of nextById) {
@@ -32,9 +31,36 @@ async function syncTable(table, prevArr = [], nextArr = [], toRow) {
   }
   const deletes = [...prevById.keys()].filter(id => !nextById.has(id));
 
-  if (inserts.length) await supabase.from(table).insert(inserts);
-  for (const u of updates) await supabase.from(table).update(u.row).eq("id", u.id);
-  if (deletes.length) await supabase.from(table).delete().in("id", deletes);
+  if (inserts.length) {
+    const { error } = await supabase.from(table).insert(inserts);
+    if (error) console.error(`Insert failed on ${table}:`, error);
+  }
+  for (const u of updates) {
+    const { error } = await supabase.from(table).update(u.row).eq("id", u.id);
+    if (error) console.error(`Update failed on ${table}:`, error);
+  }
+  if (deletes.length) {
+    // If deleting from profiles, clean up referencing child tables first to avoid FK constraint errors
+    if (table === "profiles") {
+      try {
+        await supabase.from("dues").delete().in("resident_id", deletes);
+        await supabase.from("tickets").delete().in("resident_id", deletes);
+        await supabase.from("notice_comments").delete().in("user_id", deletes);
+        await supabase.from("chat_messages").delete().in("user_id", deletes);
+        await supabase.from("event_rsvps").delete().in("user_id", deletes);
+        await supabase.from("agm_attendees").delete().in("user_id", deletes);
+        await supabase.from("agm_proxies").delete().in("granter_id", deletes);
+        await supabase.from("agm_proxies").delete().in("grantee_id", deletes);
+        await supabase.from("amendment_votes").delete().in("voter_id", deletes);
+        await supabase.from("budget_votes").delete().in("voter_id", deletes);
+        await supabase.from("nominations").delete().in("user_id", deletes);
+      } catch (fkErr) {
+        console.warn("Child cleanup warning before profile delete:", fkErr);
+      }
+    }
+    const { error } = await supabase.from(table).delete().in("id", deletes);
+    if (error) console.error(`Delete failed on ${table}:`, error);
+  }
 }
 
 /** For a parent's nested child array (e.g. election.candidates): only
