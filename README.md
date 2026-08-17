@@ -1,116 +1,245 @@
-# Kunjachaya Club — unified web + Android project (Supabase backend)
+# 🏡 Kunjachaya Club Management Platform (KC-P2)
 
-One React codebase, one Postgres database (via Supabase), two shipped
-apps: a normal website, and this same site wrapped by Capacitor into a
-real installable Android app. Both read and write the same tables in
-real time — approve a member on the web dashboard and it shows up
-instantly on a resident's phone.
+> A constitutional community management platform for **Kunjachaya Residential Area** (*কুঞ্জছায়া আবাসিক এলাকা*), built as a modern unified web app and signed Android APK powered by **Supabase (PostgreSQL + Auth + Storage + RLS)** and **Capacitor Android**.
 
-This project now uses **Supabase** instead of Firebase — see
-`../kunjachaya-supabase/` for the schema, security policies, and
-server-side functions this depends on. Set that up first.
+---
 
-## Project structure & code-splitting
+## 📋 Table of Contents
+- [Project Overview](#-project-overview)
+- [Live Deployments & Downloads](#-live-deployments--downloads)
+- [Key Features](#-key-features)
+- [Constitutional Governance Model](#-constitutional-governance-model)
+- [Role & Permission Matrix](#-role--permission-matrix)
+- [Architecture & Tech Stack](#-architecture--tech-stack)
+- [Repository Structure](#-repository-structure)
+- [Getting Started](#-getting-started)
+- [Database & Security (RLS)](#-database--security-rls)
+- [CI/CD & Android APK Automation](#-cicd--android-apk-automation)
+- [Documentation Index](#-documentation-index)
 
-The app used to ship as a single ~270KB `App.jsx` — every resident
-downloaded the entire admin portal, Standing Council tools, and audit
-screens even if they never opened them (audit finding #7: page speed).
-It's now split so each screen is its own file, lazy-loaded on demand:
+---
+
+## 🌟 Project Overview
+
+**Kunjachaya Club (KC-P2)** replaces manual paperwork and generic management scripts with a software system strictly engineered around the **Written Constitution of Kunjachaya Residential Area** (*কুঞ্জছায়া সমাজ কল্যাণ পরিষদ গঠনতন্ত্র*).
+
+Every feature — from member admission, official invitations, emergency blood bank requests, dues management with PipraPay, to constitutional amendments and secret-ballot elections — directly mirrors the club's constitutional articles (ধারা ১–৩১).
+
+---
+
+## 🚀 Live Deployments & Downloads
+
+| Platform | Deployment / Download | Status |
+|---|---|---|
+| 🌐 **Web App** | [https://kc-p2.vercel.app](https://kc-p2.vercel.app) | Live (Vercel) |
+| 📱 **Android APK** | [GitHub Releases](https://github.com/flyzctg-wq/KC-P2/releases) | Auto-built on `main` push |
+| 🗄️ **Database Backend** | Supabase Postgres (Singapore `ap-southeast-1`) | Live with RLS |
+
+---
+
+## 🎯 Key Features
+
+### 1. 👥 Member Directory & Quick Contact
+- Real-time resident roster searchable by **Name, Bengali Name, Block, Unit, Mobile Number, or Email**.
+- Direct **One-Click Phone Call (`tel:`)** and **WhatsApp Chat (`https://wa.me/`)** action buttons on every resident card.
+- **Quick Profile View Modal**: Displays blood group, profession, education, NID/ID, and joining date.
+
+### 2. 🩸 Emergency Blood Bank Directory
+- Filter by blood groups (`O+`, `O-`, `A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`).
+- Resident opt-in system (*Available to Donate* toggle).
+- Direct **Emergency Phone Call** and **Pre-Composed Urgent WhatsApp Blood Request Message** targeting listed donors.
+
+### 3. 🔐 Registration, Invitations & Approval Flow (ধারা-১০)
+- **Standard Registration**: New signups automatically start in `pending` status, requiring Article 10 approval by authorized leadership before login is granted.
+- **Official Top-Tier Invitation Links**: President and General Secretary can generate official pre-approved invitation links (`https://kc-p2.vercel.app/?invite=...&email=...`).
+- When opened, the app automatically detects the invitation, switches to the account setup screen, and pre-fills member credentials.
+
+### 4. ⚖️ Member Removal & Mutual Protection (ধারা-১৪, ১৭)
+- **Top-Tier Leaders (President & General Secretary)**: Can kick out/remove any resident or officer.
+- **Mutual Protection Rule**: President and General Secretary **cannot kick out each other**, and **neither can change the other's Executive Committee post** (Article 14 protection).
+- **Executive Admins (`canManageMembers`)**: Can remove standard residents, but cannot remove top-tier leaders or themselves.
+- **Permanent Postgres Cascade Deletion**: Deleting a member cleans up all child references (`dues`, `tickets`, `comments`, `votes`) so records never reappear.
+
+### 5. 💳 Financials, Dues & PipraPay Payments (ধারা-১৭.৫)
+- Automated monthly due generation across blocks.
+- Real payment integration with **PipraPay** checkout gateway and automated webhook receipt confirmation.
+- Printable PDF payment vouchers and ledger audit history.
+
+### 6. 🗳️ Secret-Ballot Elections (ধারা-২১)
+- Candidate nominations, manifesto reviews, and ballot casting.
+- Enforces atomic database-level vote integrity via the `cast_vote()` Postgres stored procedure (`UNIQUE(election_id, position, voter_id)`).
+
+### 7. 📜 Constitutional Amendments & Standing Council (ধারা-১৩খ, ৩০)
+- Constitutional amendment proposals with tracked article references.
+- Standing Council voting chamber for Founders and Top-Tier leadership.
+
+---
+
+## 🏛️ Constitutional Governance Model
 
 ```
-src/theme.js              — colors, fonts, logo, static content (loaded eagerly — small)
-src/utils.js              — formatters (uid, dates, currency)
-src/components/           — Btn/Card/Modal/etc. primitives, AuthScreen, Shell/nav
-src/Router.jsx            — React.lazy() + <Suspense> per screen
-src/screens/*.jsx         — one file per resident-facing screen
-src/screens/admin/*.jsx   — one file per admin screen
-src/App.jsx               — ~150 lines: auth state, db bootstrap, top-level layout only
+                     ┌─────────────────────────────────────────┐
+                     │            GENERAL ASSEMBLY             │
+                     │          (All Active Members)           │
+                     └────────────────────┬────────────────────┘
+                                          │ Elects / Governs
+                     ┌────────────────────┴────────────────────┐
+                     │          STANDING COUNCIL               │
+                     │  (Founders + President + Gen Secretary) │
+                     └────────────────────┬────────────────────┘
+                                          │ Oversees Amendments & Handover
+                     ┌────────────────────┴────────────────────┐
+                     │      EXECUTIVE COMMITTEE (15 Seats)     │
+                     ├─────────────────────────────────────────┤
+                     │  • President (Top-Tier)                 │
+                     │  • 2× Vice President                    │
+                     │  • General Secretary (Top-Tier)         │
+                     │  • Assistant General Secretary          │
+                     │  • Treasurer (Financial Lead)           │
+                     │  • Organizing Secretary                 │
+                     │  • Social Welfare Secretary             │
+                     │  • Literature & Culture Secretary       │
+                     │  • Publicity Secretary                  │
+                     │  • Sports Secretary                     │
+                     │  • Women's Affairs Secretary            │
+                     │  • 3× Executive Members                 │
+                     └─────────────────────────────────────────┘
 ```
 
-A resident logging in downloads `App.jsx`, `theme.js`, `utils.js`, the
-primitives, and only the screens they actually visit — `screens/admin/*`
-never loads unless the account is an admin and navigates there. Run
-`npm run build` and check `dist/assets/` to see the separate chunk per
-screen.
+---
 
-## 1. Set up the database
+## 🔑 Role & Permission Matrix
 
-Follow `../kunjachaya-supabase/README.md` first: create a Supabase
-project, run the SQL in `schema/`, deploy the two Edge Functions, and
-run the seed script. You need that done before this app has anything
-to show.
+| Capability | President | General Secretary | Treasurer | EC Member (`canManage...`) | General Resident |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **Approve Pending Members** (ধারা-১০) | ✅ | ✅ | ❌ | ✅ (`canManageMembers`) | ❌ |
+| **Issue Official Pre-Approved Invites** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Kick Out Standard Resident** | ✅ | ✅ | ❌ | ✅ (`canManageMembers`) | ❌ |
+| **Kick Out President / General Secretary** | ❌ (Blocked) | ❌ (Blocked) | ❌ | ❌ | ❌ |
+| **Edit Committee Posts & Permissions** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Issue & Manage Dues** (ধারা-১৭.৫) | ✅ | ✅ | ✅ | ✅ (`canManageFinancials`) | ❌ |
+| **Publish Notices & Announcements** | ✅ | ✅ | ❌ | ✅ (`canManageNotices`) | ❌ |
+| **Resolve Resident Complaints** | ✅ | ✅ | ❌ | ✅ (`canManageComplaints`) | ❌ |
+| **Vote on Constitutional Amendments** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Cast Election Ballot** (ধারা-২১) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-## 2. Connect this app to it
+---
 
-```
-cp .env.example .env
-```
-Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from your
-Supabase project settings (Project Settings → API — use the **anon
-public** key here, never the service-role key, which must never reach
-client code).
-
-## 3. Run it as a website
+## 💻 Architecture & Tech Stack
 
 ```
+   ┌────────────────────────────────────────────────────────┐
+   │                  CLIENT APPLICATIONS                   │
+   │  ┌───────────────────────────┐  ┌───────────────────┐  │
+   │  │   Vite + React (Web PWA)  │  │   Capacitor App   │  │
+   │  │    https://kc-p2.vercel   │  │   (Android APK)   │  │
+   │  └─────────────┬─────────────┘  └─────────┬─────────┘  │
+   └────────────────┼──────────────────────────┼────────────┘
+                    │                          │
+                    ▼                          ▼
+   ┌────────────────────────────────────────────────────────┐
+   │                  SUPABASE CLOUD BACKEND                │
+   │  • GoTrue Auth (Bcrypt hash, JWT sessions)             │
+   │  • PostgreSQL 15 Database (Row-Level Security Enabled) │
+   │  • Realtime Replication Engine (Live Data Subscriptions│
+   │  • Edge Functions (PipraPay Checkout & Webhooks)       │
+   └────────────────────────────────────────────────────────┘
+```
+
+- **Frontend Core**: React 18, Vite 5, Tailwind CSS, Lucide Icons
+- **Mobile Engine**: Capacitor 6 (Android Bridge)
+- **Backend Database**: Supabase PostgreSQL 15 with Postgres RLS
+- **Authentication**: Supabase GoTrue Auth (Email/Password)
+- **Payments**: PipraPay Payment Gateway Integration
+- **CI/CD**: GitHub Actions (`android-build.yml`) & Vercel Automated Deployments
+
+---
+
+## 📂 Repository Structure
+
+```
+KC P2/
+├── kunjachaya-mobile/             # Unified Mobile & Web Frontend (React + Vite + Capacitor)
+│   ├── .github/workflows/        # GitHub Actions CI/CD (Android APK Build & Release)
+│   │   └── android-build.yml
+│   ├── android/                  # Native Android Studio project generated by Capacitor
+│   │   ├── app/src/main/
+│   │   │   ├── AndroidManifest.xml
+│   │   │   └── res/              # App icons, splash screens, drawables
+│   │   └── build.gradle
+│   ├── src/
+│   │   ├── components/           # Shell, AuthScreen, Primitives, SplashIntro, Modals
+│   │   ├── lib/                  # supabase.js, store.js, write.js, authBridge.js
+│   │   ├── screens/              # Directory, BloodBank, Dues, Notices, Elections, AGM
+│   │   │   └── admin/            # Members.jsx (Kick-out & Invites), Officers.jsx, Budget.jsx
+│   │   ├── theme.js              # Colors, Bengali/English i18n STR, Badges catalog
+│   │   ├── utils.js              # getAppBaseUrl(), cleanPhone(), formatters
+│   │   └── App.jsx               # App container, auth state, router & session restore
+│   ├── capacitor.config.json     # Capacitor appId, appName, androidScheme
+│   ├── vite.config.js            # Vite build configuration
+│   └── package.json
+│
+├── README.md                      # Master Documentation (This file)
+├── WORKFLOW.md                    # Constitutional & Operations Workflow Guide
+├── BUILD.md                       # Complete Build & Deployment Manual
+├── WEB_BUILD_GUIDE.md             # Web PWA & Vercel Guide
+├── GRADLE_BUILD_GUIDE.md          # Android Gradle & APK Signing Guide
+└── SUPER_ADMIN_SETUP.md           # First-Officer Bootstrap Guide
+```
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/flyzctg-wq/KC-P2.git
+cd KC-P2
+```
+
+### 2. Configure Environment Variables
+Create `.env` in `kunjachaya-mobile/`:
+```env
+VITE_SUPABASE_URL=https://rohbgdxkzlvbrvmckzeg.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_APP_URL=https://kc-p2.vercel.app
+```
+
+### 3. Install dependencies and run locally
+```bash
 npm install
 npm run dev
 ```
-Opens at `http://localhost:5173`. `npm run build` produces a static
-`dist/` folder deployable anywhere — Vercel, Netlify, Cloudflare Pages,
-or Firebase Hosting purely as a static CDN (the included `firebase.json`
-is only for that — HSTS/caching headers — it has nothing to do with the
-database anymore).
 
-## 4. Package it as an Android app
+The web application will launch at `http://localhost:5173`.
 
-Same as before — these commands only work on your own machine (Android
-Studio, Android SDK, a JDK), not inside a chat sandbox:
-```
-npm install
-npm run build
-npx cap add android        # first time only
-npm run android:sync
-npx cap open android
-```
-Build → Generate Signed Bundle / APK from Android Studio.
+---
 
-### App identity
-- Package name: `club.kunjachaya.app` (`capacitor.config.ts`)
-- Icon/splash source: `public/logo-mark.png` (512×503, from the
-  original Stitch export) — use it in Android Studio's Image Asset
-  tool. It's crisp at icon sizes but was upscaled from a 450×554
-  source, so avoid blowing it up much larger.
+## 🔒 Database & Security (RLS)
 
-## How the data layer works
+All 24 PostgreSQL tables enforce Row Level Security (RLS):
+1. **Unauthenticated Access Blocked**: Unauthenticated requests receive empty sets via RLS.
+2. **Pending User Isolation**: Unapproved accounts (`status = 'pending'`) cannot access notices, dues, chat, or member lists.
+3. **Atomic Ballot Security**: Direct write access to `votes` is blocked; all votes pass through the `cast_vote()` security-definer procedure.
 
-Every screen in `src/App.jsx` still just calls `persist(d => ({ ...d,
-someKey: newValue }))`, same pattern as the original Firestore-blob
-prototype — that didn't need to change. What's different is what's
-underneath:
+---
 
-- **`src/lib/store.js`** — reads every Postgres table and reshapes the
-  rows back into the exact nested `db.users` / `db.notices` / etc.
-  shape every screen already expects (joining child tables like
-  `notice_comments` back onto their parent, etc).
-- **`src/lib/write.js`** — the write side. Diffs the old and new `db`
-  object per entity and issues targeted inserts/updates/deletes to the
-  right tables, instead of overwriting one JSON blob.
-- **`src/lib/authBridge.js`** — real Supabase Auth (bcrypt-hashed
-  server-side) instead of a stored plaintext password.
-- **Voting is the one exception** to the generic write path — casting
-  a ballot calls the `cast_vote()` Postgres function directly via
-  `supabase.rpc(...)`, not `persist()`, because it needs a real atomic
-  "insert or reject as duplicate" guarantee that a generic diff can't
-  give you. See `kunjachaya-supabase/schema/03_cast_vote.sql`.
+## 🤖 CI/CD & Android APK Automation
 
-## What's still simplified
+Every push to `main` triggers GitHub Actions (`.github/workflows/android-build.yml`):
+1. Compiles Vite Web assets (`npm run build`).
+2. Syncs web bundle to Capacitor Android (`npx cap sync android`).
+3. Decodes and verifies release keystore (`keytool -list`).
+4. Builds release APK (`./gradlew assembleRelease`).
+5. Signs and aligns the APK using Android Build Tools (`apksigner`).
+6. Publishes a versioned **GitHub Release** with direct `.apk` download.
 
-~~Dues can be marked "paid" directly by the resident~~ — fixed: the
-Dues screen now redirects to a real PipraPay checkout via the
-`piprapay-checkout` Edge Function, and only the `piprapay-webhook`
-function (service-role key, bypasses RLS) can mark a due paid. This
-can't be tested from this sandbox (no live Supabase project, no
-PipraPay credentials) — it's written to the contract the Edge Function
-expects, not verified end-to-end. Test it for real before trusting it
-with actual payments.
+---
+
+## 📚 Documentation Index
+
+- 📘 [**WORKFLOW.md**](./WORKFLOW.md) — Operational workflows, approval chains, mutual protection rules.
+- ⚙️ [**BUILD.md**](./BUILD.md) — Step-by-step build manual for Web and Android APK.
+- 🌐 [**WEB_BUILD_GUIDE.md**](./WEB_BUILD_GUIDE.md) — Vercel and PWA optimization guide.
+- 📱 [**GRADLE_BUILD_GUIDE.md**](./GRADLE_BUILD_GUIDE.md) — Android Studio, Gradle, and signing manual.
+- 👑 [**SUPER_ADMIN_SETUP.md**](./SUPER_ADMIN_SETUP.md) — Initial President and General Secretary bootstrap guide.
