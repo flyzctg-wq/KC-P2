@@ -101,6 +101,19 @@ export default function App() {
               bio: form.bio || "",
               pledgeAccepted: form.pledgeAccepted ?? true,
             };
+            if (u.role === "admin" && (u.post === "President" || u.post === "General Secretary")) {
+              const fullPerms = {
+                canManageMembers: true,
+                canManageNotices: true,
+                canManageFinancials: true,
+                canManageComplaints: true,
+                canDeleteItems: true,
+                ...u.permissions,
+                formDetails: form,
+              };
+              u.permissions = fullPerms;
+              supabase.from("profiles").update({ permissions: fullPerms }).eq("id", u.id).then(() => {});
+            }
             setSession(u);
             setView(prev => prev === "home" ? (u.role === "admin" ? "a-dashboard" : "r-home") : prev);
           }
@@ -187,6 +200,19 @@ export default function App() {
       if (u.status === "pending") {
         toast(lang === "bn" ? "আপনার অ্যাকাউন্টটি অপেক্ষমাণ রয়েছে। সভাপতি / সাধারণ সম্পাদকের অনুমোদনের পর লগইন করতে পারবেন।" : "Your account is pending admin approval (Article 10).", "error");
         return;
+      }
+      if (u.role === "admin" && (u.post === "President" || u.post === "General Secretary")) {
+        const fullPerms = {
+          canManageMembers: true,
+          canManageNotices: true,
+          canManageFinancials: true,
+          canManageComplaints: true,
+          canDeleteItems: true,
+          ...u.permissions,
+          formDetails: form,
+        };
+        u.permissions = fullPerms;
+        await supabase.from("profiles").update({ permissions: fullPerms }).eq("id", u.id);
       }
       // Load full DB in background after profile is confirmed
       loadDB().then(d => setDb(d));
