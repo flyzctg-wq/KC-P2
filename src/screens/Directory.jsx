@@ -1,16 +1,19 @@
 import React, { useState } from "react";
-import { Search, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User } from "lucide-react";
+import { Search, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User, FileText, Home, Building, Printer, Shield } from "lucide-react";
 import { Card, Badge, Btn, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C, BLOCKS, BADGE_CATALOG, BADGE_ICONS } from "../theme";
 import { cleanPhone, fmtDate } from "../utils";
 
-export default function Directory({ db, lang = "en", t = {} }) {
+export default function Directory({ session = {}, db = {}, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [q, setQ] = useState("");
   const [block, setBlock] = useState("All");
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const active = (db.users || []).filter(u => u.status === "active");
+  const isTopTier = session?.role === "admin" && (session?.post === "President" || session?.post === "General Secretary");
+  const canManage = session?.role === "admin" && (session?.permissions?.canManageMembers || isTopTier);
+
+  const active = (db?.users || []).filter(u => u.status === "active");
   const query = q.trim().toLowerCase();
 
   const filtered = active.filter(u => {
@@ -37,7 +40,7 @@ export default function Directory({ db, lang = "en", t = {} }) {
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder={isBn ? "নাম, ইউনিট, মোবাইল নম্বর বা ইমেইল দিয়ে অনুসন্ধান…" : "Search by name, unit, phone or email…"}
+            placeholder={isBn ? "নাম, ইউনিট, মোবাইল নম্বর বা পদবী দিয়ে অনুসন্ধান…" : "Search by name, unit, phone or post…"}
             style={inputStyle()}
             className={inputCls + " pl-9"}
           />
@@ -58,7 +61,7 @@ export default function Directory({ db, lang = "en", t = {} }) {
         {block !== "All" && <span className="font-semibold">{isBn ? `ব্লক ${block}` : `Block ${block}`}</span>}
       </div>
 
-      {/* Members Grid with Mobile, Email & Quick Action Buttons */}
+      {/* Members Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {filtered.map(u => {
           const phoneFormatted = cleanPhone(u.phone);
@@ -70,10 +73,10 @@ export default function Directory({ db, lang = "en", t = {} }) {
             >
               <div className="flex items-start gap-3">
                 <div className="relative shrink-0">
-                  <Avatar name={u.name} photoUrl={u.photoUrl} size={48} />
+                  <Avatar name={u.name} photoUrl={u.photoUrl} size={50} />
                   {u.bloodGroup && (
                     <span
-                      className="absolute -bottom-1 -right-1 text-[9px] font-extrabold px-1 rounded-full text-white bg-rose-600"
+                      className="absolute -bottom-1 -right-1 text-[9px] font-extrabold px-1 rounded-full text-white bg-rose-600 shadow-sm"
                       title={isBn ? `রক্তের গ্রুপ: ${u.bloodGroup}` : `Blood Group: ${u.bloodGroup}`}
                     >
                       {u.bloodGroup}
@@ -83,50 +86,42 @@ export default function Directory({ db, lang = "en", t = {} }) {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-extrabold text-sm truncate">{u.name}</p>
+                    <p className="font-extrabold text-sm truncate text-gray-900">{u.name}</p>
                     {u.post ? (
                       <Badge tone="success">{u.post}</Badge>
                     ) : (
                       <Badge tone="neutral">{u.memberClass || "Resident"}</Badge>
                     )}
                   </div>
+                  {u.nameBn && (
+                    <p className="text-[11px] font-medium text-emerald-800 truncate">{u.nameBn}</p>
+                  )}
 
                   <p className="text-xs mt-0.5" style={{ color: C.onSurfaceVariant }}>
                     {isBn ? "ব্লক" : "Block"} <span className="font-semibold">{u.block}</span> · {isBn ? "ইউনিট" : "Unit"} <span className="font-semibold">{u.unit}</span>
                   </p>
 
-                  {/* Quick Mobile Number Display */}
                   <div className="flex items-center gap-1.5 mt-1.5 text-xs">
                     <Phone size={12} style={{ color: C.primary }} className="shrink-0" />
-                    {u.phone ? (
-                      <span className="font-semibold truncate select-all">{u.phone}</span>
-                    ) : (
-                      <span className="opacity-50 text-[11px]">{isBn ? "মোবাইল নম্বর নেই" : "No phone"}</span>
-                    )}
-                  </div>
-
-                  {/* Quick Email Display */}
-                  <div className="flex items-center gap-1.5 mt-0.5 text-xs">
-                    <Mail size={12} style={{ color: C.outline }} className="shrink-0" />
-                    <span className="truncate opacity-80 select-all">{u.email}</span>
+                    <span className="font-semibold select-all text-gray-800">{u.phone || "—"}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Direct Quick Contact Actions */}
-              <div className="pt-2.5 border-t flex items-center gap-1.5" style={{ borderColor: C.outlineVariant }}>
-                {u.phone ? (
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-2 border-t" style={{ borderColor: C.outlineVariant }}>
+                {phoneFormatted ? (
                   <>
                     <a
                       href={`tel:${phoneFormatted}`}
                       className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
-                      style={{ backgroundColor: C.primary, color: "#fff" }}
-                      title={isBn ? "সরাসরি কল করুন" : "Direct Call"}
+                      style={{ backgroundColor: C.primaryContainer, color: "#fff" }}
+                      title={isBn ? "কল করুন" : "Call Phone"}
                     >
                       <Phone size={13} /> {isBn ? "কল" : "Call"}
                     </a>
                     <a
-                      href={`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${u.name} ভাই/আপু, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${u.name}, contacting you from Kunjachaya Club.`)}`}
+                      href={`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${u.name}, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${u.name}, reaching out from Kunjachaya Club.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
@@ -149,7 +144,7 @@ export default function Directory({ db, lang = "en", t = {} }) {
                   onClick={() => setSelectedUser(u)}
                   className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0"
                   style={{ borderColor: C.outlineVariant, color: C.onSurfaceVariant }}
-                  title={isBn ? "বিস্তারিত প্রোফাইল দেখুন" : "Quick Profile View"}
+                  title={isBn ? "প্রোফাইল দেখুন" : "View Profile"}
                 >
                   <Eye size={15} />
                 </button>
@@ -169,19 +164,20 @@ export default function Directory({ db, lang = "en", t = {} }) {
         )}
       </div>
 
-      {/* Member Details Quick View Modal */}
+      {/* Member Details Profile View Modal */}
       <Modal
         open={!!selectedUser}
         onClose={() => setSelectedUser(null)}
-        title={isBn ? "সদস্য পূর্ণ তথ্য (Quick View)" : "Member Quick Profile"}
-        width="max-w-md"
+        title={canManage ? (isBn ? "সদস্য পূর্ণ প্রোফাইল (Official View)" : "Member Full Profile") : (isBn ? "সদস্য প্রোফাইল (Basic View)" : "Member Profile")}
+        width="max-w-lg"
       >
         {selectedUser && (
-          <div className="space-y-4 py-1">
+          <div className="space-y-4 py-1 max-h-[80vh] overflow-y-auto pr-1">
+            {/* Header Card */}
             <div className="flex items-center gap-3.5 p-3.5 rounded-2xl border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
-              <Avatar name={selectedUser.name} photoUrl={selectedUser.photoUrl} size={54} />
+              <Avatar name={selectedUser.name} photoUrl={selectedUser.photoUrl} size={60} className="border-2 border-white shadow-md" />
               <div className="min-w-0 flex-1">
-                <h3 className="font-extrabold text-base heading leading-tight">{selectedUser.name}</h3>
+                <h3 className="font-extrabold text-base heading leading-tight text-gray-900">{selectedUser.name}</h3>
                 {selectedUser.nameBn && (
                   <p className="text-xs font-medium text-emerald-800">{selectedUser.nameBn}</p>
                 )}
@@ -198,26 +194,35 @@ export default function Directory({ db, lang = "en", t = {} }) {
               </div>
             </div>
 
-            {/* Quick Details Table */}
+            {/* Basic Profile Details (Visible to all) */}
             <div className="p-3.5 rounded-2xl space-y-2 text-xs border" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
               <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                 <span className="flex items-center gap-1.5 opacity-70"><Phone size={13} /> {isBn ? "মোবাইল ফোন:" : "Mobile Phone:"}</span>
-                <span className="font-bold select-all">{selectedUser.phone || "—"}</span>
+                <span className="font-bold select-all text-gray-900">{selectedUser.phone || "—"}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                 <span className="flex items-center gap-1.5 opacity-70"><Mail size={13} /> {isBn ? "ইমেইল অ্যাড্রেস:" : "Email Address:"}</span>
-                <span className="font-semibold select-all">{selectedUser.email}</span>
+                <span className="font-semibold select-all text-gray-900">{selectedUser.email}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                 <span className="flex items-center gap-1.5 opacity-70"><MapPin size={13} /> {isBn ? "বাসা ও ইউনিট:" : "Block & Unit:"}</span>
                 <span className="font-semibold">{isBn ? `ব্লক ${selectedUser.block}, ইউনিট ${selectedUser.unit}` : `Block ${selectedUser.block}, Unit ${selectedUser.unit}`}</span>
               </div>
-              {selectedUser.bloodGroup && (
-                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
-                  <span className="flex items-center gap-1.5 opacity-70"><Droplet size={13} /> {isBn ? "রক্তের গ্রুপ:" : "Blood Group:"}</span>
-                  <span className="font-bold px-2 py-0.5 rounded-full text-white bg-rose-600">{selectedUser.bloodGroup}</span>
+              <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
+                <span className="flex items-center gap-1.5 opacity-70"><Droplet size={13} /> {isBn ? "রক্তের গ্রুপ:" : "Blood Group:"}</span>
+                <div className="flex items-center gap-1.5">
+                  {selectedUser.bloodGroup ? (
+                    <span className="font-bold px-2 py-0.5 rounded-full text-white bg-rose-600">{selectedUser.bloodGroup}</span>
+                  ) : (
+                    <span className="text-gray-400">{isBn ? "নির্ধারিত নয়" : "Not set"}</span>
+                  )}
+                  {selectedUser.donor && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      {isBn ? "রক্তদাতা" : "Donor"}
+                    </span>
+                  )}
                 </div>
-              )}
+              </div>
               {selectedUser.profession && (
                 <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                   <span className="flex items-center gap-1.5 opacity-70"><Briefcase size={13} /> {isBn ? "পেশা:" : "Profession:"}</span>
@@ -225,14 +230,72 @@ export default function Directory({ db, lang = "en", t = {} }) {
                 </div>
               )}
               {selectedUser.joinedDate && (
-                <div className="flex justify-between items-center py-1">
+                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                   <span className="flex items-center gap-1.5 opacity-70"><Calendar size={13} /> {isBn ? "যোগদানের তারিখ:" : "Joined Date:"}</span>
                   <span className="font-semibold">{fmtDate(selectedUser.joinedDate)}</span>
                 </div>
               )}
+              {selectedUser.earnedBadges && selectedUser.earnedBadges.length > 0 && (
+                <div className="py-1">
+                  <span className="flex items-center gap-1.5 opacity-70 mb-1"><Award size={13} /> {isBn ? "অর্জিত ব্যাজ:" : "Earned Badges:"}</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {selectedUser.earnedBadges.map(b => (
+                      <Badge key={b} tone="warning">{b === "b_founder" ? (isBn ? "⭐ প্রতিষ্ঠাতা সদস্য" : "⭐ Founder") : b}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {selectedUser.bio && (
+                <div className="pt-2">
+                  <p className="font-bold text-[11px] mb-1 opacity-75">{isBn ? "সংক্ষিপ্ত বিবরণ:" : "Bio:"}</p>
+                  <p className="p-2 rounded-xl bg-gray-50 text-gray-700 italic text-[11px] leading-relaxed border">{selectedUser.bio}</p>
+                </div>
+              )}
             </div>
 
-            {/* Direct Contact Buttons in Modal */}
+            {/* FULL FORM-2 VERIFICATION SECTION (Exclusively for Top-Tier & Authorized Committee) */}
+            {canManage && (
+              <div className="p-3.5 rounded-2xl space-y-3 text-xs border bg-slate-50 border-slate-200">
+                <div className="flex items-center justify-between border-b pb-1.5">
+                  <h4 className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                    <Shield size={14} style={{ color: C.primary }} />
+                    {isBn ? "ফরম-২ অফিশিয়াল রেকর্ড (অনুমোদিত নেতৃত্ব দর্শন)" : "Form-2 Official Record (Admin View)"}
+                  </h4>
+                  <Badge tone="success">{isBn ? "যাচাইকৃত" : "Verified"}</Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-gray-500 block">{isBn ? "পরিচয়পত্র (ID Type & No):" : "ID Type & No:"}</span>
+                    <span className="font-bold select-all text-gray-900">{selectedUser.idType || "NID"}: {selectedUser.idNumber || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-500 block">{isBn ? "জন্ম তারিখ ও লিঙ্গ:" : "DOB & Gender:"}</span>
+                    <span className="font-semibold text-gray-800">{selectedUser.dob || "—"} ({selectedUser.gender || "male"})</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-500 block">{isBn ? "পিতা / মাতার নাম:" : "Father / Mother:"}</span>
+                    <span className="font-semibold text-gray-800">{selectedUser.fatherName || "—"} / {selectedUser.motherName || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-500 block">{isBn ? "শিক্ষা / ধর্ম:" : "Education / Religion:"}</span>
+                    <span className="font-semibold text-gray-800">{selectedUser.education || "—"} · {selectedUser.religion || "Islam"}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[10px] text-gray-500 block">{isBn ? "কুঞ্জছায়া পূর্ণ ঠিকানা:" : "Full Address:"}</span>
+                    <span className="font-semibold text-gray-800">{selectedUser.area || "কুঞ্জছায়া আবাসিক এলাকা"}, {selectedUser.thana || "বায়েজীদ বোস্তামী"}, {selectedUser.district || "চট্টগ্রাম"}</span>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <Btn full size="sm" variant="outline" icon={Printer} onClick={() => window.print()}>
+                    {isBn ? "প্রিন্ট ফরম-২" : "Print Form 2 Document"}
+                  </Btn>
+                </div>
+              </div>
+            )}
+
+            {/* Direct Contact Action Buttons */}
             <div className="grid grid-cols-2 gap-2 pt-1">
               {selectedUser.phone ? (
                 <>

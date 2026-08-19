@@ -55,23 +55,34 @@ export function inputStyle(focusRing = C.primary) {
 }
 
 export function Avatar({ name = "User", photoUrl, size = 36, className = "" }) {
-  if (photoUrl) {
+  const [hasError, setHasError] = React.useState(false);
+
+  if (photoUrl && !hasError) {
     return (
       <img
         src={photoUrl}
         alt={name}
+        onError={() => setHasError(true)}
         style={{ width: size, height: size }}
-        className={`rounded-full object-cover shrink-0 border border-black/10 select-none ${className}`}
+        className={`rounded-full object-cover shrink-0 border border-emerald-950/10 shadow-sm select-none ${className}`}
       />
     );
   }
+
   const h = avatarHue(name);
   return (
     <div
-      style={{ width: size, height: size, backgroundColor: `hsl(${h},38%,88%)`, color: `hsl(${h},45%,28%)`, fontSize: size * 0.38 }}
-      className={`rounded-full flex items-center justify-center font-bold shrink-0 select-none ${className}`}
+      style={{
+        width: size,
+        height: size,
+        background: `linear-gradient(135deg, hsl(${h}, 55%, 88%), hsl(${h + 35}, 50%, 78%))`,
+        color: `hsl(${h}, 60%, 22%)`,
+        fontSize: size * 0.36,
+      }}
+      className={`rounded-full flex items-center justify-center font-black shrink-0 border border-black/5 shadow-inner select-none relative overflow-hidden ${className}`}
     >
-      {initials(name)}
+      <div className="absolute inset-0 bg-white/20 pointer-events-none" />
+      <span className="relative z-10 tracking-tight">{initials(name)}</span>
     </div>
   );
 }
