@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from "react";
 import {
   FileText, Send, Printer, Download, MessageCircle, Plus, Search, Filter,
   Shield, Check, Trash2, Eye, Edit3, Copy, Sparkles, RefreshCw, Calendar,
-  Building, User, Phone, CheckCircle2, ChevronRight, ArrowLeft, Share2
+  Building, User, Phone, CheckCircle2, ChevronRight, ArrowLeft, Share2, Sliders
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C } from "../../theme";
@@ -17,9 +17,9 @@ const LETTER_TEMPLATES = [
     subject: "২০২৬-২০২৭ ইং মেয়াদের জন্য কুঞ্জছায়া ক্লাবের উপদেষ্টা পরিষদের উপদেষ্টা পদে মনোনয়ন করা প্রসঙ্গে।",
     salutation: "প্রিয় মহোদয়,",
     body: "আসসালামু আলাইকুম। গত ২৬মার্চ ২০২১ তারিখ কুঞ্জছায়া ক্লাব, কুঞ্জছায়া আবাসিক এলাকা, বায়েজিদ বোস্তামী প্রতিষ্ঠিত হয়। অত্যন্ত আনন্দের সাথে জানানো যাচ্ছে যে, কুঞ্জছায়া ক্লাব এর কার্যনির্বাহী কমিটির সিদ্ধান্ত অনুযায়ী আপনাকে ক্লাবের উপদেষ্টা পদে মনোনীত করা হয়েছে।\n\nউক্ত পদে দায়িত্ব পালনে আপনার সদয় সম্মতি আমাদের ক্লাবের কার্যক্রমকে আরও গতিশীল করবে।",
-    signatoryLeftTitle: "আহ্বায়ক / সভাপতি",
+    signatoryLeftTitle: "আহ্বায়কঃ",
     signatoryLeftName: "জাকারিয়া হাসান",
-    signatoryRightTitle: "সদস্য সচিব / সাধারণ সম্পাদক",
+    signatoryRightTitle: "সদস্য সচিবঃ",
     signatoryRightName: "খালিদ হাসান",
   },
   {
@@ -30,9 +30,9 @@ const LETTER_TEMPLATES = [
     subject: "কুঞ্জছায়া ক্লাবের বার্ষিক সাধারণ সভা (AGM) ও জরুরি মতবিনিময় প্রসঙ্গে।",
     salutation: "সম্মানিত সদস্যবৃন্দ,",
     body: "আসসালামু আলাইকুম। কুঞ্জছায়া ক্লাবের সকল সদস্যের সদয় অবগতির জন্য জানানো যাচ্ছে যে, আগামী [তারিখ লিখুন] রোজ [বার] বিকেল ৫:০০ ঘটিকায় ক্লাবের প্রধান কার্যালয়ে এক জরুরি সাধারণ সভা অনুষ্ঠিত হবে।\n\nউক্ত সভায় ক্লাবের বার্ষিক উন্নয়ন পরিকল্পনা, আয়-ব্যয় হিসাব অনুমোদন ও নিরাপত্তা বিষয়ক গুরুত্বপূর্ণ সিদ্ধান্ত গৃহীত হবে।\n\nসভায় আপনার উপস্থিতি সংগঠনের অগ্রযাত্রাকে বেগবান করবে।",
-    signatoryLeftTitle: "সভাপতি",
+    signatoryLeftTitle: "সভাপতিঃ",
     signatoryLeftName: "জাকারিয়া হাসান",
-    signatoryRightTitle: "সাধারণ সম্পাদক",
+    signatoryRightTitle: "সাধারণ সম্পাদকঃ",
     signatoryRightName: "খালিদ হাসান",
   },
   {
@@ -43,9 +43,9 @@ const LETTER_TEMPLATES = [
     subject: "কুঞ্জছায়া আবাসিক এলাকার সড়ক বাতি ও ড্রেনেজ ব্যবস্থা সংস্কারের আবেদন।",
     salutation: "মহোদয়,",
     body: "যথাযথ সম্মান প্রদর্শনপূর্বক বিনীত নিবেদন এই যে, বায়েজিদ থানাধীন কুঞ্জছায়া আবাসিক এলাকায় সম্প্রতি সড়ক বাতি বিকল এবং ড্রেনেজ সমস্যা দেখা দিয়েছে। জনস্বার্থে ও এলাকার নিরাপত্তা জোরদারে অতি দ্রুত বৈদ্যুতিক বাতি স্থাপন ও ড্রেন সংস্কারের প্রয়োজনীয় ব্যবস্থা গ্রহণে আপনার সদয় সহযোগিতা কামনা করছি।",
-    signatoryLeftTitle: "সভাপতি",
+    signatoryLeftTitle: "সভাপতিঃ",
     signatoryLeftName: "জাকারিয়া হাসান",
-    signatoryRightTitle: "সাধারণ সম্পাদক",
+    signatoryRightTitle: "সাধারণ সম্পাদকঃ",
     signatoryRightName: "খালিদ হাসান",
   },
   {
@@ -56,9 +56,9 @@ const LETTER_TEMPLATES = [
     subject: "কুঞ্জছায়া ক্লাবের সাধারণ সদস্যপদ অনুমোদন ও অভিনন্দন জ্ঞাপন প্রসঙ্গে।",
     salutation: "প্রিয় সদস্য,",
     body: "আন্তরিক শুভেচ্ছা ও অভিনন্দন। আপনার আবেদনের প্রেক্ষিতে কুঞ্জছায়া ক্লাবের সংবিধানের ধারা-১০ মোতাবেক আপনার সদস্যপদ আনন্দের সাথে অনুমোদন করা হলো।\n\nকুঞ্জছায়া পরিবারের অংশ হিসেবে আপনি এলাকার উন্নয়ন, সমাজসেবা ও পারস্পরিক সৌহার্দ্য রক্ষায় সক্রিয় ভূমিকা রাখবেন বলে আমরা আশাবাদী।",
-    signatoryLeftTitle: "সভাপতি",
+    signatoryLeftTitle: "সভাপতিঃ",
     signatoryLeftName: "জাকারিয়া হাসান",
-    signatoryRightTitle: "সাধারণ সম্পাদক",
+    signatoryRightTitle: "সাধারণ সম্পাদকঃ",
     signatoryRightName: "খালিদ হাসান",
   },
   {
@@ -69,9 +69,9 @@ const LETTER_TEMPLATES = [
     subject: "বিষয়: [পত্রের বিষয় লিখুন]",
     salutation: "জনাব / প্রিয় মহোদয়,",
     body: "[এখানে আপনার পত্রের মূল বিবরণ বিস্তারিত লিখুন...]",
-    signatoryLeftTitle: "সভাপতি / আহ্বায়ক",
+    signatoryLeftTitle: "সভাপতি / আহ্বায়কঃ",
     signatoryLeftName: "জাকারিয়া হাসান",
-    signatoryRightTitle: "সাধারণ সম্পাদক",
+    signatoryRightTitle: "সাধারণ সম্পাদকঃ",
     signatoryRightName: "খালিদ হাসান",
   }
 ];
@@ -81,14 +81,13 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   const isTopTier = session?.role === "admin" && (session?.post === "President" || session?.post === "General Secretary");
   const canManage = session?.role === "admin" && (session?.permissions?.canManageNotices || isTopTier);
 
-  // States
+  // View States
   const [viewMode, setViewMode] = useState("editor"); // "editor" | "archive"
-  const [selectedLetter, setSelectedLetter] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Letter Form State
   const [memoNo, setMemoNo] = useState(`WC/C/2026/01-${Math.floor(100 + Math.random() * 900)}`);
-  const [letterDate, setLetterDate] = useState(new Date().toLocaleDateString("bn-BD", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, "/"));
+  const [letterDate, setLetterDate] = useState("৩১/০৭/২০২৬");
   const [recipient, setRecipient] = useState(LETTER_TEMPLATES[0].recipient);
   const [recipientPhone, setRecipientPhone] = useState("");
   const [subject, setSubject] = useState(LETTER_TEMPLATES[0].subject);
@@ -99,7 +98,14 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   const [signatoryRightTitle, setSignatoryRightTitle] = useState(LETTER_TEMPLATES[0].signatoryRightTitle);
   const [signatoryRightName, setSignatoryRightName] = useState(LETTER_TEMPLATES[0].signatoryRightName);
 
-  // Reference for print
+  // Fine Alignment Offset Controls
+  const [dateTopOffset, setDateTopOffset] = useState(8.0); // % from top
+  const [dateRightOffset, setDateRightOffset] = useState(13.5); // % from right
+  const [memoTopOffset, setMemoTopOffset] = useState(12.8); // % from top
+  const [contentTopOffset, setContentTopOffset] = useState(16.5); // % from top
+  const [fontSizeScale, setFontSizeScale] = useState(1.0); // font size multiplier
+  const [showAdjustments, setShowAdjustments] = useState(false);
+
   const letterRef = useRef(null);
 
   const lettersList = useMemo(() => db.letters || [], [db.letters]);
@@ -148,6 +154,11 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
       signatoryLeftName,
       signatoryRightTitle,
       signatoryRightName,
+      dateTopOffset,
+      dateRightOffset,
+      memoTopOffset,
+      contentTopOffset,
+      fontSizeScale,
       issuedBy: session?.name || "President / General Secretary",
       createdAt: new Date().toISOString(),
     };
@@ -160,8 +171,84 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
     toast(isBn ? `অফিসিয়াল পত্রটি স্মারক রেজিস্টারে সংরক্ষিত হয়েছে! [স্মারক: ${memoNo}]` : `Letter saved to official register! [Memo: ${memoNo}]`);
   };
 
+  // High-Resolution 1-to-1 Pixel-Perfect Print & PDF Export
   const handlePrint = () => {
-    window.print();
+    const canvas = document.getElementById("official-letterhead-canvas");
+    if (!canvas) {
+      window.print();
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=850,height=1150");
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const canvasHtml = canvas.outerHTML;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="bn">
+        <head>
+          <meta charset="utf-8" />
+          <title>${subject || "Official Letter - Kunjachaya Club"}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Kalpurush&family=SolaimanLipi&display=swap');
+            
+            @page {
+              size: A4 portrait;
+              margin: 0;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              background-color: #ffffff;
+              display: flex;
+              justify-content: center;
+              align-items: flex-start;
+              font-family: 'SolaimanLipi', 'Kalpurush', 'Inter', sans-serif;
+            }
+            #official-letterhead-canvas {
+              width: 210mm !important;
+              height: 297mm !important;
+              max-width: 210mm !important;
+              min-height: 297mm !important;
+              position: relative !important;
+              margin: 0 !important;
+              border: none !important;
+              border-radius: 0 !important;
+              box-shadow: none !important;
+              background-image: url('/letterhead.png') !important;
+              background-size: 100% 100% !important;
+              background-repeat: no-repeat !important;
+              background-position: center center !important;
+              overflow: hidden !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${canvasHtml}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.close();
+              }, 400);
+            };
+          <\/script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleWhatsAppSend = (customPhone, customLetter) => {
@@ -172,7 +259,9 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
       recipient,
       subject,
       body,
+      signatoryLeftTitle,
       signatoryLeftName,
+      signatoryRightTitle,
       signatoryRightName
     };
 
@@ -186,10 +275,10 @@ ${letterToShare.salutation || ""}
 ${letterToShare.body}
 
 নিবেদক:
-${letterToShare.signatoryLeftTitle || "সভাপতি"}: ${letterToShare.signatoryLeftName || ""}
-${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক"}: ${letterToShare.signatoryRightName || ""}
+${letterToShare.signatoryLeftTitle || "আহ্বায়কঃ"} ${letterToShare.signatoryLeftName || ""}
+${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${letterToShare.signatoryRightName || ""}
 
-কুঞ্জছায়া আবাসিক এলাকা, বায়েজিদ বোস্তামী, চট্টগ্রাম।`;
+কুঞ্জছায়া আবাসিক এলাকা, বায়েজিদ থানা রোড, ২নং জালালাবাদ, চট্টগ্রাম-৪২১০।`;
 
     if (targetPhone) {
       window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`, "_blank");
@@ -200,36 +289,6 @@ ${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক
 
   return (
     <div className="space-y-4">
-      {/* Print CSS Styles for Perfect A4 Letterhead Output */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #official-letterhead-canvas, #official-letterhead-canvas * {
-            visibility: visible;
-          }
-          #official-letterhead-canvas {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background-color: white !important;
-            z-index: 99999 !important;
-            box-shadow: none !important;
-            border: none !important;
-            border-radius: 0 !important;
-          }
-          @page {
-            size: A4 portrait;
-            margin: 0;
-          }
-        }
-      `}</style>
-
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: C.outlineVariant }}>
         <div className="flex items-center gap-3">
@@ -273,6 +332,12 @@ ${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক
                   <Sparkles size={14} className="text-amber-600" />
                   {isBn ? "রেডিমেড টেমপ্লেট নির্বাচন করুন" : "Choose Letter Template"}
                 </span>
+                <button
+                  onClick={() => setShowAdjustments(prev => !prev)}
+                  className="text-[11px] text-emerald-800 font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Sliders size={12} /> {showAdjustments ? (isBn ? "প্যাডিং লুকান" : "Hide Tuning") : (isBn ? "প্যাডিং সমন্বয়" : "Fine Tune Layout")}
+                </button>
               </div>
               <select
                 onChange={e => handleApplyTemplate(e.target.value)}
@@ -283,6 +348,80 @@ ${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক
                   <option key={t.id} value={t.id}>{t.title}</option>
                 ))}
               </select>
+
+              {/* Collapsible Fine Tuning Controls */}
+              {showAdjustments && (
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-[11px] animate-in fade-in duration-150">
+                  <p className="font-bold text-gray-700 border-b pb-1">প্যাডের টেক্সট পজিশন সমন্বয় (Layout Tuning)</p>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-gray-500 font-semibold mb-0.5">তারিখ ওপরের দূরত্ব: {dateTopOffset}%</label>
+                      <input
+                        type="range"
+                        min="5.0"
+                        max="12.0"
+                        step="0.2"
+                        value={dateTopOffset}
+                        onChange={e => setDateTopOffset(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-500 font-semibold mb-0.5">তারিখ ডানদিকের দূরত্ব: {dateRightOffset}%</label>
+                      <input
+                        type="range"
+                        min="8.0"
+                        max="22.0"
+                        step="0.5"
+                        value={dateRightOffset}
+                        onChange={e => setDateRightOffset(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-gray-500 font-semibold mb-0.5">স্মারক নং দূরত্ব: {memoTopOffset}%</label>
+                      <input
+                        type="range"
+                        min="10.0"
+                        max="16.0"
+                        step="0.2"
+                        value={memoTopOffset}
+                        onChange={e => setMemoTopOffset(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-500 font-semibold mb-0.5">বডি টেক্সট শুরু: {contentTopOffset}%</label>
+                      <input
+                        type="range"
+                        min="14.0"
+                        max="22.0"
+                        step="0.5"
+                        value={contentTopOffset}
+                        onChange={e => setContentTopOffset(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-500 font-semibold mb-0.5">ফন্ট সাইজ স্কেল: {fontSizeScale.toFixed(1)}x</label>
+                    <input
+                      type="range"
+                      min="0.8"
+                      max="1.3"
+                      step="0.05"
+                      value={fontSizeScale}
+                      onChange={e => setFontSizeScale(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
             </Card>
 
             {/* Letter Editor Form */}
@@ -376,7 +515,7 @@ ${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক
                     className={inputCls + " text-xs mb-1.5"}
                     value={signatoryLeftTitle}
                     onChange={e => setSignatoryLeftTitle(e.target.value)}
-                    placeholder="আহ্বায়ক / সভাপতি"
+                    placeholder="আহ্বায়কঃ"
                   />
                   <input
                     style={inputStyle()}
@@ -394,7 +533,7 @@ ${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক
                     className={inputCls + " text-xs mb-1.5"}
                     value={signatoryRightTitle}
                     onChange={e => setSignatoryRightTitle(e.target.value)}
-                    placeholder="সদস্য সচিব / সাধারণ সম্পাদক"
+                    placeholder="সদস্য সচিবঃ"
                   />
                   <input
                     style={inputStyle()}
@@ -437,76 +576,110 @@ ${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক
             <div
               id="official-letterhead-canvas"
               ref={letterRef}
-              className="w-full max-w-[620px] aspect-[1/1.414] bg-white rounded-xl shadow-2xl relative overflow-hidden border border-gray-200 select-text flex flex-col justify-between"
+              className="w-full max-w-[620px] aspect-[1/1.414] bg-white rounded-xl shadow-2xl relative overflow-hidden border border-gray-200 select-text"
               style={{
                 backgroundImage: "url('/letterhead.png')",
                 backgroundSize: "100% 100%",
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "center center",
                 boxSizing: "border-box",
-                paddingTop: "14%",
-                paddingBottom: "11%",
-                paddingLeft: "9%",
-                paddingRight: "9%",
                 color: "#0f172a",
                 fontFamily: "'Inter', 'Kalpurush', 'SolaimanLipi', sans-serif",
               }}
             >
-              {/* Top Header: Date and Memo No. */}
-              <div className="space-y-1 text-right">
-                <div className="inline-block text-white font-bold text-xs sm:text-sm tracking-wide px-2 py-0.5">
-                  তারিখঃ {letterDate}
-                </div>
-                <div className="text-[11px] sm:text-xs font-semibold text-gray-800 pr-1">
-                  স্মারক নংঃ <span className="font-mono font-bold">{memoNo}</span>
-                </div>
+              {/* 1. Date (তারিখ) - Placed directly inside the top orange bar */}
+              <div
+                className="absolute text-white font-bold tracking-wide select-all"
+                style={{
+                  top: `${dateTopOffset}%`,
+                  right: `${dateRightOffset}%`,
+                  fontSize: `${12.5 * fontSizeScale}px`,
+                }}
+              >
+                তারিখঃ {letterDate}
               </div>
 
-              {/* Main Content Area */}
-              <div className="flex-1 my-3 text-[11px] sm:text-[13px] leading-[1.7] space-y-3.5 text-gray-900">
-                {/* Recipient / বরাবর */}
-                <div className="space-y-0.5 text-left font-medium">
-                  <p className="font-bold text-gray-900">বরাবর</p>
-                  {recipient.split("\n").map((line, idx) => (
-                    <p key={idx} className="leading-tight text-gray-800">{line}</p>
-                  ))}
-                </div>
-
-                {/* Subject / বিষয় */}
-                {subject && (
-                  <div className="font-bold text-gray-950 underline decoration-gray-400 decoration-1 underline-offset-4 py-1 leading-snug">
-                    {subject.startsWith("বিষয়") ? subject : `বিষয়: ${subject}`}
-                  </div>
-                )}
-
-                {/* Salutation / সম্ভাষণ */}
-                {salutation && (
-                  <p className="font-semibold text-gray-900 pt-1">{salutation}</p>
-                )}
-
-                {/* Body Paragraphs / মূল বক্তব্য */}
-                <div className="space-y-3 text-justify">
-                  {body.split("\n\n").map((para, idx) => (
-                    <p key={idx} className="leading-relaxed indent-4">{para}</p>
-                  ))}
-                </div>
+              {/* 2. Memo No. (স্মারক নং) - Below orange bar on the right */}
+              <div
+                className="absolute text-gray-900 font-bold select-all"
+                style={{
+                  top: `${memoTopOffset}%`,
+                  right: "9%",
+                  fontSize: `${12 * fontSizeScale}px`,
+                }}
+              >
+                স্মারক নংঃ <span className="font-mono">{memoNo}</span>
               </div>
 
-              {/* Bottom Signatories / নিবেদক */}
-              <div className="space-y-2 pt-2">
-                <div className="text-left text-[11px] sm:text-xs font-semibold text-gray-800">
-                  <p>নিবেদক</p>
-                  <p className="font-bold text-gray-900">কুঞ্জছায়া ক্লাবের পক্ষে</p>
+              {/* 3. Main Content Area (বরাবর, বিষয়, সম্ভাষণ, মূল বক্তব্য ও সমাপনী) */}
+              <div
+                className="absolute left-[9%] right-[9%] bottom-[10.5%] flex flex-col justify-between"
+                style={{
+                  top: `${contentTopOffset}%`,
+                }}
+              >
+                {/* Upper Section */}
+                <div
+                  className="space-y-2.5 text-gray-900"
+                  style={{
+                    fontSize: `${12.5 * fontSizeScale}px`,
+                    lineHeight: "1.7",
+                  }}
+                >
+                  {/* Recipient / বরাবর */}
+                  <div className="space-y-0.5 text-left font-medium">
+                    <p className="font-bold text-gray-950">বরাবর</p>
+                    {recipient.split("\n").map((line, idx) => (
+                      <p key={idx} className="leading-tight text-gray-800">{line}</p>
+                    ))}
+                  </div>
+
+                  {/* Subject / বিষয় */}
+                  {subject && (
+                    <div
+                      className="font-bold text-gray-950 underline decoration-gray-400 decoration-1 underline-offset-4 pt-1 pb-0.5 leading-snug"
+                      style={{
+                        fontSize: `${13 * fontSizeScale}px`,
+                      }}
+                    >
+                      {subject.startsWith("বিষয়") ? subject : `বিষয়: ${subject}`}
+                    </div>
+                  )}
+
+                  {/* Salutation / সম্ভাষণ */}
+                  {salutation && (
+                    <p className="font-semibold text-gray-900">{salutation}</p>
+                  )}
+
+                  {/* Body Paragraphs / মূল বক্তব্য */}
+                  <div className="space-y-2.5 text-justify">
+                    {body.split("\n\n").map((para, idx) => (
+                      <p key={idx} className="leading-relaxed indent-5">{para}</p>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-end pt-4 text-[11px] sm:text-xs">
-                  <div className="text-left">
-                    <p className="font-semibold text-gray-700">{signatoryLeftTitle}ঃ</p>
-                    <p className="font-bold text-gray-950 mt-0.5">{signatoryLeftName}</p>
+                {/* Bottom Section: Closing & Signatures */}
+                <div
+                  className="space-y-2 pt-1"
+                  style={{
+                    fontSize: `${12 * fontSizeScale}px`,
+                  }}
+                >
+                  <div className="text-left font-semibold text-gray-800">
+                    <p>নিবেদক</p>
+                    <p className="font-bold text-gray-950">কুঞ্জছায়া ক্লাবের পক্ষে</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-700">{signatoryRightTitle}ঃ</p>
-                    <p className="font-bold text-gray-950 mt-0.5">{signatoryRightName}</p>
+
+                  <div className="flex justify-between items-end pt-3 text-gray-900 font-bold">
+                    <div className="text-left">
+                      <span>{signatoryLeftTitle} </span>
+                      <span>{signatoryLeftName}</span>
+                    </div>
+                    <div className="text-right">
+                      <span>{signatoryRightTitle} </span>
+                      <span>{signatoryRightName}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -563,10 +736,15 @@ ${letterToShare.signatoryRightTitle || "সাধারণ সম্পাদক
                         setSubject(l.subject);
                         setSalutation(l.salutation || "");
                         setBody(l.body);
-                        setSignatoryLeftTitle(l.signatoryLeftTitle || "সভাপতি");
+                        setSignatoryLeftTitle(l.signatoryLeftTitle || "আহ্বায়কঃ");
                         setSignatoryLeftName(l.signatoryLeftName || "");
-                        setSignatoryRightTitle(l.signatoryRightTitle || "সাধারণ সম্পাদক");
+                        setSignatoryRightTitle(l.signatoryRightTitle || "সদস্য সচিবঃ");
                         setSignatoryRightName(l.signatoryRightName || "");
+                        if (l.dateTopOffset) setDateTopOffset(l.dateTopOffset);
+                        if (l.dateRightOffset) setDateRightOffset(l.dateRightOffset);
+                        if (l.memoTopOffset) setMemoTopOffset(l.memoTopOffset);
+                        if (l.contentTopOffset) setContentTopOffset(l.contentTopOffset);
+                        if (l.fontSizeScale) setFontSizeScale(l.fontSizeScale);
                         setViewMode("editor");
                       }}
                       className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold"
