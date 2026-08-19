@@ -15,3 +15,7 @@ android/.gradle/
 android/build/
 android/local.properties
 android/app/release/
+
+# Supabase CLI temp files
+supabase/.temp/
+
