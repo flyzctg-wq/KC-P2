@@ -139,6 +139,14 @@ export default function App() {
               };
               u.permissions = fullPerms;
               supabase.from("profiles").update({ permissions: fullPerms }).eq("id", u.id).then(() => {});
+            } else if (u.role === "admin" && u.post === "Treasurer") {
+              const treasurerPerms = {
+                ...u.permissions,
+                canManageFinancials: true,
+                formDetails: form,
+              };
+              u.permissions = treasurerPerms;
+              supabase.from("profiles").update({ permissions: treasurerPerms }).eq("id", u.id).then(() => {});
             }
             setSession(u);
             setView(prev => prev === "home" ? (u.role === "admin" ? "a-dashboard" : "r-home") : prev);
@@ -286,6 +294,14 @@ export default function App() {
         };
         u.permissions = fullPerms;
         await supabase.from("profiles").update({ permissions: fullPerms }).eq("id", u.id);
+      } else if (u.role === "admin" && u.post === "Treasurer") {
+        const treasurerPerms = {
+          ...u.permissions,
+          canManageFinancials: true,
+          formDetails: form,
+        };
+        u.permissions = treasurerPerms;
+        await supabase.from("profiles").update({ permissions: treasurerPerms }).eq("id", u.id);
       }
       // Load full DB in background after profile is confirmed
       loadDB().then(d => setDb(d));
