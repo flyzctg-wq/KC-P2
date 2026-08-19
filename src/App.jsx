@@ -171,7 +171,7 @@ export default function App() {
       const next = typeof updater === "function" ? updater(prev) : updater;
       syncChanges(prev, next).catch(err => {
         console.error("Sync failed:", err);
-        toast("Some changes couldn't be saved — check your connection.", "error");
+        toast(err?.message || "Some changes couldn't be saved — check your connection.", "error");
       });
       return next;
     });
