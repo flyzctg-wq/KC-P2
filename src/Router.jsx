@@ -34,6 +34,7 @@ const AdminDues = lazy(() => import("./screens/admin/Dues"));
 const AdminElections = lazy(() => import("./screens/admin/Elections"));
 const AdminTickets = lazy(() => import("./screens/admin/Tickets"));
 const AdminActivity = lazy(() => import("./screens/admin/Activity"));
+const AdminLetters = lazy(() => import("./screens/admin/Letters"));
 const Handover = lazy(() => import("./screens/Handover"));
 
 function ScreenFallback() {
@@ -66,6 +67,8 @@ export default function Router({ session, db, persist, view, setView, toast, log
       case "a-elections": return AdminElections;
       case "a-tickets": return AdminTickets;
       case "a-activity": return AdminActivity;
+      case "a-letters":
+      case "letters": return AdminLetters;
       case "agm": return AGM;
       case "amendments": return Amendments;
       case "hotlines": return Hotlines;

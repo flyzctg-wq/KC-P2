@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3, Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck, MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange } from "lucide-react";
+import { Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3, Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck, MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange, FileText } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
 
@@ -31,6 +31,7 @@ const ADMIN_NAV = [
   { key: "a-dues", label: "financials", icon: Wallet },
   { key: "chat", label: "chat", icon: MessageCircle },
   { key: "a-notices", label: "notices", icon: Bell },
+  { key: "a-letters", label: "letters", icon: FileText },
   { key: "a-elections", label: "elections", icon: Vote },
   { key: "agm", label: "agm", icon: CalendarCheck },
   { key: "amendments", label: "amendments", icon: Scale },
@@ -80,11 +81,12 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
         <nav className="flex-1 flex flex-col gap-1 overflow-y-auto pr-1">
           {nav.map(item => {
             const Icon = item.icon; const active = view === item.key;
+            const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
             return (
               <button key={item.key} onClick={() => setView(item.key)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left"
                 style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}>
-                <Icon size={17} strokeWidth={2.3} /> {t[item.label] || item.label}
+                <Icon size={17} strokeWidth={2.3} /> {labelText}
               </button>
             );
           })}
@@ -180,7 +182,7 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
                       style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                     >
                       <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                      <span className="truncate">{t[item.label] || item.label}</span>
+                      <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
                     </button>
                   );
                 })}

@@ -1,5 +1,5 @@
 import React from "react";
-import { Vote, LifeBuoy, TrendingUp, UserCheck } from "lucide-react";
+import { Vote, LifeBuoy, TrendingUp, UserCheck, FileText } from "lucide-react";
 import { Card, SectionTitle, StatMini } from "../../components/primitives";
 import { C, MEMBER_CLASSES } from "../../theme";
 import { currency, monthLabel, currentMonthYM } from "../../utils";
@@ -67,6 +67,30 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
             })}
           </div>
         </Card>
+      </div>
+
+      {/* Official Letterhead Suite Quick Banner */}
+      <div
+        onClick={() => go("a-letters")}
+        className="mt-4 p-4 rounded-2xl border flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group"
+        style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}
+      >
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-600 to-orange-700 text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+            <FileText size={22} />
+          </div>
+          <div>
+            <h3 className="font-black text-sm text-gray-900 heading">
+              {isBn ? "অফিসিয়াল লেটারহেড প্যাডে পত্র ও নোটিশ ইস্যু" : "Official Letterhead & Notice Issuance"}
+            </h3>
+            <p className="text-xs text-gray-500">
+              {isBn ? "স্মারক নং নির্ধারণ, স্বয়ংক্রিয় প্যাড প্রিভিউ, পিডিএফ ডাউনলোড ও সরাসরি হোয়াটসঅ্যাপে প্রেরণ" : "Compose official letters on branded letterhead, export PDF & send to WhatsApp"}
+            </p>
+          </div>
+        </div>
+        <span className="px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-slate-800 group-hover:bg-slate-900 shrink-0">
+          {isBn ? "পত্র লিখুন" : "Open Suite"} →
+        </span>
       </div>
     </div>
   );
