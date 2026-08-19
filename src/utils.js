@@ -39,3 +39,58 @@ export const cleanPhone = (phone = "") => {
   if (digits.startsWith("01")) return `88${digits}`;
   return digits;
 };
+
+/** Plays a mild, pleasant tap/pop notification sound using Web Audio API */
+let _audioCtx = null;
+export const playTapSound = (type = "send") => {
+  try {
+    if (typeof window === "undefined") return;
+    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtxClass) return;
+
+    if (!_audioCtx) {
+      _audioCtx = new AudioCtxClass();
+    }
+    if (_audioCtx.state === "suspended") {
+      _audioCtx.resume().catch(() => {});
+    }
+
+    const ctx = _audioCtx;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === "send") {
+      // Crisp, subtle tap / water pop (560Hz -> 760Hz -> 400Hz in 55ms)
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(560, now);
+      osc.frequency.exponentialRampToValueAtTime(760, now + 0.015);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.055);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.09, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } else {
+      // Soft gentle two-tone tap for received message
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(460, now);
+      osc.frequency.exponentialRampToValueAtTime(680, now + 0.035);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.11, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
+      osc.start(now);
+      osc.stop(now + 0.08);
+    }
+  } catch {
+    // Fail silently if browser audio is restricted
+  }
+};
+

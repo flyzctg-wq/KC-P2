@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Send, MessageCircle, ShieldCheck } from "lucide-react";
 import { Btn, inputCls, inputStyle, Avatar, Empty, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
-import { uid, nowISO, fmtDateTime } from "../utils";
+import { uid, nowISO, fmtDateTime, playTapSound } from "../utils";
 
 export default function Chat({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -11,11 +11,25 @@ export default function Chat({ session, db, persist, toast, logActivity, lang = 
   const [text, setText] = useState("");
   const scrollRef = useRef(null);
   const messages = (db.chatMessages || []).filter(m => m.channel === channel);
+  const prevCountRef = useRef(messages.length);
 
-  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages.length, channel]);
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages.length, channel]);
+
+  useEffect(() => {
+    if (messages.length > prevCountRef.current) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg && lastMsg.userId !== session.id) {
+        playTapSound("receive");
+      }
+    }
+    prevCountRef.current = messages.length;
+  }, [messages, session.id]);
 
   const send = () => {
     if (!text.trim()) return;
+    playTapSound("send");
     persist(d => ({ ...d, chatMessages: [...(d.chatMessages || []), { id: uid("chat"), channel, userId: session.id, userName: session.name, text, date: nowISO() }] }));
     setText("");
   };
