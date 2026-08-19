@@ -98,12 +98,13 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   const [signatoryRightTitle, setSignatoryRightTitle] = useState(LETTER_TEMPLATES[0].signatoryRightTitle);
   const [signatoryRightName, setSignatoryRightName] = useState(LETTER_TEMPLATES[0].signatoryRightName);
 
-  // Precise Alignment Offset Controls
+  // Precise Alignment Offset Controls (Defaults calibrated to exact user red mark & reference PDF)
   const [dateTopOffset, setDateTopOffset] = useState(8.2); // % from top (inside orange bar)
-  const [dateRightOffset, setDateRightOffset] = useState(17.5); // % from right
-  const [memoTopOffset, setMemoTopOffset] = useState(12.5); // % from top (in white area)
-  const [memoRightOffset, setMemoRightOffset] = useState(17.5); // % from right (clear of black triangle!)
-  const [contentTopOffset, setContentTopOffset] = useState(16.5); // % from top
+  const [dateRightOffset, setDateRightOffset] = useState(22.0); // % from right
+  const [memoTopOffset, setMemoTopOffset] = useState(13.2); // % from top (inside white area below orange bar)
+  const [memoRightOffset, setMemoRightOffset] = useState(22.0); // % from right (aligned with orange bar end)
+  const [contentTopOffset, setContentTopOffset] = useState(17.0); // % from top
+  const [signatureGap, setSignatureGap] = useState(42); // px gap between নিবেদক and Signatories
   const [fontSizeScale, setFontSizeScale] = useState(1.0); // font scale multiplier
   const [showAdjustments, setShowAdjustments] = useState(false);
 
@@ -158,6 +159,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
       memoTopOffset,
       memoRightOffset,
       contentTopOffset,
+      signatureGap,
       fontSizeScale,
       issuedBy: session?.name || "President / General Secretary",
       createdAt: new Date().toISOString(),
@@ -173,7 +175,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
 
   // High-Resolution 100% Pixel-Perfect Clean A4 Print Window
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank", "width=900,height=1200");
+    const printWindow = window.open("", "_blank", "width=920,height=1250");
     if (!printWindow) {
       window.print();
       return;
@@ -274,7 +276,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
               display: flex;
               justify-content: space-between;
               align-items: flex-end;
-              padding-top: 12px;
+              padding-top: ${signatureGap}px;
               font-weight: bold;
               font-size: ${12.5 * fontSizeScale}px;
             }
@@ -309,7 +311,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
               </div>
 
               <div>
-                <div style="font-weight: 600; margin-bottom: 4px;">
+                <div style="font-weight: 600; margin-bottom: 2px;">
                   <p>নিবেদক</p>
                   <p style="font-weight: bold;">কুঞ্জছায়া ক্লাবের পক্ষে</p>
                 </div>
@@ -462,8 +464,8 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                       <label className="block text-gray-500 font-semibold mb-0.5">তারিখ ডানের দূরত্ব: {dateRightOffset}%</label>
                       <input
                         type="range"
-                        min="10.0"
-                        max="26.0"
+                        min="12.0"
+                        max="30.0"
                         step="0.5"
                         value={dateRightOffset}
                         onChange={e => setDateRightOffset(Number(e.target.value))}
@@ -489,8 +491,8 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                       <label className="block text-gray-500 font-semibold mb-0.5">স্মারক ডানের দূরত্ব: {memoRightOffset}%</label>
                       <input
                         type="range"
-                        min="12.0"
-                        max="28.0"
+                        min="14.0"
+                        max="32.0"
                         step="0.5"
                         value={memoRightOffset}
                         onChange={e => setMemoRightOffset(Number(e.target.value))}
@@ -501,6 +503,18 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
+                      <label className="block text-gray-500 font-semibold mb-0.5">স্বাক্ষরের ফাঁকা জায়গা: {signatureGap}px</label>
+                      <input
+                        type="range"
+                        min="15"
+                        max="80"
+                        step="2"
+                        value={signatureGap}
+                        onChange={e => setSignatureGap(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
                       <label className="block text-gray-500 font-semibold mb-0.5">বডি টেক্সট শুরু: {contentTopOffset}%</label>
                       <input
                         type="range"
@@ -509,18 +523,6 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                         step="0.5"
                         value={contentTopOffset}
                         onChange={e => setContentTopOffset(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">ফন্ট সাইজ স্কেল: {fontSizeScale.toFixed(1)}x</label>
-                      <input
-                        type="range"
-                        min="0.8"
-                        max="1.3"
-                        step="0.05"
-                        value={fontSizeScale}
-                        onChange={e => setFontSizeScale(Number(e.target.value))}
                         className="w-full"
                       />
                     </div>
@@ -706,7 +708,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                 তারিখঃ {letterDate}
               </div>
 
-              {/* 2. Memo No. (স্মারক নং) - Fully visible in the clean WHITE area */}
+              {/* 2. Memo No. (স্মারক নং) - Exactly aligned with the red mark in clean WHITE area */}
               <div
                 className="absolute text-gray-900 font-bold select-all z-10"
                 style={{
@@ -766,7 +768,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                   </div>
                 </div>
 
-                {/* Bottom Section: Closing & Signatures */}
+                {/* Bottom Section: Closing & Signatures with ample spacing */}
                 <div
                   className="space-y-1.5 pt-1"
                   style={{
@@ -778,7 +780,12 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                     <p className="font-bold text-gray-950">কুঞ্জছায়া ক্লাবের পক্ষে</p>
                   </div>
 
-                  <div className="flex justify-between items-end pt-2 text-gray-900 font-bold">
+                  <div
+                    className="flex justify-between items-end text-gray-900 font-bold"
+                    style={{
+                      paddingTop: `${signatureGap}px`,
+                    }}
+                  >
                     <div className="text-left">
                       <span>{signatoryLeftTitle} </span>
                       <span>{signatoryLeftName}</span>
@@ -852,6 +859,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                         if (l.memoTopOffset) setMemoTopOffset(l.memoTopOffset);
                         if (l.memoRightOffset) setMemoRightOffset(l.memoRightOffset);
                         if (l.contentTopOffset) setContentTopOffset(l.contentTopOffset);
+                        if (l.signatureGap) setSignatureGap(l.signatureGap);
                         if (l.fontSizeScale) setFontSizeScale(l.fontSizeScale);
                         setViewMode("editor");
                       }}
