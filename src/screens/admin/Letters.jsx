@@ -98,15 +98,14 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   const [signatoryRightTitle, setSignatoryRightTitle] = useState(LETTER_TEMPLATES[0].signatoryRightTitle);
   const [signatoryRightName, setSignatoryRightName] = useState(LETTER_TEMPLATES[0].signatoryRightName);
 
-  // Fine Alignment Offset Controls
-  const [dateTopOffset, setDateTopOffset] = useState(8.0); // % from top
-  const [dateRightOffset, setDateRightOffset] = useState(13.5); // % from right
-  const [memoTopOffset, setMemoTopOffset] = useState(12.8); // % from top
+  // Precise Alignment Offset Controls
+  const [dateTopOffset, setDateTopOffset] = useState(8.2); // % from top (inside orange bar)
+  const [dateRightOffset, setDateRightOffset] = useState(17.5); // % from right
+  const [memoTopOffset, setMemoTopOffset] = useState(12.5); // % from top (in white area)
+  const [memoRightOffset, setMemoRightOffset] = useState(17.5); // % from right (clear of black triangle!)
   const [contentTopOffset, setContentTopOffset] = useState(16.5); // % from top
-  const [fontSizeScale, setFontSizeScale] = useState(1.0); // font size multiplier
+  const [fontSizeScale, setFontSizeScale] = useState(1.0); // font scale multiplier
   const [showAdjustments, setShowAdjustments] = useState(false);
-
-  const letterRef = useRef(null);
 
   const lettersList = useMemo(() => db.letters || [], [db.letters]);
 
@@ -157,6 +156,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
       dateTopOffset,
       dateRightOffset,
       memoTopOffset,
+      memoRightOffset,
       contentTopOffset,
       fontSizeScale,
       issuedBy: session?.name || "President / General Secretary",
@@ -171,21 +171,18 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
     toast(isBn ? `অফিসিয়াল পত্রটি স্মারক রেজিস্টারে সংরক্ষিত হয়েছে! [স্মারক: ${memoNo}]` : `Letter saved to official register! [Memo: ${memoNo}]`);
   };
 
-  // High-Resolution 1-to-1 Pixel-Perfect Print & PDF Export
+  // High-Resolution 100% Pixel-Perfect Clean A4 Print Window
   const handlePrint = () => {
-    const canvas = document.getElementById("official-letterhead-canvas");
-    if (!canvas) {
-      window.print();
-      return;
-    }
-
-    const printWindow = window.open("", "_blank", "width=850,height=1150");
+    const printWindow = window.open("", "_blank", "width=900,height=1200");
     if (!printWindow) {
       window.print();
       return;
     }
 
-    const canvasHtml = canvas.outerHTML;
+    const recipientFormatted = recipient.split("\n").map(l => `<p style="margin:2px 0;">${l}</p>`).join("");
+    const subjectFormatted = subject.startsWith("বিষয়") ? subject : `বিষয়: ${subject}`;
+    const bodyFormatted = body.split("\n\n").map(p => `<p style="margin-bottom:12px; text-indent:24px; text-align:justify; line-height:1.75;">${p}</p>`).join("");
+    const originUrl = window.location.origin;
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -208,35 +205,129 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
               print-color-adjust: exact !important;
               color-adjust: exact !important;
             }
-            body {
-              margin: 0;
-              padding: 0;
+            html, body {
+              width: 210mm;
+              height: 297mm;
               background-color: #ffffff;
-              display: flex;
-              justify-content: center;
-              align-items: flex-start;
               font-family: 'SolaimanLipi', 'Kalpurush', 'Inter', sans-serif;
+              color: #0f172a;
+              overflow: hidden;
             }
-            #official-letterhead-canvas {
-              width: 210mm !important;
-              height: 297mm !important;
-              max-width: 210mm !important;
-              min-height: 297mm !important;
-              position: relative !important;
-              margin: 0 !important;
-              border: none !important;
-              border-radius: 0 !important;
-              box-shadow: none !important;
-              background-image: url('/letterhead.png') !important;
-              background-size: 100% 100% !important;
-              background-repeat: no-repeat !important;
-              background-position: center center !important;
-              overflow: hidden !important;
+            .a4-container {
+              position: relative;
+              width: 210mm;
+              height: 297mm;
+              margin: 0 auto;
+              background: #ffffff;
+              overflow: hidden;
+            }
+            .letterhead-bg {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 210mm;
+              height: 297mm;
+              z-index: 1;
+              pointer-events: none;
+            }
+            .date-block {
+              position: absolute;
+              top: ${dateTopOffset}%;
+              right: ${dateRightOffset}%;
+              color: #ffffff;
+              font-weight: bold;
+              font-size: ${13 * fontSizeScale}px;
+              z-index: 10;
+              letter-spacing: 0.5px;
+            }
+            .memo-block {
+              position: absolute;
+              top: ${memoTopOffset}%;
+              right: ${memoRightOffset}%;
+              color: #0f172a;
+              font-weight: bold;
+              font-size: ${12.5 * fontSizeScale}px;
+              z-index: 10;
+            }
+            .content-block {
+              position: absolute;
+              top: ${contentTopOffset}%;
+              left: 9%;
+              right: 9%;
+              bottom: 10.5%;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              z-index: 10;
+              font-size: ${13 * fontSizeScale}px;
+              line-height: 1.75;
+            }
+            .subject-line {
+              font-weight: bold;
+              font-size: ${13.5 * fontSizeScale}px;
+              color: #000000;
+              text-decoration: underline;
+              text-underline-offset: 4px;
+              margin: 10px 0 6px 0;
+            }
+            .signatory-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              padding-top: 12px;
+              font-weight: bold;
+              font-size: ${12.5 * fontSizeScale}px;
             }
           </style>
         </head>
         <body>
-          ${canvasHtml}
+          <div class="a4-container">
+            <img src="${originUrl}/letterhead.png" class="letterhead-bg" alt="Letterhead" />
+            
+            <div class="date-block">
+              তারিখঃ ${letterDate}
+            </div>
+
+            <div class="memo-block">
+              স্মারক নংঃ <span style="font-family: monospace;">${memoNo}</span>
+            </div>
+
+            <div class="content-block">
+              <div>
+                <div style="margin-bottom: 8px;">
+                  <p style="font-weight: bold; margin-bottom: 2px;">বরাবর</p>
+                  ${recipientFormatted}
+                </div>
+
+                ${subject ? `<div class="subject-line">${subjectFormatted}</div>` : ""}
+
+                ${salutation ? `<p style="font-weight: 600; margin: 8px 0 6px 0;">${salutation}</p>` : ""}
+
+                <div style="margin-top: 6px;">
+                  ${bodyFormatted}
+                </div>
+              </div>
+
+              <div>
+                <div style="font-weight: 600; margin-bottom: 4px;">
+                  <p>নিবেদক</p>
+                  <p style="font-weight: bold;">কুঞ্জছায়া ক্লাবের পক্ষে</p>
+                </div>
+
+                <div class="signatory-row">
+                  <div>
+                    <span>${signatoryLeftTitle} </span>
+                    <span>${signatoryLeftName}</span>
+                  </div>
+                  <div>
+                    <span>${signatoryRightTitle} </span>
+                    <span>${signatoryRightName}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <script>
             window.onload = function() {
               setTimeout(function() {
@@ -368,11 +459,11 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">তারিখ ডানদিকের দূরত্ব: {dateRightOffset}%</label>
+                      <label className="block text-gray-500 font-semibold mb-0.5">তারিখ ডানের দূরত্ব: {dateRightOffset}%</label>
                       <input
                         type="range"
-                        min="8.0"
-                        max="22.0"
+                        min="10.0"
+                        max="26.0"
                         step="0.5"
                         value={dateRightOffset}
                         onChange={e => setDateRightOffset(Number(e.target.value))}
@@ -383,7 +474,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">স্মারক নং দূরত্ব: {memoTopOffset}%</label>
+                      <label className="block text-gray-500 font-semibold mb-0.5">স্মারক ওপরের দূরত্ব: {memoTopOffset}%</label>
                       <input
                         type="range"
                         min="10.0"
@@ -394,6 +485,21 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                         className="w-full"
                       />
                     </div>
+                    <div>
+                      <label className="block text-gray-500 font-semibold mb-0.5">স্মারক ডানের দূরত্ব: {memoRightOffset}%</label>
+                      <input
+                        type="range"
+                        min="12.0"
+                        max="28.0"
+                        step="0.5"
+                        value={memoRightOffset}
+                        onChange={e => setMemoRightOffset(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-gray-500 font-semibold mb-0.5">বডি টেক্সট শুরু: {contentTopOffset}%</label>
                       <input
@@ -406,19 +512,18 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                         className="w-full"
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-500 font-semibold mb-0.5">ফন্ট সাইজ স্কেল: {fontSizeScale.toFixed(1)}x</label>
-                    <input
-                      type="range"
-                      min="0.8"
-                      max="1.3"
-                      step="0.05"
-                      value={fontSizeScale}
-                      onChange={e => setFontSizeScale(Number(e.target.value))}
-                      className="w-full"
-                    />
+                    <div>
+                      <label className="block text-gray-500 font-semibold mb-0.5">ফন্ট সাইজ স্কেল: {fontSizeScale.toFixed(1)}x</label>
+                      <input
+                        type="range"
+                        min="0.8"
+                        max="1.3"
+                        step="0.05"
+                        value={fontSizeScale}
+                        onChange={e => setFontSizeScale(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -552,7 +657,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                 </Btn>
                 <div className="flex items-center gap-2">
                   <Btn full variant="outline" icon={Printer} onClick={handlePrint}>
-                    {isBn ? "প্রিন্ট / PDF" : "Print / PDF"}
+                    {isBn ? "প্রিন্ট / PDF ডাউনলোড" : "Print / PDF"}
                   </Btn>
                   <button
                     onClick={() => handleWhatsAppSend()}
@@ -572,24 +677,26 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
               <span className="text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded">210mm × 297mm Standard</span>
             </div>
 
-            {/* A4 CANVAS CONTAINER */}
+            {/* A4 CANVAS CONTAINER WITH ACTUAL IMG BACKGROUND */}
             <div
               id="official-letterhead-canvas"
-              ref={letterRef}
               className="w-full max-w-[620px] aspect-[1/1.414] bg-white rounded-xl shadow-2xl relative overflow-hidden border border-gray-200 select-text"
               style={{
-                backgroundImage: "url('/letterhead.png')",
-                backgroundSize: "100% 100%",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center center",
                 boxSizing: "border-box",
                 color: "#0f172a",
                 fontFamily: "'Inter', 'Kalpurush', 'SolaimanLipi', sans-serif",
               }}
             >
-              {/* 1. Date (তারিখ) - Placed directly inside the top orange bar */}
+              {/* Full Bleed Official Letterhead Background Image */}
+              <img
+                src="/letterhead.png"
+                alt="Letterhead Background"
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none z-0"
+              />
+
+              {/* 1. Date (তারিখ) - Placed cleanly inside the top orange bar */}
               <div
-                className="absolute text-white font-bold tracking-wide select-all"
+                className="absolute text-white font-bold tracking-wide select-all z-10"
                 style={{
                   top: `${dateTopOffset}%`,
                   right: `${dateRightOffset}%`,
@@ -599,12 +706,12 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                 তারিখঃ {letterDate}
               </div>
 
-              {/* 2. Memo No. (স্মারক নং) - Below orange bar on the right */}
+              {/* 2. Memo No. (স্মারক নং) - Fully visible in the clean WHITE area */}
               <div
-                className="absolute text-gray-900 font-bold select-all"
+                className="absolute text-gray-900 font-bold select-all z-10"
                 style={{
                   top: `${memoTopOffset}%`,
-                  right: "9%",
+                  right: `${memoRightOffset}%`,
                   fontSize: `${12 * fontSizeScale}px`,
                 }}
               >
@@ -613,14 +720,14 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
 
               {/* 3. Main Content Area (বরাবর, বিষয়, সম্ভাষণ, মূল বক্তব্য ও সমাপনী) */}
               <div
-                className="absolute left-[9%] right-[9%] bottom-[10.5%] flex flex-col justify-between"
+                className="absolute left-[9%] right-[9%] bottom-[10.5%] flex flex-col justify-between z-10"
                 style={{
                   top: `${contentTopOffset}%`,
                 }}
               >
                 {/* Upper Section */}
                 <div
-                  className="space-y-2.5 text-gray-900"
+                  className="space-y-2 text-gray-900"
                   style={{
                     fontSize: `${12.5 * fontSizeScale}px`,
                     lineHeight: "1.7",
@@ -652,7 +759,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                   )}
 
                   {/* Body Paragraphs / মূল বক্তব্য */}
-                  <div className="space-y-2.5 text-justify">
+                  <div className="space-y-2 text-justify">
                     {body.split("\n\n").map((para, idx) => (
                       <p key={idx} className="leading-relaxed indent-5">{para}</p>
                     ))}
@@ -661,7 +768,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
 
                 {/* Bottom Section: Closing & Signatures */}
                 <div
-                  className="space-y-2 pt-1"
+                  className="space-y-1.5 pt-1"
                   style={{
                     fontSize: `${12 * fontSizeScale}px`,
                   }}
@@ -671,7 +778,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                     <p className="font-bold text-gray-950">কুঞ্জছায়া ক্লাবের পক্ষে</p>
                   </div>
 
-                  <div className="flex justify-between items-end pt-3 text-gray-900 font-bold">
+                  <div className="flex justify-between items-end pt-2 text-gray-900 font-bold">
                     <div className="text-left">
                       <span>{signatoryLeftTitle} </span>
                       <span>{signatoryLeftName}</span>
@@ -743,6 +850,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
                         if (l.dateTopOffset) setDateTopOffset(l.dateTopOffset);
                         if (l.dateRightOffset) setDateRightOffset(l.dateRightOffset);
                         if (l.memoTopOffset) setMemoTopOffset(l.memoTopOffset);
+                        if (l.memoRightOffset) setMemoRightOffset(l.memoRightOffset);
                         if (l.contentTopOffset) setContentTopOffset(l.contentTopOffset);
                         if (l.fontSizeScale) setFontSizeScale(l.fontSizeScale);
                         setViewMode("editor");
