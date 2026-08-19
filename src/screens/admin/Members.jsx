@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2, Loader2, Eye, Printer, FileText, MapPin, Droplet, Award, Calendar, Briefcase, GraduationCap, Home, Camera, Building, ExternalLink, Heart } from "lucide-react";
+import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2, Loader2, Eye, Printer, FileText, MapPin, Droplet, Award, Calendar, Briefcase, GraduationCap, Home, Camera, Building, ExternalLink, Heart, Upload, ScanLine, ZoomIn, Trash } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
 import { uid, nowISO, getAppBaseUrl, cleanPhone, fmtDate } from "../../utils";
@@ -330,7 +330,67 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
  * - Full Official View (Form-2 Details & Admin Management): Available to Top-Tier & Authorized Admins
  */
 function MemberProfileInspector({ user, session, canManage, isTopTier, persist, logActivity, toast, isBn, onClose, onKickOut, canKickOut }) {
-  const [tab, setTab] = useState("basic"); // "basic" | "full" | "roles"
+  const [tab, setTab] = useState("basic"); // "basic" | "full" | "roles" | "scan"
+
+  // Scanned Form Upload state
+  const [scanUploading, setScanUploading] = useState(false);
+  const [scanUrl, setScanUrl] = useState(user.formScanUrl || "");
+  const [scanPreview, setScanPreview] = useState(false);
+  const scanInputRef = React.useRef(null);
+
+  const handleScanUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      toast(isBn ? "শুধুমাত্র JPG, PNG, WEBP বা PDF আপলোড করুন।" : "Only JPG, PNG, WEBP, or PDF files are allowed.", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast(isBn ? "ফাইলের সাইজ ৫ MB-এর বেশি হওয়া উচিত নয়।" : "File size must not exceed 5 MB.", "error");
+      return;
+    }
+    setScanUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `forms/${user.id}/membership-form.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("member-forms")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("member-forms").getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+      setScanUrl(publicUrl);
+      // Save URL to profile
+      await supabase.from("profiles").update({
+        permissions: { ...(user.permissions || {}), formScanUrl: publicUrl, formDetails: user.permissions?.formDetails || {} }
+      }).eq("id", user.id);
+      persist(d => logActivity({
+        ...d,
+        users: (d.users || []).map(u => u.id === user.id ? { ...u, formScanUrl: publicUrl } : u)
+      }, session?.name, `Uploaded scanned membership form for ${user.name}`));
+      toast(isBn ? `${user.name}-এর সদস্যপদ ফরমের স্ক্যান সফলভাবে আপলোড হয়েছে!` : `Scanned form uploaded for ${user.name}!`);
+    } catch (err) {
+      toast(err.message || (isBn ? "আপলোড ব্যর্থ হয়েছে।" : "Upload failed."), "error");
+    } finally {
+      setScanUploading(false);
+    }
+  };
+
+  const handleDeleteScan = async () => {
+    if (!scanUrl) return;
+    const path = `forms/${user.id}/membership-form.${scanUrl.split(".").pop().split("?")[0]}`;
+    await supabase.storage.from("member-forms").remove([path]).catch(() => {});
+    await supabase.from("profiles").update({
+      permissions: { ...(user.permissions || {}), formScanUrl: null, formDetails: user.permissions?.formDetails || {} }
+    }).eq("id", user.id);
+    persist(d => logActivity({
+      ...d,
+      users: (d.users || []).map(u => u.id === user.id ? { ...u, formScanUrl: null } : u)
+    }, session?.name, `Deleted scanned membership form for ${user.name}`));
+    setScanUrl("");
+    toast(isBn ? "স্ক্যান মুছে ফেলা হয়েছে।" : "Scanned form removed.");
+  };
 
   // Role Editor state
   const [memberClass, setMemberClass] = useState(user.memberClass || "General");
@@ -428,6 +488,13 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
             style={tab === "roles" ? { backgroundColor: C.primary, color: "#fff" } : { color: C.onSurfaceVariant }}
           >
             {isBn ? "পদবী ও অনুমতি" : "Roles & Authority"}
+          </button>
+          <button
+            onClick={() => setTab("scan")}
+            className="flex-1 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1"
+            style={tab === "scan" ? { backgroundColor: C.primary, color: "#fff" } : { color: C.onSurfaceVariant }}
+          >
+            <ScanLine size={12} /> {isBn ? "ফরম স্ক্যান" : "Form Scan"}
           </button>
         </div>
       )}
@@ -695,6 +762,157 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
               </Btn>
             )}
           </div>
+        </div>
+      )}
+
+      {/* TAB 4: SCANNED FORM HARDCOPY (Authorized Management) */}
+      {canManage && tab === "scan" && (
+        <div className="space-y-4">
+          <div className="p-3 rounded-xl border flex items-start gap-2.5" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
+            <ScanLine size={18} className="shrink-0 mt-0.5 text-emerald-700" />
+            <div className="text-xs space-y-1">
+              <p className="font-bold text-gray-900">
+                {isBn ? "সদস্য ফরমের স্ক্যানকৃত মূল কপি সংরক্ষণ (ধারা-১০)" : "Scanned Original Membership Form (Article 10)"}
+              </p>
+              <p className="text-gray-600 leading-relaxed">
+                {isBn
+                  ? "সদস্যের স্বাক্ষরিত মূল ফরমের স্ক্যান কপি শুধুমাত্র সভাপতি, সাধারণ সম্পাদক বা অনুমোদিত কর্মকর্তা আপলোড করতে পারবেন। সদস্য শুধুমাত্র তার নিজের স্ক্যান দেখতে পাবেন।"
+                  : "Authorized officers can upload/replace official signed hardcopy forms. Members can only view their own hardcopy."}
+              </p>
+            </div>
+          </div>
+
+          <input
+            type="file"
+            ref={scanInputRef}
+            onChange={handleScanUpload}
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="hidden"
+          />
+
+          {scanUrl ? (
+            <div className="space-y-3">
+              <div className="relative rounded-2xl border overflow-hidden bg-slate-900/5 group" style={{ borderColor: C.outlineVariant }}>
+                {scanUrl.endsWith(".pdf") || scanUrl.includes("application/pdf") ? (
+                  <div className="p-8 text-center space-y-3 bg-slate-50">
+                    <FileText size={48} className="mx-auto text-rose-600" />
+                    <p className="font-bold text-sm text-gray-800">PDF Membership Form Document</p>
+                    <a
+                      href={scanUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900"
+                    >
+                      <ExternalLink size={14} /> Open / View PDF
+                    </a>
+                  </div>
+                ) : (
+                  <div className="relative max-h-[380px] overflow-hidden flex items-center justify-center bg-black/5">
+                    <img
+                      src={scanUrl}
+                      alt="Scanned Membership Form"
+                      className="w-full h-auto object-contain max-h-[380px] cursor-pointer hover:opacity-95 transition-opacity"
+                      onClick={() => setScanPreview(true)}
+                    />
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm p-1 rounded-xl text-white">
+                      <button
+                        onClick={() => setScanPreview(true)}
+                        className="p-1.5 hover:bg-white/20 rounded-lg text-xs font-bold flex items-center gap-1"
+                        title={isBn ? "জুম করে দেখুন" : "Zoom View"}
+                      >
+                        <ZoomIn size={14} />
+                      </button>
+                      <a
+                        href={scanUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 hover:bg-white/20 rounded-lg text-xs font-bold"
+                        title={isBn ? "নতুন ট্যাবে খুলুন" : "Open in new tab"}
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Btn
+                  full
+                  variant="outline"
+                  icon={Upload}
+                  onClick={() => scanInputRef.current?.click()}
+                  disabled={scanUploading}
+                >
+                  {scanUploading ? (isBn ? "আপলোড হচ্ছে..." : "Uploading...") : (isBn ? "নতুন স্ক্যান দিয়ে প্রতিস্থাপন করুন" : "Replace Scanned Copy")}
+                </Btn>
+                <Btn
+                  variant="danger"
+                  icon={Trash}
+                  onClick={handleDeleteScan}
+                  disabled={scanUploading}
+                >
+                  {isBn ? "মুছে ফেলুন" : "Delete"}
+                </Btn>
+              </div>
+            </div>
+          ) : (
+            <div
+              onClick={() => scanInputRef.current?.click()}
+              className="p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors"
+              style={{ borderColor: C.outlineVariant }}
+            >
+              {scanUploading ? (
+                <div className="space-y-2 py-4">
+                  <Loader2 size={32} className="animate-spin mx-auto text-emerald-600" />
+                  <p className="text-xs font-bold text-gray-700">{isBn ? "হার্ডকপি আপলোড হচ্ছে..." : "Uploading scanned document..."}</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
+                    <Upload size={22} />
+                  </div>
+                  <p className="font-bold text-xs text-gray-900">
+                    {isBn ? "স্বাক্ষরিত ফরমের স্ক্যান কপি বা ছবি আপলোড করুন" : "Upload Signed Hardcopy Form (Image or PDF)"}
+                  </p>
+                  <p className="text-[11px] text-gray-500 max-w-xs">
+                    {isBn ? "JPG, PNG, WEBP বা PDF ফরম্যাট (সর্বোচ্চ ৫ MB)" : "JPG, PNG, WEBP or PDF formats (Max 5MB)"}
+                  </p>
+                  <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black text-emerald-800 bg-emerald-100 mt-2">
+                    {isBn ? "ফাইল নির্বাচন করুন" : "Select File"}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Full Screen Image Preview Modal */}
+          {scanPreview && (
+            <Modal open={scanPreview} onClose={() => setScanPreview(false)} title={isBn ? "সদস্য ফরম হার্ডকপি প্রিভিউ" : "Membership Form Scan Preview"} width="max-w-3xl">
+              <div className="space-y-3 py-1">
+                <div className="max-h-[75vh] overflow-auto p-2 bg-slate-900 rounded-2xl flex items-center justify-center">
+                  <img src={scanUrl} alt="Form Full Preview" className="max-w-full h-auto rounded-lg shadow-lg" />
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-semibold">{user.name} · {user.unit}</span>
+                  <div className="flex gap-2">
+                    <a
+                      href={scanUrl}
+                      download={`kunjachaya_form_${user.name.replace(/\s+/g, "_")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-xl font-bold text-xs text-white bg-slate-800 hover:bg-slate-900 flex items-center gap-1.5"
+                    >
+                      <Printer size={13} /> {isBn ? "প্রিন্ট / ডাউনলোড" : "Print / Download"}
+                    </a>
+                    <Btn size="sm" variant="outline" onClick={() => setScanPreview(false)}>
+                      {isBn ? "বন্ধ করুন" : "Close"}
+                    </Btn>
+                  </div>
+                </div>
+              </div>
+            </Modal>
+          )}
         </div>
       )}
     </div>

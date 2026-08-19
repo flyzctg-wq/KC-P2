@@ -287,10 +287,20 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                   </div>
                 </div>
 
-                <div className="pt-1">
+                <div className="pt-1 flex gap-2">
                   <Btn full size="sm" variant="outline" icon={Printer} onClick={() => window.print()}>
                     {isBn ? "প্রিন্ট ফরম-২" : "Print Form 2 Document"}
                   </Btn>
+                  {(selectedUser.permissions?.formScanUrl || selectedUser.formScanUrl) && (
+                    <a
+                      href={selectedUser.permissions?.formScanUrl || selectedUser.formScanUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-xl font-bold text-xs text-white bg-teal-700 hover:bg-teal-800 flex items-center justify-center gap-1.5 shrink-0"
+                    >
+                      {isBn ? "হার্ডকপি স্ক্যান" : "View Scan"}
+                    </a>
+                  )}
                 </div>
               </div>
             )}

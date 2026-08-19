@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
-import { User, Phone, Mail, MapPin, Heart, Shield, Check, Printer, FileText, Calendar, Building, Award, Briefcase, GraduationCap, Home, Camera, Upload, Trash2, Image as ImageIcon, Lock, Key, Eye, EyeOff } from "lucide-react";
-import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, SectionTitle } from "../components/primitives";
+import { User, Phone, Mail, MapPin, Heart, Shield, Check, Printer, FileText, Calendar, Building, Award, Briefcase, GraduationCap, Home, Camera, Upload, Trash2, Image as ImageIcon, Lock, Key, Eye, EyeOff, ScanLine, ZoomIn, ExternalLink } from "lucide-react";
+import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Modal, SectionTitle } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
 import { fmtDate } from "../utils";
 
@@ -13,6 +13,7 @@ export default function Profile({ session = {}, setSession, db, persist, toast, 
   const isBn = lang === "bn";
   const s = session || {};
   const fileInputRef = useRef(null);
+  const [scanModal, setScanModal] = useState(false);
 
   // Initialize form state with Form 2 schema fields
   const [form, setForm] = useState({
@@ -891,6 +892,128 @@ export default function Profile({ session = {}, setSession, db, persist, toast, 
             </span>
           </label>
         </Card>
+
+        {/* Section 8.5: Official Scanned Membership Form Hardcopy (সদস্য ফরমের হার্ডকপি স্ক্যান) */}
+        <Card className="p-5">
+          <div className="flex items-center gap-2.5 mb-4 pb-3 border-b" style={{ borderColor: C.outlineVariant }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-teal-600 text-white">
+              <ScanLine size={16} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-gray-900">
+                {isBn ? "৮. সদস্য ফরমের মূল হার্ডকপি স্ক্যান" : "8. Official Scanned Membership Form"}
+              </h3>
+              <p className="text-[11px]" style={{ color: C.onSurfaceVariant }}>
+                {isBn ? "ক্লাব কার্যালয় কর্তৃক সংরক্ষিত আপনার স্বাক্ষরিত মূল সদস্য ফরমের ডিজিটাল কপি" : "Official signed hardcopy scan stored by club authority"}
+              </p>
+            </div>
+          </div>
+
+          {session?.permissions?.formScanUrl || session?.formScanUrl ? (
+            <div className="space-y-3">
+              {((session?.permissions?.formScanUrl || session?.formScanUrl).endsWith(".pdf")) ? (
+                <div className="p-6 rounded-2xl bg-slate-50 border text-center space-y-2.5" style={{ borderColor: C.outlineVariant }}>
+                  <FileText size={40} className="mx-auto text-rose-600" />
+                  <p className="font-bold text-xs text-gray-800">
+                    {isBn ? "স্বাক্ষরিত অফিশিয়াল সদস্য ফরম (PDF)" : "Official Signed Form (PDF)"}
+                  </p>
+                  <a
+                    href={session?.permissions?.formScanUrl || session?.formScanUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900"
+                  >
+                    <ExternalLink size={13} /> {isBn ? "ফরম দেখুন ও ডাউনলোড করুন" : "Open / Download Form"}
+                  </a>
+                </div>
+              ) : (
+                <div className="relative rounded-2xl border overflow-hidden bg-slate-900/5 max-h-[360px] flex items-center justify-center" style={{ borderColor: C.outlineVariant }}>
+                  <img
+                    src={session?.permissions?.formScanUrl || session?.formScanUrl}
+                    alt="Official Form Hardcopy"
+                    className="w-full h-auto object-contain max-h-[360px] cursor-pointer hover:opacity-95 transition-opacity"
+                    onClick={() => setScanModal(true)}
+                  />
+                  <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm p-1 rounded-xl text-white">
+                    <button
+                      onClick={() => setScanModal(true)}
+                      className="p-1.5 hover:bg-white/20 rounded-lg text-xs font-bold flex items-center gap-1"
+                      title={isBn ? "জুম করে দেখুন" : "Zoom View"}
+                    >
+                      <ZoomIn size={14} />
+                    </button>
+                    <a
+                      href={session?.permissions?.formScanUrl || session?.formScanUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 hover:bg-white/20 rounded-lg text-xs font-bold"
+                      title={isBn ? "নতুন ট্যাবে খুলুন" : "Open in new tab"}
+                    >
+                      <ExternalLink size={14} />
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+                <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                  <Check size={14} /> {isBn ? "যাচাইকৃত মূল হার্ডকপি সংযুক্ত" : "Verified Official Hardcopy Attached"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setScanModal(true)}
+                  className="font-bold text-xs text-emerald-700 hover:underline flex items-center gap-1"
+                >
+                  <ZoomIn size={13} /> {isBn ? "পূর্ণাঙ্গ প্রিভিউ দেখুন" : "View Full Scan"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-slate-50 border text-center space-y-2" style={{ borderColor: C.outlineVariant }}>
+              <ScanLine size={32} className="mx-auto text-gray-400" />
+              <p className="font-bold text-xs text-gray-700">
+                {isBn ? "আপনার স্বাক্ষরিত মূল ফরমের স্ক্যান কপি প্রক্রিয়াধীন রয়েছে" : "Your hardcopy scan is being processed by the office"}
+              </p>
+              <p className="text-[11px] text-gray-500 max-w-sm mx-auto">
+                {isBn
+                  ? "সভাপতি বা সাধারণ সম্পাদক কর্তৃক মূল হার্ডকপি যাচাই ও আপলোডের পর আপনি এখানে ডিজিটাল কপি দেখতে ও ডাউনলোড করতে পারবেন।"
+                  : "Once leadership verifies and uploads your signed hardcopy form, it will appear here for your personal records."}
+              </p>
+            </div>
+          )}
+        </Card>
+
+        {/* Full Screen Image Preview Modal for Member */}
+        {scanModal && (session?.permissions?.formScanUrl || session?.formScanUrl) && (
+          <Modal open={scanModal} onClose={() => setScanModal(false)} title={isBn ? "আমার সদস্য ফরম হার্ডকপি" : "My Official Form Hardcopy"} width="max-w-3xl">
+            <div className="space-y-3 py-1">
+              <div className="max-h-[75vh] overflow-auto p-2 bg-slate-900 rounded-2xl flex items-center justify-center">
+                <img
+                  src={session?.permissions?.formScanUrl || session?.formScanUrl}
+                  alt="My Form Preview"
+                  className="max-w-full h-auto rounded-lg shadow-lg"
+                />
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-500 font-semibold">{session?.name} · Unit {session?.unit}</span>
+                <div className="flex gap-2">
+                  <a
+                    href={session?.permissions?.formScanUrl || session?.formScanUrl}
+                    download={`kunjachaya_form_${(session?.name || "member").replace(/\s+/g, "_")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl font-bold text-xs text-white bg-slate-800 hover:bg-slate-900 flex items-center gap-1.5"
+                  >
+                    <Printer size={13} /> {isBn ? "প্রিন্ট / ডাউনলোড" : "Print / Download"}
+                  </a>
+                  <Btn size="sm" variant="outline" onClick={() => setScanModal(false)}>
+                    {isBn ? "বন্ধ করুন" : "Close"}
+                  </Btn>
+                </div>
+              </div>
+            </div>
+          </Modal>
+        )}
 
         {/* Section 9: Account Security & Change Password (অ্যাকাউন্ট নিরাপত্তা ও পাসওয়ার্ড পরিবর্তন) */}
         <Card className="p-5">
