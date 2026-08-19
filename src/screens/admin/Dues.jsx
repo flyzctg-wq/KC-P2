@@ -4,7 +4,7 @@ import {
   Wallet, CheckCircle2, Clock, Search, Filter, Printer, MessageCircle, Phone,
   FileText, Check, AlertTriangle, Layers, Building, RefreshCw, Zap, Download,
   FileSpreadsheet, Mail, MoreVertical, Edit, Trash2, User, ChevronDown, ChevronUp,
-  Receipt, ArrowRight, Share2, CheckSquare, Square
+  Receipt, ArrowRight, Share2, CheckSquare, Square, X
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C, BLOCKS, MEMBER_CLASSES } from "../../theme";
@@ -33,7 +33,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   const [monthlyModal, setMonthlyModal] = useState(false);
   const [gmChargeModal, setGmChargeModal] = useState(false);
   const [expenseModal, setExpenseModal] = useState(false);
-  const [receiptPrintData, setReceiptPrintData] = useState(null);
+  const [invoiceModal, setInvoiceModal] = useState(null);
 
   // Form States for "Bill Receive" Modal
   const [rcvDate, setRcvDate] = useState(new Date().toISOString().split("T")[0]);
@@ -69,7 +69,11 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   const allDues = useMemo(() => db.dues || [], [db.dues]);
   const allExpenses = useMemo(() => db.expenses || [], [db.expenses]);
 
-  // Comprehensive Financial Metrics (Matching ISP / Enterprise Billing Architecture)
+  // Dynamic Officers Info for Reminders & Invoices
+  const treasurerUser = useMemo(() => activeResidents.find(u => u.post === "Treasurer") || { phone: "01787-268864", name: "Golam Sarwar Jony" }, [activeResidents]);
+  const gsUser = useMemo(() => activeResidents.find(u => u.post === "General Secretary") || { phone: "01722-227207", name: "Khalid Hasan" }, [activeResidents]);
+
+  // Comprehensive Financial Metrics
   const currentMonthDues = allDues.filter(d => !selectedMonth || selectedMonth === "all" || d.month === selectedMonth);
   const paidDuesCurrentMonth = currentMonthDues.filter(d => d.status === "paid");
   const unpaidDuesCurrentMonth = currentMonthDues.filter(d => d.status !== "paid");
@@ -119,7 +123,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
     setSelectedRows(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  // Open "Bill Receive" Modal for specific item
+  // Open "Bill Receive" Modal
   const openBillReceive = (dueItem) => {
     const user = activeResidents.find(u => u.id === dueItem.residentId) || {};
     setBillReceiveModal({
@@ -131,6 +135,15 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
     setRcvDiscount(0);
     setRcvTxRef(`${rcvPaymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`);
     setRcvRemarks("");
+  };
+
+  // Open "Generate Invoice" Modal
+  const openGenerateInvoice = (dueItem) => {
+    const user = activeResidents.find(u => u.id === dueItem.residentId) || {};
+    setInvoiceModal({
+      ...dueItem,
+      resident: user,
+    });
   };
 
   // Submit "Bill Receive"
@@ -274,7 +287,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
 
   // Export to CSV
   const handleExportCSV = () => {
-    const headers = ["Invoice ID", "Member Name", "Unit", "Block", "Mobile", "Charge Title", "Month", "Amount (BDT)", "Status", "Payment Date", "Payment Method", "Receipt Ref"];
+    const headers = ["Invoice ID", "Member Name", "Unit", "Block", "Mobile Number", "Title", "Month", "Amount (BDT)", "Status", "Payment Date", "Payment Method", "Receipt Ref"];
     const rows = filteredList.map(d => {
       const u = activeResidents.find(x => x.id === d.residentId) || {};
       return [
@@ -325,16 +338,16 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
         {canManage && (
           <div className="flex items-center gap-2 flex-wrap">
             <Btn size="sm" variant="outline" icon={FileSpreadsheet} onClick={handleExportCSV}>
-              {isBn ? "এক্সেল এক্সপোর্ট" : "Generate Excel"}
+              {isBn ? "Generate Excel" : "Generate Excel"}
             </Btn>
             <Btn size="sm" variant="outline" icon={Printer} onClick={() => window.print()}>
-              {isBn ? "পিডিএফ প্রিন্ট" : "Generate PDF"}
+              {isBn ? "Generate PDF" : "Generate PDF"}
             </Btn>
             <Btn size="sm" variant="outline" icon={Plus} onClick={() => setGmChargeModal(true)}>
-              {isBn ? "+ জিএম লেভি" : "+ GM Levy"}
+              {isBn ? "+ GM Levy" : "+ GM Levy"}
             </Btn>
             <Btn size="sm" icon={Send} onClick={() => setMonthlyModal(true)}>
-              {isBn ? "+ মাসিক চাঁদা জারি" : "+ Issue Monthly Bill"}
+              {isBn ? "+ Issue Monthly Bill" : "+ Issue Monthly Bill"}
             </Btn>
           </div>
         )}
@@ -563,11 +576,17 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
         </div>
       </div>
 
-      {/* ENTERPRISE BILLING LIST TABLE (Matching Screenshot 1) */}
-      <div className="rounded-2xl border shadow-sm overflow-hidden bg-white" style={{ borderColor: C.outlineVariant }}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
+      {/* ========================================================================= */}
+      {/* ENTERPRISE BILLING TABLE WITH ALWAYS-VISIBLE HORIZONTAL SCROLLBAR         */}
+      {/* ========================================================================= */}
+      <div
+        className="rounded-2xl border shadow-sm bg-white overflow-hidden"
+        style={{ borderColor: C.outlineVariant }}
+      >
+        {/* Scrollable Container with max-height to ensure horizontal scrollbar is always visible on screen */}
+        <div className="overflow-x-auto max-h-[640px] overflow-y-auto" style={{ scrollbarWidth: "auto", WebkitOverflowScrolling: "touch" }}>
+          <table className="w-full text-left border-collapse text-xs min-w-[1250px]">
+            <thead className="sticky top-0 z-20 shadow-sm">
               <tr className="bg-[#1e293b] text-white text-[11px] font-extrabold uppercase tracking-wider">
                 <th className="p-3 w-10 text-center">
                   <input
@@ -577,21 +596,21 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
                     className="rounded text-emerald-600 cursor-pointer"
                   />
                 </th>
-                <th className="p-3">C.Code</th>
-                <th className="p-3">ID / Unit</th>
-                <th className="p-3">Cus. Name</th>
-                <th className="p-3">MobileNumber</th>
-                <th className="p-3">Zone</th>
-                <th className="p-3">Cus. Type</th>
-                <th className="p-3">Package / Title</th>
-                <th className="p-3">Due Date</th>
-                <th className="p-3 text-right">M.Bill</th>
-                <th className="p-3 text-right">Received</th>
-                <th className="p-3 text-right">BalanceDue</th>
-                <th className="p-3">PaymentDate</th>
-                <th className="p-3">Server / Verified</th>
-                <th className="p-3 text-center">B.Status</th>
-                <th className="p-3 text-center">Action</th>
+                <th className="p-3 whitespace-nowrap">MEMBER CODE</th>
+                <th className="p-3 whitespace-nowrap">ID / Unit</th>
+                <th className="p-3 whitespace-nowrap min-w-[170px]">MEMBER NAME</th>
+                <th className="p-3 whitespace-nowrap">Mobile Number</th>
+                <th className="p-3 whitespace-nowrap">Zone</th>
+                <th className="p-3 whitespace-nowrap">MEMBER TYPE</th>
+                <th className="p-3 whitespace-nowrap min-w-[150px]">Title</th>
+                <th className="p-3 whitespace-nowrap">Due Date</th>
+                <th className="p-3 text-right whitespace-nowrap">M.Bill</th>
+                <th className="p-3 text-right whitespace-nowrap">Received</th>
+                <th className="p-3 text-right whitespace-nowrap">Balance Due</th>
+                <th className="p-3 whitespace-nowrap">Payment Date</th>
+                <th className="p-3 whitespace-nowrap">Verified</th>
+                <th className="p-3 text-center whitespace-nowrap">B.Status</th>
+                <th className="p-3 text-center whitespace-nowrap sticky right-0 bg-[#1e293b] z-10 shadow-md">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -600,8 +619,24 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
                 const isPaid = d.status === "paid";
                 const isSelected = selectedRows.includes(d.id);
                 const rawPhone = cleanPhone(member.phone);
-                const clientCode = `00${index + 1}`.slice(-4);
+                const memberCode = `00${index + 1}`.slice(-4);
                 const memberID = `KC-${member.block || "A"}${member.unit || "01"}`;
+                const billingLastDate = d.dueDate || `${d.month}-15`;
+                const dueMonthName = monthLabel(d.month);
+                const monthlyBillVal = `৳${Number(d.amount).toLocaleString("en-IN")}`;
+                const dueAmountVal = isPaid ? "৳০" : `৳${Number(d.amount).toLocaleString("en-IN")}`;
+
+                // Exact custom formatted WhatsApp message requested by user
+                const customWaMessage = `প্রিয়  ${member.name || "সদস্য"} ,
+অনুগ্রহ করে আপনার ${dueMonthName} এর মাসিক চাঁদা প্রদান করুন।
+ব্যবহারকারীর নাম:   ${member.name || ""} 
+মাসিক বিলের পরিমাণ:  ${monthlyBillVal} 
+বকেয়া:  ${dueAmountVal} 
+বিল পরিশোধ এর করার শেষ তারিখ:  ${billingLastDate} 
+ধন্যবাদ
+কুঞ্জাছায়া ক্লাব
+কোষাধ্যক্ষ: ${treasurerUser.phone || "01787-268864"} 
+সাধারণ সম্পাদক: ${gsUser.phone || "01722-227207"}`;
 
                 return (
                   <tr
@@ -616,8 +651,8 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
                         className="rounded text-emerald-600 cursor-pointer"
                       />
                     </td>
-                    <td className="p-3 font-mono font-bold text-gray-700">{clientCode}</td>
-                    <td className="p-3 font-mono font-bold text-sky-800">
+                    <td className="p-3 font-mono font-bold text-gray-700 whitespace-nowrap">{memberCode}</td>
+                    <td className="p-3 font-mono font-bold text-sky-800 whitespace-nowrap">
                       <div>{memberID}</div>
                       <div className="text-[10px] text-gray-400 font-normal">{d.month}</div>
                     </td>
@@ -625,38 +660,38 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
                       <div className="flex items-center gap-2">
                         <Avatar name={member.name || "Member"} photoUrl={member.photoUrl} size={28} />
                         <div className="min-w-0">
-                          <p className="font-extrabold text-gray-900 truncate max-w-[140px]">{member.name || "Unknown"}</p>
+                          <p className="font-extrabold text-gray-900 truncate max-w-[150px]">{member.name || "Unknown"}</p>
                           {member.nameBn && (
                             <p className="text-[10px] text-emerald-800 font-medium truncate">{member.nameBn}</p>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="p-3 font-semibold text-gray-800 select-all">{member.phone || "—"}</td>
-                    <td className="p-3 text-gray-600">Block {member.block || "A"}</td>
-                    <td className="p-3">
+                    <td className="p-3 font-semibold text-gray-800 select-all whitespace-nowrap">{member.phone || "—"}</td>
+                    <td className="p-3 text-gray-600 whitespace-nowrap">Block {member.block || "A"}</td>
+                    <td className="p-3 whitespace-nowrap">
                       <Badge tone={member.memberClass === "Founding" ? "warning" : "neutral"}>
                         {member.memberClass || "General"}
                       </Badge>
                     </td>
-                    <td className="p-3 font-semibold text-gray-800 truncate max-w-[160px]" title={d.chargeTitle}>
+                    <td className="p-3 font-semibold text-gray-800 truncate max-w-[180px]" title={d.chargeTitle}>
                       {d.chargeTitle || `Monthly Dues`}
                     </td>
-                    <td className="p-3 text-gray-500 font-mono text-[11px]">{d.dueDate || `${d.month}-15`}</td>
-                    <td className="p-3 text-right font-mono font-bold text-gray-900">{currency(d.amount)}</td>
-                    <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                    <td className="p-3 text-gray-500 font-mono text-[11px] whitespace-nowrap">{billingLastDate}</td>
+                    <td className="p-3 text-right font-mono font-bold text-gray-900 whitespace-nowrap">{currency(d.amount)}</td>
+                    <td className="p-3 text-right font-mono font-bold text-emerald-700 whitespace-nowrap">
                       {isPaid ? currency(d.receivedAmount || d.amount) : "0.00"}
                     </td>
-                    <td className="p-3 text-right font-mono font-black text-rose-600">
+                    <td className="p-3 text-right font-mono font-black text-rose-600 whitespace-nowrap">
                       {isPaid ? "0.00" : currency(d.amount)}
                     </td>
-                    <td className="p-3 text-gray-500 font-mono text-[11px]">
+                    <td className="p-3 text-gray-500 font-mono text-[11px] whitespace-nowrap">
                       {d.paidDate ? fmtDate(d.paidDate) : "—"}
                     </td>
-                    <td className="p-3 text-[11px] text-gray-600 truncate max-w-[120px]">
+                    <td className="p-3 text-[11px] text-gray-600 truncate max-w-[120px] whitespace-nowrap">
                       {d.collectedBy || (isPaid ? "Treasurer" : "Pending")}
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="p-3 text-center whitespace-nowrap">
                       {isPaid ? (
                         <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-black text-white bg-emerald-600 shadow-sm">
                           Paid
@@ -670,24 +705,26 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
                         </button>
                       )}
                     </td>
-                    <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {!isPaid && (
-                          <button
-                            onClick={() => openBillReceive(d)}
-                            className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs"
-                            title={isBn ? "বিল গ্রহণ করুন" : "Receive Bill"}
-                          >
-                            <Receipt size={14} />
-                          </button>
-                        )}
+                    <td className="p-3 text-center whitespace-nowrap sticky right-0 bg-white shadow-md">
+                      <div className="flex items-center justify-center gap-1.5">
+                        {/* Generate Invoice Action Button */}
+                        <button
+                          onClick={() => openGenerateInvoice(d)}
+                          className="p-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold text-xs flex items-center gap-1"
+                          title="Generate Invoice"
+                        >
+                          <FileText size={14} />
+                          <span className="text-[10px] hidden xl:inline">Invoice</span>
+                        </button>
+
+                        {/* Custom WhatsApp Reminder Button */}
                         {rawPhone && (
                           <a
-                            href={`https://wa.me/${rawPhone}?text=${encodeURIComponent(`আসসালামু আলাইকুম ${member.name}, কুঞ্জছায়া ক্লাব ${d.chargeTitle || d.month}-এর চাঁদা (${currency(d.amount)}) সংক্রান্ত যোগাযোগ।`)}`}
+                            href={`https://wa.me/${rawPhone}?text=${encodeURIComponent(customWaMessage)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100"
-                            title="WhatsApp"
+                            className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                            title="Send WhatsApp Reminder"
                           >
                             <MessageCircle size={14} />
                           </a>
@@ -960,6 +997,109 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
                   <Check size={16} /> Submit
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ========================================================================= */}
+      {/* GENERATE INVOICE MODAL & PRINTABLE VOUCHER                                */}
+      {/* ========================================================================= */}
+      <Modal
+        open={!!invoiceModal}
+        onClose={() => setInvoiceModal(null)}
+        title="Official Invoice / Money Receipt"
+        width="max-w-xl"
+      >
+        {invoiceModal && (
+          <div className="space-y-4 py-2 text-xs">
+            {/* Printable Invoice Card */}
+            <div className="p-5 rounded-2xl border border-gray-300 bg-white space-y-4 shadow-sm">
+              <div className="flex items-start justify-between border-b pb-3">
+                <div>
+                  <h3 className="font-black text-base text-emerald-950 heading">KUNJACHAYA CLUB</h3>
+                  <p className="text-[11px] text-gray-500">Kunjachaya R/A, Bayezid Bostami Road, Jalalabad, Chattogram</p>
+                  <p className="text-[10px] font-bold text-emerald-800 mt-0.5">OFFICIAL INVOICE & MONEY RECEIPT</p>
+                </div>
+                <div className="text-right">
+                  <span className={`inline-block px-3 py-1 rounded-full font-black text-xs text-white ${invoiceModal.status === "paid" ? "bg-emerald-600" : "bg-rose-600"}`}>
+                    {invoiceModal.status === "paid" ? "PAID" : "DUE"}
+                  </span>
+                  <p className="font-mono text-[10px] text-gray-400 mt-1">INV-{invoiceModal.id.slice(-6).toUpperCase()}</p>
+                </div>
+              </div>
+
+              {/* Member Details */}
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 text-xs">
+                <div>
+                  <span className="text-[10px] text-gray-400 block">BILLED TO:</span>
+                  <p className="font-black text-gray-900 text-sm">{invoiceModal.resident?.name || "Member Name"}</p>
+                  <p className="text-gray-600">Block {invoiceModal.resident?.block || "A"} (Unit {invoiceModal.resident?.unit || "01"})</p>
+                  <p className="font-semibold text-gray-700">{invoiceModal.resident?.phone || "—"}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-gray-400 block">BILLING INFO:</span>
+                  <p className="font-bold text-gray-800">Month: {monthLabel(invoiceModal.month)}</p>
+                  <p className="text-gray-600">Due Date: {invoiceModal.dueDate || `${invoiceModal.month}-15`}</p>
+                  {invoiceModal.paidDate && (
+                    <p className="text-emerald-700 font-semibold">Paid: {fmtDate(invoiceModal.paidDate)}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Line Items */}
+              <table className="w-full border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-100 text-gray-700 font-bold border-b">
+                    <th className="p-2 text-left">Description</th>
+                    <th className="p-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="p-2.5 font-semibold text-gray-800">
+                      {invoiceModal.chargeTitle || `Monthly Subscription - ${monthLabel(invoiceModal.month)}`}
+                    </td>
+                    <td className="p-2.5 text-right font-mono font-bold text-gray-900">
+                      {currency(invoiceModal.amount)}
+                    </td>
+                  </tr>
+                  {invoiceModal.discount > 0 && (
+                    <tr className="text-gray-500">
+                      <td className="p-2.5 italic">Discount / Waiver</td>
+                      <td className="p-2.5 text-right font-mono text-emerald-700">-{currency(invoiceModal.discount)}</td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 font-black text-sm bg-slate-50">
+                    <td className="p-2.5 text-gray-900">Total Balance Due</td>
+                    <td className="p-2.5 text-right font-mono text-rose-700">
+                      {invoiceModal.status === "paid" ? "৳0.00" : currency(invoiceModal.amount)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              {/* Signatures */}
+              <div className="flex justify-between pt-6 text-center text-[10px] text-gray-500 border-t">
+                <div>
+                  <div className="w-28 border-b border-gray-400 mb-1 mx-auto" />
+                  <p className="font-bold text-gray-800">Treasurer</p>
+                  <p>{treasurerUser.name}</p>
+                </div>
+                <div>
+                  <div className="w-28 border-b border-gray-400 mb-1 mx-auto" />
+                  <p className="font-bold text-gray-800">General Secretary</p>
+                  <p>{gsUser.name}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-1">
+              <Btn full variant="outline" onClick={() => setInvoiceModal(null)}>Close</Btn>
+              <Btn full icon={Printer} onClick={() => window.print()}>Print Invoice</Btn>
             </div>
           </div>
         )}
