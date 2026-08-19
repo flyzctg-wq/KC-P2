@@ -125,7 +125,7 @@ export default function Profile({ session = {}, setSession, db, persist, toast, 
   };
 
   const save = async (overridePhoto) => {
-    const photoToSave = overridePhoto !== undefined ? overridePhoto : form.photoUrl;
+    const photoToSave = typeof overridePhoto === "string" ? overridePhoto : (typeof form.photoUrl === "string" ? form.photoUrl : "");
     if (!form.name.trim()) {
       toast(isBn ? "অনুগ্রহ করে আবেদনকারীর ইংরেজি নাম প্রদান করুন।" : "Please provide the English name.", "error");
       return;
@@ -981,7 +981,7 @@ export default function Profile({ session = {}, setSession, db, persist, toast, 
             >
               {isBn ? "প্রিন্ট ফরম-২" : "Print Form 2"}
             </Btn>
-            <Btn icon={Check} onClick={save}>
+            <Btn icon={Check} onClick={() => save()}>
               {isBn ? "সদস্য ফরম সংরক্ষণ করুন" : "Save Member Profile"}
             </Btn>
           </div>
