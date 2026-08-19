@@ -91,7 +91,7 @@ export default function App() {
             if (inserted) profileRow = inserted;
           }
 
-          if (profileRow && profileRow.status === "active") {
+          if (profileRow && profileRow.status !== "pending") {
             const form = profileRow.permissions?.formDetails || {};
             const u = {
               id: profileRow.id, name: profileRow.name, email: profileRow.email,

@@ -33,11 +33,17 @@ async function syncTable(table, prevArr = [], nextArr = [], toRow) {
 
   if (inserts.length) {
     const { error } = await supabase.from(table).insert(inserts);
-    if (error) console.error(`Insert failed on ${table}:`, error);
+    // Previously this only logged to the console and swallowed the
+    // failure — the caller (App.jsx's persist()) had already updated
+    // local UI state optimistically, so a blocked insert (e.g. an RLS
+    // policy rejecting it) looked like it worked right up until the
+    // next refresh silently dropped it. Throwing here lets persist()'s
+    // .catch() actually show the user a toast instead of nothing.
+    if (error) throw new Error(`Could not save to ${table}: ${error.message}`);
   }
   for (const u of updates) {
     const { error } = await supabase.from(table).update(u.row).eq("id", u.id);
-    if (error) console.error(`Update failed on ${table}:`, error);
+    if (error) throw new Error(`Could not update ${table}: ${error.message}`);
   }
   if (deletes.length) {
     // If deleting from profiles, clean up referencing child tables first to avoid FK constraint errors
@@ -59,7 +65,7 @@ async function syncTable(table, prevArr = [], nextArr = [], toRow) {
       }
     }
     const { error } = await supabase.from(table).delete().in("id", deletes);
-    if (error) console.error(`Delete failed on ${table}:`, error);
+    if (error) throw new Error(`Could not delete from ${table}: ${error.message}`);
   }
 }
 
