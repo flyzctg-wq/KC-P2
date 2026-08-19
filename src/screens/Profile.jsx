@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { User, Phone, Mail, MapPin, Heart, Shield, Check, Printer, FileText, Calendar, Building, Award, Briefcase, GraduationCap, Home, Camera, Upload, Trash2, Image as ImageIcon } from "lucide-react";
+import { User, Phone, Mail, MapPin, Heart, Shield, Check, Printer, FileText, Calendar, Building, Award, Briefcase, GraduationCap, Home, Camera, Upload, Trash2, Image as ImageIcon, Lock, Key, Eye, EyeOff } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, SectionTitle } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
 import { fmtDate } from "../utils";
@@ -7,6 +7,7 @@ import { fmtDate } from "../utils";
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
 import { supabase } from "../lib/supabase";
+import { updateUserPassword } from "../lib/authBridge";
 
 export default function Profile({ session = {}, setSession, db, persist, toast, go, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -50,6 +51,35 @@ export default function Profile({ session = {}, setSession, db, persist, toast, 
     bio: s.bio || "",
     pledgeAccepted: s.pledgeAccepted ?? true,
   });
+
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleChangePassword = async (e) => {
+    e?.preventDefault?.();
+    if (!newPassword || newPassword.length < 6) {
+      toast(isBn ? "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।" : "Password must be at least 6 characters.", "error");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast(isBn ? "পাসওয়ার্ড দুটি মিলছে না।" : "Passwords do not match.", "error");
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      await updateUserPassword(newPassword);
+      toast(isBn ? "পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!" : "Password updated successfully!", "success");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      toast(err.message || (isBn ? "পাসওয়ার্ড পরিবর্তন করতে ব্যর্থ হয়েছে।" : "Failed to update password."), "error");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   // Sync form if session updates asynchronously
   React.useEffect(() => {
@@ -860,6 +890,77 @@ export default function Profile({ session = {}, setSession, db, persist, toast, 
                 : "I have read and fully agreed to the constitutional pledge and terms of Kunjachhaya Club."}
             </span>
           </label>
+        </Card>
+
+        {/* Section 9: Account Security & Change Password (অ্যাকাউন্ট নিরাপত্তা ও পাসওয়ার্ড পরিবর্তন) */}
+        <Card className="p-5">
+          <div className="flex items-center gap-2.5 mb-4 pb-3 border-b" style={{ borderColor: C.outlineVariant }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-600 text-white">
+              <Key size={16} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-gray-900">
+                {isBn ? "৯. অ্যাকাউন্ট নিরাপত্তা ও পাসওয়ার্ড পরিবর্তন" : "9. Account Security & Password"}
+              </h3>
+              <p className="text-[11px]" style={{ color: C.onSurfaceVariant }}>
+                {isBn ? "আপনার অ্যাকাউন্টের জন্য একটি নতুন ও শক্তিশালী পাসওয়ার্ড নির্ধারণ করুন" : "Set a new secure password for your club account"}
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+            <div className="space-y-3">
+              <Field label={isBn ? "নতুন পাসওয়ার্ড (New Password)" : "New Password"}>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    style={inputStyle()}
+                    className={`${inputCls} pr-10`}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder={isBn ? "কমপক্ষে ৬ অক্ষর…" : "Minimum 6 characters…"}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(p => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </Field>
+
+              <Field label={isBn ? "নতুন পাসওয়ার্ড নিশ্চিত করুন (Confirm Password)" : "Confirm Password"}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  style={inputStyle()}
+                  className={inputCls}
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder={isBn ? "পাসওয়ার্ড পুনরায় লিখুন…" : "Re-enter new password…"}
+                  autoComplete="new-password"
+                />
+              </Field>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <Btn
+                type="submit"
+                variant="secondary"
+                size="sm"
+                icon={Lock}
+                disabled={isChangingPassword || !newPassword}
+              >
+                {isChangingPassword
+                  ? (isBn ? "পরিবর্তন হচ্ছে…" : "Updating…")
+                  : (isBn ? "পাসওয়ার্ড আপডেট করুন" : "Update Password")}
+              </Btn>
+              <span className="text-[11px] text-gray-500">
+                {isBn ? "পরবর্তী লগইনে এই পাসওয়ার্ড কার্যকর হবে।" : "Effective immediately for next sign-in."}
+              </span>
+            </div>
+          </form>
         </Card>
 
         {/* Bottom Actions */}
