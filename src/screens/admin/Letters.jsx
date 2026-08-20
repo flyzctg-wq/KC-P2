@@ -949,23 +949,37 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
               {/* AUTO-SCALING RESPONSIVE A4 CANVAS CONTAINER */}
               <div
                 ref={canvasContainerRef}
-                className="w-full flex justify-center items-start overflow-hidden py-2 bg-slate-100/70 rounded-2xl border border-slate-200"
+                className="w-full flex justify-center items-start py-3 bg-slate-100/70 rounded-2xl border border-slate-200 overflow-hidden"
                 style={{
-                  minHeight: `${Math.round(1123 * effectiveScale)}px`,
-                  height: `${Math.round(1123 * effectiveScale + 12)}px`,
+                  minHeight: `${Math.round(1123 * effectiveScale + 24)}px`,
+                  height: `${Math.round(1123 * effectiveScale + 24)}px`,
                 }}
               >
+                {/* Shrink-wrapper: sized to VISUAL scaled dimensions so layout matches visual */}
                 <div
                   style={{
-                    width: "794px",
-                    height: "1123px",
-                    transform: `scale(${effectiveScale})`,
-                    transformOrigin: "top center",
-                    boxShadow: "0 20px 40px -15px rgba(0,0,0,0.25)",
+                    width: `${Math.round(794 * effectiveScale)}px`,
+                    height: `${Math.round(1123 * effectiveScale)}px`,
+                    position: "relative",
+                    flexShrink: 0,
                   }}
-                  className="rounded-sm overflow-hidden"
                 >
-                  {renderA4LetterCanvas()}
+                  {/* Actual 794×1123 canvas scaled from top-left origin */}
+                  <div
+                    style={{
+                      width: "794px",
+                      height: "1123px",
+                      transform: `scale(${effectiveScale})`,
+                      transformOrigin: "top left",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      boxShadow: "0 20px 40px -15px rgba(0,0,0,0.25)",
+                    }}
+                    className="rounded-sm overflow-hidden"
+                  >
+                    {renderA4LetterCanvas()}
+                  </div>
                 </div>
               </div>
 
