@@ -1,5 +1,10 @@
 import React from "react";
-import { Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3, Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck, MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange, FileText } from "lucide-react";
+import {
+  Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
+  Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
+  MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
+  FileText, Sun, Moon, Laptop
+} from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
 
@@ -65,19 +70,38 @@ const ADMIN_BOTTOM_NAV = [
   { key: "a-notices", label: "notices", icon: Bell },
 ];
 
-export default function Shell({ session, view, setView, logout, lang, setLang, t, children, navOpen, setNavOpen }) {
+export default function Shell({
+  session, view, setView, logout, lang, setLang, t, children,
+  navOpen, setNavOpen, theme = "system", setTheme = () => {}
+}) {
   const isAdmin = session.role === "admin";
   const nav = isAdmin ? ADMIN_NAV : RESIDENT_NAV;
   const bottomNav = isAdmin ? ADMIN_BOTTOM_NAV : RESIDENT_BOTTOM_NAV;
+
+  const isDarkMode = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  const toggleThemeNext = () => {
+    if (theme === "light") setTheme("dark");
+    else if (theme === "dark") setTheme("system");
+    else setTheme("light");
+  };
 
   return (
     <div className="flex min-h-screen w-full max-w-full overflow-x-hidden" style={{ backgroundColor: C.surface }}>
       {/* Desktop sidebar = "Web Platform" */}
       <aside className="hidden lg:flex lg:w-64 flex-col shrink-0 border-r px-4 py-6" style={{ borderColor: C.outlineVariant, backgroundColor: C.surface }}>
         <div className="flex items-center gap-2 px-2 mb-8">
-          <div style={{ backgroundColor: C.primary }} className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5"><img src={LOGO_MARK} alt="Kunjachaya Club" className="w-full h-full object-contain" /></div>
-          <div><p className="font-extrabold text-sm heading leading-none">Kunjachaya</p><p className="text-[10px] font-semibold tracking-wide" style={{ color: C.outline }}>{isAdmin ? "ADMIN PORTAL · WEB" : "RESIDENT · WEB"}</p></div>
+          <div style={{ backgroundColor: C.primary }} className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5 shadow-sm">
+            <img src={LOGO_MARK} alt="Kunjachaya Club" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <p className="font-extrabold text-sm heading leading-none">Kunjachaya</p>
+            <p className="text-[10px] font-semibold tracking-wide" style={{ color: C.outline }}>
+              {isAdmin ? "ADMIN PORTAL · WEB" : "RESIDENT · WEB"}
+            </p>
+          </div>
         </div>
+
         <nav className="flex-1 flex flex-col gap-1 overflow-y-auto pr-1">
           {nav.map(item => {
             const Icon = item.icon; const active = view === item.key;
@@ -91,10 +115,11 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
             );
           })}
         </nav>
-        <div className="border-t pt-4 mt-4" style={{ borderColor: C.outlineVariant }}>
+
+        <div className="border-t pt-4 mt-4 space-y-1.5" style={{ borderColor: C.outlineVariant }}>
           <div
             onClick={() => setView("r-profile")}
-            className="flex items-center gap-2.5 px-2 py-2 mb-3 rounded-xl hover:bg-black/5 cursor-pointer transition-colors"
+            className="flex items-center gap-2.5 px-2 py-2 mb-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
             title="Edit Profile"
           >
             <Avatar name={session.name} photoUrl={session.photoUrl} />
@@ -106,27 +131,69 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
               {lang === "bn" ? "প্রোফাইল" : "Edit"}
             </span>
           </div>
-          <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold mb-1" style={{ color: C.onSurfaceVariant }}><Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}</button>
-          <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold" style={{ color: C.error }}><LogOut size={14} /> {t.logout}</button>
+
+          {/* Desktop Theme Switcher */}
+          <button
+            onClick={toggleThemeNext}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            style={{ color: C.onSurfaceVariant }}
+            title="Toggle Theme"
+          >
+            <span className="flex items-center gap-2">
+              {theme === "dark" ? <Moon size={14} className="text-amber-400" /> : theme === "light" ? <Sun size={14} className="text-amber-500" /> : <Laptop size={14} />}
+              {lang === "bn" ? "থিম মোড" : "Theme"}
+            </span>
+            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>
+              {theme === "dark" ? (lang === "bn" ? "ডার্ক" : "Dark") : theme === "light" ? (lang === "bn" ? "লাইট" : "Light") : (lang === "bn" ? "অটো" : "Auto")}
+            </span>
+          </button>
+
+          <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
+            <Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}
+          </button>
+
+          <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" style={{ color: C.error }}>
+            <LogOut size={14} /> {t.logout}
+          </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar = "Android App" feel */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
+        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b backdrop-blur-md" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
           <div className="flex items-center gap-2">
-            <div style={{ backgroundColor: C.primary }} className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5"><img src={LOGO_MARK} alt="Kunjachaya Club" className="w-full h-full object-contain" /></div>
+            <div style={{ backgroundColor: C.primary }} className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5 shadow-sm">
+              <img src={LOGO_MARK} alt="Kunjachaya Club" className="w-full h-full object-contain" />
+            </div>
             <span className="font-extrabold text-sm heading">{isAdmin ? "Admin · " : ""}Kunjachaya</span>
           </div>
+          
           <div className="flex items-center gap-1">
-            <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="p-2 rounded-full" style={{ color: C.onSurfaceVariant }} title="Change Language"><Globe size={17} /></button>
-            <button onClick={() => setNavOpen(true)} className="p-2 rounded-full" style={{ color: C.onSurfaceVariant }} title="Open Menu"><Menu size={20} /></button>
+            {/* Mobile Fast Theme Toggle Button */}
+            <button
+              onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              style={{ color: C.onSurfaceVariant }}
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
+            </button>
+
+            {/* Language Selector */}
+            <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }} title="Change Language">
+              <Globe size={17} />
+            </button>
+
+            {/* Drawer Menu Button */}
+            <button onClick={() => setNavOpen(true)} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }} title="Open Menu">
+              <Menu size={20} />
+            </button>
           </div>
         </header>
 
-        {/* Mobile Side Drawer (3-Line Menu) with Full Web App Modules & Smooth Scrolling */}
+        {/* Mobile Side Drawer (3-Line Menu) */}
         {navOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden" style={{ backgroundColor: "rgba(20,25,15,0.55)", backdropFilter: "blur(2px)" }} onClick={() => setNavOpen(false)}>
+          <div className="fixed inset-0 z-50 lg:hidden" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={() => setNavOpen(false)}>
             <div
               onClick={e => e.stopPropagation()}
               style={{ backgroundColor: C.surface, color: C.onSurface }}
@@ -135,7 +202,7 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
               {/* Drawer Top Header */}
               <div className="flex items-center justify-between pb-3 mb-2 border-b" style={{ borderColor: C.outlineVariant }}>
                 <div className="flex items-center gap-2">
-                  <div style={{ backgroundColor: C.primary }} className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5">
+                  <div style={{ backgroundColor: C.primary }} className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5 shadow-sm">
                     <img src={LOGO_MARK} alt="Kunjachaya Club" className="w-full h-full object-contain" />
                   </div>
                   <div>
@@ -145,7 +212,7 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
                     </span>
                   </div>
                 </div>
-                <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-full hover:bg-black/5" style={{ color: C.onSurfaceVariant }}>
+                <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
                   <X size={20} />
                 </button>
               </div>
@@ -153,7 +220,7 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
               {/* User Profile Card */}
               <div
                 onClick={() => { setView("r-profile"); setNavOpen(false); }}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl mb-3 border cursor-pointer hover:bg-black/5 transition-colors"
+                className="flex items-center gap-2.5 p-2.5 rounded-xl mb-3 border cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                 style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}
               >
                 <Avatar name={session.name} photoUrl={session.photoUrl} size={38} />
@@ -166,7 +233,7 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
                 </span>
               </div>
 
-              {/* Scrollable Navigation List with All Web App Modules */}
+              {/* Scrollable Navigation List */}
               <div className="text-[11px] font-bold px-2 py-1 uppercase tracking-wider opacity-50">
                 {lang === "bn" ? "সকল মেনু ও সেবা" : "All Modules & Services"}
               </div>
@@ -188,16 +255,39 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
                 })}
               </nav>
 
-              {/* Drawer Footer Actions */}
-              <div className="pt-3 mt-1 border-t flex flex-col gap-1" style={{ borderColor: C.outlineVariant }}>
+              {/* Drawer Footer Theme and Language Controls */}
+              <div className="pt-3 mt-1 border-t space-y-2" style={{ borderColor: C.outlineVariant }}>
+                {/* 3-Option Theme Segmented Bar */}
+                <div className="p-1 rounded-xl flex items-center gap-1 border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${theme === "light" ? "bg-white dark:bg-slate-800 text-amber-600 shadow-sm" : "opacity-60"}`}
+                  >
+                    <Sun size={13} /> {lang === "bn" ? "লাইট" : "Light"}
+                  </button>
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${theme === "dark" ? "bg-emerald-700 text-white shadow-sm" : "opacity-60"}`}
+                  >
+                    <Moon size={13} /> {lang === "bn" ? "ডার্ক" : "Dark"}
+                  </button>
+                  <button
+                    onClick={() => setTheme("system")}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${theme === "system" ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm" : "opacity-60"}`}
+                  >
+                    <Laptop size={13} /> {lang === "bn" ? "অটো" : "Auto"}
+                  </button>
+                </div>
+
                 <button
                   onClick={() => setLang(l => l === "en" ? "bn" : "en")}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold"
                   style={{ color: C.onSurfaceVariant, backgroundColor: C.surfaceContainerLow }}
                 >
                   <span className="flex items-center gap-2"><Globe size={14} /> {lang === "en" ? "ভাষা পরিবর্তন" : "Switch Language"}</span>
-                  <span className="font-bold text-[11px] px-1.5 py-0.5 rounded bg-black/5">{lang === "en" ? "বাংলা" : "English"}</span>
+                  <span className="font-bold text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>{lang === "en" ? "বাংলা" : "English"}</span>
                 </button>
+
                 <button
                   onClick={logout}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
@@ -214,7 +304,7 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
 
         {/* Bottom Nav = Clean, responsive mobile bar with 5 primary destinations */}
         <nav
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t px-1 py-1.5 shadow-lg"
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t px-1 py-1.5 shadow-lg backdrop-blur-md"
           style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}
         >
           {bottomNav.map(item => {

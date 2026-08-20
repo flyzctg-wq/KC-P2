@@ -15,6 +15,7 @@ import Router from "./Router";
 import SplashIntro from "./components/SplashIntro";
 
 export default function App() {
+  const [theme, setTheme] = useState(() => localStorage.getItem("kc_theme") || "system");
   const [db, setDb] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null); // current user object
@@ -35,6 +36,31 @@ export default function App() {
     setToasts(ts => [...ts, { id, msg, type }]);
     setTimeout(() => setToasts(ts => ts.filter(x => x.id !== id)), 3200);
   }, []);
+
+  useEffect(() => {
+    const applyTheme = () => {
+      const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.classList.toggle("dark", isDark);
+      localStorage.setItem("kc_theme", theme);
+
+      let metaThemeColor = document.querySelector("meta[name='theme-color']");
+      if (!metaThemeColor) {
+        metaThemeColor = document.createElement("meta");
+        metaThemeColor.name = "theme-color";
+        document.head.appendChild(metaThemeColor);
+      }
+      metaThemeColor.setAttribute("content", isDark ? "#0b0f0b" : "#fcfdf6");
+    };
+
+    applyTheme();
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      if (theme === "system") applyTheme();
+    };
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [theme]);
 
   useEffect(() => {
     // inject fonts
@@ -508,11 +534,11 @@ export default function App() {
       )}
       <div style={{ position: "relative", zIndex: 1 }}>
         {!session ? (
-          <AuthScreen db={db} lang={lang} setLang={setLang} t={t} authMode={authMode} setAuthMode={setAuthMode} login={login} register={register} />
+          <AuthScreen db={db} lang={lang} setLang={setLang} t={t} authMode={authMode} setAuthMode={setAuthMode} login={login} register={register} theme={theme} setTheme={setTheme} />
         ) : (
           <Shell session={session} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
-            navOpen={navOpen} setNavOpen={setNavOpen}>
-            <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} t={t} />
+            navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}>
+            <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} t={t} theme={theme} setTheme={setTheme} />
           </Shell>
         )}
       </div>

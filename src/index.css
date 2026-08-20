@@ -2,14 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --c-primary: #154212;
+  --c-primary-container: #2d5a27;
+  --c-on-primary-container: #eaffe0;
+  --c-on-primary: #ffffff;
+  --c-secondary: #526345;
+  --c-secondary-container: #d2e6c0;
+  --c-on-secondary-container: #263219;
+  --c-tertiary: #5e2b00;
+  --c-tertiary-container: #7e3f09;
+  --c-on-tertiary-container: #ffe4cc;
+  --c-background: #fbf9f5;
+  --c-surface: #ffffff;
+  --c-surface-variant: #e4e2de;
+  --c-surface-container: #efeeea;
+  --c-surface-container-low: #f5f3ef;
+  --c-surface-container-high: #eae8e4;
+  --c-on-surface: #1b1c1a;
+  --c-on-surface-variant: #42493e;
+  --c-outline: #8a9182;
+  --c-outline-variant: #dfe3d9;
+  --c-error: #ba1a1a;
+  --c-error-container: #ffdad6;
+  --c-on-error-container: #93000a;
+  --c-gold: #a06a00;
+  --c-gold-container: #ffe3ac;
+  color-scheme: light;
+}
+
+.dark {
+  --c-primary: #4ade80;
+  --c-primary-container: #166534;
+  --c-on-primary-container: #dcfce7;
+  --c-on-primary: #052e16;
+  --c-secondary: #94a3b8;
+  --c-secondary-container: #1e293b;
+  --c-on-secondary-container: #e2e8f0;
+  --c-tertiary: #fb923c;
+  --c-tertiary-container: #7c2d12;
+  --c-on-tertiary-container: #ffedd5;
+  --c-background: #0b0f0b;
+  --c-surface: #141a13;
+  --c-surface-variant: #1e261d;
+  --c-surface-container: #192118;
+  --c-surface-container-low: #101610;
+  --c-surface-container-high: #242f22;
+  --c-on-surface: #f1f5f0;
+  --c-on-surface-variant: #a3b09e;
+  --c-outline: #505f4c;
+  --c-outline-variant: #253322;
+  --c-error: #f87171;
+  --c-error-container: #450a0a;
+  --c-on-error-container: #fecaca;
+  --c-gold: #fbbf24;
+  --c-gold-container: #451a03;
+  color-scheme: dark;
+}
+
 html, body, #root {
   height: 100%;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #fcfdf6;
+  background-color: var(--c-background);
+  color: var(--c-on-surface);
   overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 body {
@@ -21,4 +81,19 @@ body {
   max-width: 100vw;
   width: 100%;
   position: relative;
+  background-color: var(--c-background);
+}
+
+/* Dark mode adjustments for cards and text */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--c-surface-container-low) !important;
+  color: var(--c-on-surface) !important;
+  border-color: var(--c-outline-variant) !important;
+}
+
+.dark select option {
+  background-color: #141a13;
+  color: #f1f5f0;
 }

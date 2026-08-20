@@ -1,5 +1,9 @@
 import React, { useState, useRef } from "react";
-import { User, Phone, Mail, MapPin, Heart, Shield, Check, Printer, FileText, Calendar, Building, Award, Briefcase, GraduationCap, Home, Camera, Upload, Trash2, Image as ImageIcon, Lock, Key, Eye, EyeOff, ScanLine, ZoomIn, ExternalLink } from "lucide-react";
+import {
+  User, Phone, Mail, MapPin, Heart, Shield, Check, Printer, FileText, Calendar,
+  Building, Award, Briefcase, GraduationCap, Home, Camera, Upload, Trash2, Image as ImageIcon,
+  Lock, Key, Eye, EyeOff, ScanLine, ZoomIn, ExternalLink, Sun, Moon, Laptop, Palette
+} from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Modal, SectionTitle } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
 import { fmtDate } from "../utils";
@@ -9,7 +13,10 @@ const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 import { supabase } from "../lib/supabase";
 import { updateUserPassword } from "../lib/authBridge";
 
-export default function Profile({ session = {}, setSession, db, persist, toast, go, lang = "en", t = {} }) {
+export default function Profile({
+  session = {}, setSession, db, persist, toast, go, lang = "en", t = {},
+  theme = "system", setTheme = () => {}
+}) {
   const isBn = lang === "bn";
   const s = session || {};
   const fileInputRef = useRef(null);
@@ -1084,6 +1091,61 @@ export default function Profile({ session = {}, setSession, db, persist, toast, 
               </span>
             </div>
           </form>
+        </Card>
+
+        {/* Section 10: Theme & Appearance (১০. থিম ও ডিসপ্লে পছন্দ) */}
+        <Card className="p-5">
+          <div className="flex items-center gap-2.5 mb-4 pb-3 border-b" style={{ borderColor: C.outlineVariant }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-700 text-white shadow-sm">
+              <Palette size={16} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-gray-900">
+                {isBn ? "১০. থিম ও ডিসপ্লে পছন্দ" : "10. Theme & Appearance"}
+              </h3>
+              <p className="text-[11px]" style={{ color: C.onSurfaceVariant }}>
+                {isBn ? "আপনার পছন্দ অনুযায়ী লাইট অথবা ডার্ক মোড নির্বাচন করুন" : "Choose between light, dark, or system default appearance"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => setTheme("light")}
+              className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-2 text-center transition-all ${theme === "light" ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 ring-2 ring-emerald-500/30 shadow-sm" : "hover:bg-slate-50 dark:hover:bg-slate-900"}`}
+              style={{ borderColor: theme === "light" ? undefined : C.outlineVariant }}
+            >
+              <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
+                <Sun size={18} />
+              </div>
+              <span className="text-xs font-bold">{isBn ? "লাইট মোড" : "Light"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTheme("dark")}
+              className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-2 text-center transition-all ${theme === "dark" ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 ring-2 ring-emerald-500/30 shadow-sm" : "hover:bg-slate-50 dark:hover:bg-slate-900"}`}
+              style={{ borderColor: theme === "dark" ? undefined : C.outlineVariant }}
+            >
+              <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400">
+                <Moon size={18} />
+              </div>
+              <span className="text-xs font-bold">{isBn ? "ডার্ক মোড" : "Dark"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTheme("system")}
+              className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-2 text-center transition-all ${theme === "system" ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 ring-2 ring-emerald-500/30 shadow-sm" : "hover:bg-slate-50 dark:hover:bg-slate-900"}`}
+              style={{ borderColor: theme === "system" ? undefined : C.outlineVariant }}
+            >
+              <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-200">
+                <Laptop size={18} />
+              </div>
+              <span className="text-xs font-bold">{isBn ? "সিস্টেম অটো" : "System"}</span>
+            </button>
+          </div>
         </Card>
 
         {/* Bottom Actions */}

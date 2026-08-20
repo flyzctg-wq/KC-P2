@@ -49,7 +49,7 @@ export function Badge({ children, tone = "neutral" }) {
 export function Field({ label, children }) {
   return <label className="block mb-4"><span className="block text-xs font-semibold mb-1.5" style={{ color: C.onSurfaceVariant }}>{label}</span>{children}</label>;
 }
-export const inputCls = "w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors focus:ring-2";
+export const inputCls = "w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors focus:ring-2 focus:ring-emerald-600/40";
 export function inputStyle(focusRing = C.primary) {
   return { backgroundColor: C.surfaceContainerLow, border: `1.5px solid ${C.outlineVariant}`, color: C.onSurface };
 }
@@ -102,11 +102,11 @@ export function Empty({ icon: Icon, title, subtitle }) {
 export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ backgroundColor: "rgba(20,25,15,0.45)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface }} className={`w-full ${width} rounded-t-3xl sm:rounded-3xl max-h-[88vh] overflow-y-auto`}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }} className={`w-full ${width} rounded-t-3xl sm:rounded-3xl max-h-[88vh] overflow-y-auto border shadow-2xl`}>
         <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
           <h3 className="font-bold text-base" style={{ color: C.onSurface }}>{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:opacity-70" style={{ backgroundColor: C.surfaceContainer }}><X size={16} /></button>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:opacity-70" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>

@@ -45,11 +45,11 @@ function ScreenFallback() {
   );
 }
 
-export default function Router({ session, db, persist, view, setView, toast, logActivity, setSession, lang, t }) {
+export default function Router({ session, db, persist, view, setView, toast, logActivity, setSession, lang, t, theme, setTheme }) {
   const [params, setParams] = useState({});
   const go = (v, p = {}) => { setParams(p); setView(v); };
 
-  const props = { session, db, persist, toast, logActivity, go, params, setSession, lang, t };
+  const props = { session, db, persist, toast, logActivity, go, params, setSession, lang, t, theme, setTheme };
 
   const Screen = (() => {
     switch (view) {
