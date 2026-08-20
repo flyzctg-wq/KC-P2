@@ -414,6 +414,167 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
     }
   };
 
+  // ── A4 Letterhead Canvas (React JSX live preview mirror of generateLetterHTML) ──
+  const renderA4LetterCanvas = () => {
+    const originUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const subjectFormatted = subject.startsWith("বিষয়") ? subject : `বিষয়: ${subject}`;
+
+    return (
+      <div
+        style={{
+          position: "relative",
+          width: "794px",
+          height: "1123px",
+          background: "#ffffff",
+          fontFamily: "'SolaimanLipi', 'Kalpurush', 'Inter', sans-serif",
+          color: "#0f172a",
+          overflow: "hidden",
+        }}
+      >
+        {/* Letterhead Background Image */}
+        <img
+          src={`${originUrl}/letterhead.png`}
+          alt="Letterhead"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "794px",
+            height: "1123px",
+            objectFit: "fill",
+            zIndex: 1,
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Date Block (positioned over orange bar on letterhead) */}
+        <div
+          style={{
+            position: "absolute",
+            top: `${dateTopOffset}%`,
+            right: `${dateRightOffset}%`,
+            color: "#ffffff",
+            fontWeight: "bold",
+            fontSize: `${13 * fontSizeScale}px`,
+            zIndex: 10,
+            letterSpacing: "0.5px",
+          }}
+        >
+          তারিখঃ {letterDate}
+        </div>
+
+        {/* Memo Number Block */}
+        <div
+          style={{
+            position: "absolute",
+            top: `${memoTopOffset}%`,
+            right: `${memoRightOffset}%`,
+            color: "#0f172a",
+            fontWeight: "bold",
+            fontSize: `${12.5 * fontSizeScale}px`,
+            zIndex: 10,
+          }}
+        >
+          স্মারক নংঃ <span style={{ fontFamily: "monospace" }}>{memoNo}</span>
+        </div>
+
+        {/* Main Content Block */}
+        <div
+          style={{
+            position: "absolute",
+            top: `${contentTopOffset}%`,
+            left: "9%",
+            right: "9%",
+            bottom: "10.5%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            zIndex: 10,
+            fontSize: `${13 * fontSizeScale}px`,
+            lineHeight: 1.75,
+          }}
+        >
+          {/* Upper: Recipient + Subject + Body */}
+          <div>
+            {/* Recipient */}
+            <div style={{ marginBottom: "8px" }}>
+              <p style={{ fontWeight: "bold", marginBottom: "2px" }}>বরাবর</p>
+              {recipient.split("\n").map((line, i) => (
+                <p key={i} style={{ margin: "2px 0" }}>{line}</p>
+              ))}
+            </div>
+
+            {/* Subject */}
+            {subject && (
+              <div
+                style={{
+                  fontWeight: "bold",
+                  fontSize: `${13.5 * fontSizeScale}px`,
+                  color: "#000000",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "4px",
+                  margin: "10px 0 6px 0",
+                }}
+              >
+                {subjectFormatted}
+              </div>
+            )}
+
+            {/* Salutation */}
+            {salutation && (
+              <p style={{ fontWeight: 600, margin: "8px 0 6px 0" }}>{salutation}</p>
+            )}
+
+            {/* Body Paragraphs */}
+            <div style={{ marginTop: "6px" }}>
+              {body.split("\n\n").map((para, i) => (
+                <p
+                  key={i}
+                  style={{
+                    marginBottom: "14px",
+                    textIndent: "28px",
+                    textAlign: "justify",
+                    lineHeight: 1.75,
+                  }}
+                >
+                  {para}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {/* Lower: Signatories */}
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: "2px" }}>
+              <p>নিবেদক</p>
+              <p style={{ fontWeight: "bold" }}>কুঞ্জছায়া ক্লাবের পক্ষে</p>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-end",
+                paddingTop: `${signatureGap}px`,
+                fontWeight: "bold",
+                fontSize: `${12.5 * fontSizeScale}px`,
+              }}
+            >
+              <div>
+                <span>{signatoryLeftTitle} </span>
+                <span>{signatoryLeftName}</span>
+              </div>
+              <div>
+                <span>{signatoryRightTitle} </span>
+                <span>{signatoryRightName}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header Bar */}
