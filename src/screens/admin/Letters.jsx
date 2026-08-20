@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   FileText, Send, Printer, Download, MessageCircle, Plus, Search, Filter,
   Shield, Check, Trash2, Eye, Edit3, Copy, Sparkles, RefreshCw, Calendar,
-  Building, User, Phone, CheckCircle2, ChevronRight, ArrowLeft, Share2, Sliders
+  Building, User, Phone, CheckCircle2, ChevronRight, ArrowLeft, Share2, Sliders,
+  ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCcw
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C } from "../../theme";
@@ -17,7 +18,7 @@ const LETTER_TEMPLATES = [
     subject: "২০২৬-২০২৭ ইং মেয়াদের জন্য কুঞ্জছায়া ক্লাবের উপদেষ্টা পরিষদের উপদেষ্টা পদে মনোনয়ন করা প্রসঙ্গে।",
     salutation: "প্রিয় মহোদয়,",
     body: "আসসালামু আলাইকুম। গত ২৬মার্চ ২০২১ তারিখ কুঞ্জছায়া ক্লাব, কুঞ্জছায়া আবাসিক এলাকা, বায়েজিদ বোস্তামী প্রতিষ্ঠিত হয়। অত্যন্ত আনন্দের সাথে জানানো যাচ্ছে যে, কুঞ্জছায়া ক্লাব এর কার্যনির্বাহী কমিটির সিদ্ধান্ত অনুযায়ী আপনাকে ক্লাবের উপদেষ্টা পদে মনোনীত করা হয়েছে।\n\nউক্ত পদে দায়িত্ব পালনে আপনার সদয় সম্মতি আমাদের ক্লাবের কার্যক্রমকে আরও গতিশীল করবে।",
-    signatoryLeftTitle: "আহ্বায়কঃ",
+    signatoryLeftTitle: "আহ্বায়কঃ",
     signatoryLeftName: "জাকারিয়া হাসান",
     signatoryRightTitle: "সদস্য সচিবঃ",
     signatoryRightName: "খালিদ হাসান",
@@ -83,7 +84,9 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
 
   // View States
   const [viewMode, setViewMode] = useState("editor"); // "editor" | "archive"
+  const [mobileTab, setMobileTab] = useState("editor"); // "editor" | "preview" (for mobile view toggle)
   const [searchQuery, setSearchQuery] = useState("");
+  const [fullscreenPreview, setFullscreenPreview] = useState(false);
 
   // Letter Form State
   const [memoNo, setMemoNo] = useState(`WC/C/2026/01-${Math.floor(100 + Math.random() * 900)}`);
@@ -108,6 +111,11 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   const [fontSizeScale, setFontSizeScale] = useState(1.0); // font scale multiplier
   const [showAdjustments, setShowAdjustments] = useState(false);
 
+  // Responsive Canvas Scaling State (Standard A4 is 794px × 1123px at 96 DPI)
+  const canvasContainerRef = useRef(null);
+  const [autoScale, setAutoScale] = useState(0.48);
+  const [customZoom, setCustomZoom] = useState(1.0); // manual multiplier
+
   const lettersList = useMemo(() => db.letters || [], [db.letters]);
 
   const filteredLetters = useMemo(() => {
@@ -119,6 +127,24 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
       (l.recipient || "").toLowerCase().includes(q)
     );
   }, [lettersList, searchQuery]);
+
+  // Recalculate auto-scale factor based on available container width
+  useEffect(() => {
+    const updateScale = () => {
+      if (canvasContainerRef.current) {
+        const containerW = canvasContainerRef.current.clientWidth || 360;
+        const availableW = Math.max(260, containerW - 16);
+        const fitScale = Math.min(1.0, availableW / 794);
+        setAutoScale(fitScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, [viewMode, mobileTab]);
+
+  const effectiveScale = autoScale * customZoom;
 
   const handleApplyTemplate = (tmplId) => {
     const tmpl = LETTER_TEMPLATES.find(t => t.id === tmplId);
@@ -173,219 +199,227 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
     toast(isBn ? `অফিসিয়াল পত্রটি স্মারক রেজিস্টারে সংরক্ষিত হয়েছে! [স্মারক: ${memoNo}]` : `Letter saved to official register! [Memo: ${memoNo}]`);
   };
 
-  // High-Resolution 100% Pixel-Perfect Clean A4 Print Window
-  const handlePrint = () => {
-    const printWindow = window.open("", "_blank", "width=920,height=1250");
-    if (!printWindow) {
-      window.print();
-      return;
-    }
-
+  // Generate full HTML string for Print / PDF Export
+  const generateLetterHTML = () => {
     const recipientFormatted = recipient.split("\n").map(l => `<p style="margin:2px 0;">${l}</p>`).join("");
     const subjectFormatted = subject.startsWith("বিষয়") ? subject : `বিষয়: ${subject}`;
-    const bodyFormatted = body.split("\n\n").map(p => `<p style="margin-bottom:12px; text-indent:24px; text-align:justify; line-height:1.75;">${p}</p>`).join("");
-    const originUrl = window.location.origin;
+    const bodyFormatted = body.split("\n\n").map(p => `<p style="margin-bottom:14px; text-indent:28px; text-align:justify; line-height:1.75;">${p}</p>`).join("");
+    const originUrl = typeof window !== "undefined" ? window.location.origin : "";
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="bn">
-        <head>
-          <meta charset="utf-8" />
-          <title>${subject || "Official Letter - Kunjachaya Club"}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Kalpurush&family=SolaimanLipi&display=swap');
-            
-            @page {
-              size: A4 portrait;
-              margin: 0;
-            }
-            * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-              color-adjust: exact !important;
-            }
-            html, body {
-              width: 210mm;
-              height: 297mm;
-              background-color: #ffffff;
-              font-family: 'SolaimanLipi', 'Kalpurush', 'Inter', sans-serif;
-              color: #0f172a;
-              overflow: hidden;
-            }
-            .a4-container {
-              position: relative;
-              width: 210mm;
-              height: 297mm;
-              margin: 0 auto;
-              background: #ffffff;
-              overflow: hidden;
-            }
-            .letterhead-bg {
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 210mm;
-              height: 297mm;
-              z-index: 1;
-              pointer-events: none;
-            }
-            .date-block {
-              position: absolute;
-              top: ${dateTopOffset}%;
-              right: ${dateRightOffset}%;
-              color: #ffffff;
-              font-weight: bold;
-              font-size: ${13 * fontSizeScale}px;
-              z-index: 10;
-              letter-spacing: 0.5px;
-            }
-            .memo-block {
-              position: absolute;
-              top: ${memoTopOffset}%;
-              right: ${memoRightOffset}%;
-              color: #0f172a;
-              font-weight: bold;
-              font-size: ${12.5 * fontSizeScale}px;
-              z-index: 10;
-            }
-            .content-block {
-              position: absolute;
-              top: ${contentTopOffset}%;
-              left: 9%;
-              right: 9%;
-              bottom: 10.5%;
-              display: flex;
-              flex-direction: column;
-              justify-content: space-between;
-              z-index: 10;
-              font-size: ${13 * fontSizeScale}px;
-              line-height: 1.75;
-            }
-            .subject-line {
-              font-weight: bold;
-              font-size: ${13.5 * fontSizeScale}px;
-              color: #000000;
-              text-decoration: underline;
-              text-underline-offset: 4px;
-              margin: 10px 0 6px 0;
-            }
-            .signatory-row {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-              padding-top: ${signatureGap}px;
-              font-weight: bold;
-              font-size: ${12.5 * fontSizeScale}px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="a4-container">
-            <img src="${originUrl}/letterhead.png" class="letterhead-bg" alt="Letterhead" />
-            
-            <div class="date-block">
-              তারিখঃ ${letterDate}
-            </div>
+    return `<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${subject || "Official Letter - Kunjachaya Club"}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Kalpurush&family=SolaimanLipi&display=swap');
+      
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      html, body {
+        width: 210mm;
+        height: 297mm;
+        background-color: #ffffff;
+        font-family: 'SolaimanLipi', 'Kalpurush', 'Inter', sans-serif;
+        color: #0f172a;
+        overflow: hidden;
+      }
+      .a4-container {
+        position: relative;
+        width: 210mm;
+        height: 297mm;
+        margin: 0 auto;
+        background: #ffffff;
+        overflow: hidden;
+      }
+      .letterhead-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 210mm;
+        height: 297mm;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .date-block {
+        position: absolute;
+        top: ${dateTopOffset}%;
+        right: ${dateRightOffset}%;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: ${13 * fontSizeScale}px;
+        z-index: 10;
+        letter-spacing: 0.5px;
+      }
+      .memo-block {
+        position: absolute;
+        top: ${memoTopOffset}%;
+        right: ${memoRightOffset}%;
+        color: #0f172a;
+        font-weight: bold;
+        font-size: ${12.5 * fontSizeScale}px;
+        z-index: 10;
+      }
+      .content-block {
+        position: absolute;
+        top: ${contentTopOffset}%;
+        left: 9%;
+        right: 9%;
+        bottom: 10.5%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 10;
+        font-size: ${13 * fontSizeScale}px;
+        line-height: 1.75;
+      }
+      .subject-line {
+        font-weight: bold;
+        font-size: ${13.5 * fontSizeScale}px;
+        color: #000000;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        margin: 10px 0 6px 0;
+      }
+      .signatory-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding-top: ${signatureGap}px;
+        font-weight: bold;
+        font-size: ${12.5 * fontSizeScale}px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="a4-container">
+      <img src="${originUrl}/letterhead.png" class="letterhead-bg" alt="Letterhead" />
+      
+      <div class="date-block">
+        তারিখঃ ${letterDate}
+      </div>
 
-            <div class="memo-block">
-              স্মারক নংঃ <span style="font-family: monospace;">${memoNo}</span>
-            </div>
+      <div class="memo-block">
+        স্মারক নংঃ <span style="font-family: monospace;">${memoNo}</span>
+      </div>
 
-            <div class="content-block">
-              <div>
-                <div style="margin-bottom: 8px;">
-                  <p style="font-weight: bold; margin-bottom: 2px;">বরাবর</p>
-                  ${recipientFormatted}
-                </div>
-
-                ${subject ? `<div class="subject-line">${subjectFormatted}</div>` : ""}
-
-                ${salutation ? `<p style="font-weight: 600; margin: 8px 0 6px 0;">${salutation}</p>` : ""}
-
-                <div style="margin-top: 6px;">
-                  ${bodyFormatted}
-                </div>
-              </div>
-
-              <div>
-                <div style="font-weight: 600; margin-bottom: 2px;">
-                  <p>নিবেদক</p>
-                  <p style="font-weight: bold;">কুঞ্জছায়া ক্লাবের পক্ষে</p>
-                </div>
-
-                <div class="signatory-row">
-                  <div>
-                    <span>${signatoryLeftTitle} </span>
-                    <span>${signatoryLeftName}</span>
-                  </div>
-                  <div>
-                    <span>${signatoryRightTitle} </span>
-                    <span>${signatoryRightName}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div class="content-block">
+        <div>
+          <div style="margin-bottom: 8px;">
+            <p style="font-weight: bold; margin-bottom: 2px;">বরাবর</p>
+            ${recipientFormatted}
           </div>
 
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-                window.close();
-              }, 400);
-            };
-          <\/script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+          ${subject ? `<div class="subject-line">${subjectFormatted}</div>` : ""}
+
+          ${salutation ? `<p style="font-weight: 600; margin: 8px 0 6px 0;">${salutation}</p>` : ""}
+
+          <div style="margin-top: 6px;">
+            ${bodyFormatted}
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight: 600; margin-bottom: 2px;">
+            <p>নিবেদক</p>
+            <p style="font-weight: bold;">কুঞ্জছায়া ক্লাবের পক্ষে</p>
+          </div>
+
+          <div class="signatory-row">
+            <div>
+              <span>${signatoryLeftTitle} </span>
+              <span>${signatoryLeftName}</span>
+            </div>
+            <div>
+              <span>${signatoryRightTitle} </span>
+              <span>${signatoryRightName}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
   };
 
-  const handleWhatsAppSend = (customPhone, customLetter) => {
-    const targetPhone = cleanPhone(customPhone || recipientPhone);
-    const letterToShare = customLetter || {
-      memoNo,
-      date: letterDate,
-      recipient,
-      subject,
-      body,
-      signatoryLeftTitle,
-      signatoryLeftName,
-      signatoryRightTitle,
-      signatoryRightName
-    };
+  // High-Resolution Print Engine (Android & WebView Compatible via Hidden Iframe)
+  const handlePrint = () => {
+    try {
+      const htmlContent = generateLetterHTML();
+      
+      // Attempt 1: Hidden Iframe Print (works seamlessly without new tab/window popups in WebViews)
+      let iframe = document.getElementById("letter-print-iframe");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "letter-print-iframe";
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        document.body.appendChild(iframe);
+      }
 
-    const text = `*কুঞ্জছায়া ক্লাব - অফিসিয়াল পত্র / নোটিশ*
-স্মারক নংঃ ${letterToShare.memoNo}
-তারিখঃ ${letterToShare.date}
+      const doc = iframe.contentWindow?.document || iframe.contentDocument;
+      if (doc) {
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch (e) {
+            window.print();
+          }
+        }, 500);
+        return;
+      }
+    } catch (err) {
+      console.warn("Iframe print fallback to window:", err);
+    }
 
-${letterToShare.subject}
+    // Fallback: window print
+    window.print();
+  };
 
-${letterToShare.salutation || ""}
-${letterToShare.body}
-
-নিবেদক:
-${letterToShare.signatoryLeftTitle || "আহ্বায়কঃ"} ${letterToShare.signatoryLeftName || ""}
-${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${letterToShare.signatoryRightName || ""}
-
-কুঞ্জছায়া আবাসিক এলাকা, বায়েজিদ থানা রোড, ২নং জালালাবাদ, চট্টগ্রাম-৪২১০।`;
-
-    if (targetPhone) {
-      window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`, "_blank");
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  // Direct Download of Standalone Printable HTML / Document
+  const handleDownloadDocument = () => {
+    try {
+      const htmlContent = generateLetterHTML();
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Letter_${memoNo.replace(/[^a-zA-Z0-9_-]/g, "_")}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast(isBn ? "প্রিন্টযোগ্য ফাইল ডাউনলোড সম্পন্ন হয়েছে!" : "Printable document downloaded!");
+    } catch (err) {
+      toast(isBn ? "ডাউনলোডে ত্রুটি দেখা দিয়েছে।" : "Failed to download document.", "error");
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: C.outlineVariant }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-600 to-orange-700 text-white flex items-center justify-center font-black shadow-md">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-600 to-orange-700 text-white flex items-center justify-center font-black shadow-md shrink-0">
             <FileText size={20} />
           </div>
           <div>
@@ -398,7 +432,7 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setViewMode("editor")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${viewMode === "editor" ? "bg-emerald-700 text-white shadow-sm" : "bg-slate-100 text-gray-700 hover:bg-slate-200"}`}
@@ -415,387 +449,388 @@ ${letterToShare.signatoryRightTitle || "সদস্য সচিবঃ"} ${lett
       </div>
 
       {viewMode === "editor" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* LEFT: FORM CONTROLS & TEMPLATES (5 Cols) */}
-          <div className="lg:col-span-5 space-y-4">
-            {/* Template Selector Card */}
-            <Card className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-amber-600" />
-                  {isBn ? "রেডিমেড টেমপ্লেট নির্বাচন করুন" : "Choose Letter Template"}
-                </span>
-                <button
-                  onClick={() => setShowAdjustments(prev => !prev)}
-                  className="text-[11px] text-emerald-800 font-bold flex items-center gap-1 hover:underline"
-                >
-                  <Sliders size={12} /> {showAdjustments ? (isBn ? "প্যাডিং লুকান" : "Hide Tuning") : (isBn ? "প্যাডিং সমন্বয়" : "Fine Tune Layout")}
-                </button>
-              </div>
-              <select
-                onChange={e => handleApplyTemplate(e.target.value)}
-                style={inputStyle()}
-                className={inputCls + " text-xs font-semibold"}
-              >
-                {LETTER_TEMPLATES.map(t => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-              </select>
+        <div className="space-y-4">
+          {/* Mobile Tab Toggle (Visible only on small/mobile screens) */}
+          <div className="lg:hidden flex rounded-xl p-1 bg-slate-100 border border-slate-200">
+            <button
+              onClick={() => setMobileTab("editor")}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${mobileTab === "editor" ? "bg-emerald-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+            >
+              {isBn ? "১. পত্রের তথ্য ও রচনা" : "1. Letter Form"}
+            </button>
+            <button
+              onClick={() => setMobileTab("preview")}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${mobileTab === "preview" ? "bg-emerald-700 text-white shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+            >
+              <Eye size={14} />
+              {isBn ? "২. A4 প্যাড লাইভ প্রিভিউ" : "2. Live A4 Preview"}
+            </button>
+          </div>
 
-              {/* Collapsible Fine Tuning Controls */}
-              {showAdjustments && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-[11px] animate-in fade-in duration-150">
-                  <p className="font-bold text-gray-700 border-b pb-1">প্যাডের টেক্সট পজিশন সমন্বয় (Layout Tuning)</p>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">তারিখ ওপরের দূরত্ব: {dateTopOffset}%</label>
-                      <input
-                        type="range"
-                        min="5.0"
-                        max="12.0"
-                        step="0.2"
-                        value={dateTopOffset}
-                        onChange={e => setDateTopOffset(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">তারিখ ডানের দূরত্ব: {dateRightOffset}%</label>
-                      <input
-                        type="range"
-                        min="12.0"
-                        max="30.0"
-                        step="0.5"
-                        value={dateRightOffset}
-                        onChange={e => setDateRightOffset(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">স্মারক ওপরের দূরত্ব: {memoTopOffset}%</label>
-                      <input
-                        type="range"
-                        min="10.0"
-                        max="16.0"
-                        step="0.2"
-                        value={memoTopOffset}
-                        onChange={e => setMemoTopOffset(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">স্মারক ডানের দূরত্ব: {memoRightOffset}%</label>
-                      <input
-                        type="range"
-                        min="14.0"
-                        max="32.0"
-                        step="0.5"
-                        value={memoRightOffset}
-                        onChange={e => setMemoRightOffset(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">স্বাক্ষরের ফাঁকা জায়গা: {signatureGap}px</label>
-                      <input
-                        type="range"
-                        min="15"
-                        max="80"
-                        step="2"
-                        value={signatureGap}
-                        onChange={e => setSignatureGap(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-500 font-semibold mb-0.5">বডি টেক্সট শুরু: {contentTopOffset}%</label>
-                      <input
-                        type="range"
-                        min="14.0"
-                        max="22.0"
-                        step="0.5"
-                        value={contentTopOffset}
-                        onChange={e => setContentTopOffset(Number(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* Letter Editor Form */}
-            <Card className="p-4 space-y-3 text-xs">
-              <h3 className="font-bold text-gray-900 border-b pb-2 flex items-center justify-between">
-                <span>{isBn ? "পত্রের বিবরণ ও ফিল্ডসমূহ" : "Letter Details"}</span>
-                <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  {isBn ? "লাইভ প্রিভিউ সক্রিয়" : "Live Preview"}
-                </span>
-              </h3>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={isBn ? "স্মারক নং (Memo / Ref No.)" : "Memo / Ref No."}>
-                  <input
-                    style={inputStyle()}
-                    className={inputCls}
-                    value={memoNo}
-                    onChange={e => setMemoNo(e.target.value)}
-                    placeholder="WC/C/2026/01-001"
-                  />
-                </Field>
-
-                <Field label={isBn ? "তারিখ (Date)" : "Date"}>
-                  <input
-                    style={inputStyle()}
-                    className={inputCls}
-                    value={letterDate}
-                    onChange={e => setLetterDate(e.target.value)}
-                    placeholder="৩১/০৭/২০২৬"
-                  />
-                </Field>
-              </div>
-
-              <Field label={isBn ? "প্রাপক / বরাবর (Recipient Details)" : "Recipient Address"}>
-                <textarea
-                  rows={3}
-                  style={inputStyle()}
-                  className={inputCls}
-                  value={recipient}
-                  onChange={e => setRecipient(e.target.value)}
-                  placeholder="জনাব সাহেদ ইকবাল বাবু..."
-                />
-              </Field>
-
-              <Field label={isBn ? "প্রাপকের মোবাইল নম্বর (হোয়াটসঅ্যাপের জন্য)" : "Recipient Mobile (for WhatsApp)"}>
-                <input
-                  style={inputStyle()}
-                  className={inputCls}
-                  value={recipientPhone}
-                  onChange={e => setRecipientPhone(e.target.value)}
-                  placeholder="01711-XXXXXX"
-                />
-              </Field>
-
-              <Field label={isBn ? "বিষয় (Subject)" : "Subject"}>
-                <input
-                  style={inputStyle()}
-                  className={inputCls}
-                  value={subject}
-                  onChange={e => setSubject(e.target.value)}
-                  placeholder="বিষয়: ..."
-                />
-              </Field>
-
-              <Field label={isBn ? "সম্ভাষণ (Salutation)" : "Salutation"}>
-                <input
-                  style={inputStyle()}
-                  className={inputCls}
-                  value={salutation}
-                  onChange={e => setSalutation(e.target.value)}
-                  placeholder="প্রিয় মহোদয়,"
-                />
-              </Field>
-
-              <Field label={isBn ? "মূল বক্তব্য (Letter Content / Body)" : "Letter Body"}>
-                <textarea
-                  rows={7}
-                  style={inputStyle()}
-                  className={inputCls + " leading-relaxed"}
-                  value={body}
-                  onChange={e => setBody(e.target.value)}
-                  placeholder="পত্রের মূল বিবরণ লিখুন..."
-                />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-3 pt-1 border-t">
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{isBn ? "বাম স্বাক্ষরকারী" : "Left Signatory"}</label>
-                  <input
-                    style={inputStyle()}
-                    className={inputCls + " text-xs mb-1.5"}
-                    value={signatoryLeftTitle}
-                    onChange={e => setSignatoryLeftTitle(e.target.value)}
-                    placeholder="আহ্বায়কঃ"
-                  />
-                  <input
-                    style={inputStyle()}
-                    className={inputCls + " text-xs font-bold"}
-                    value={signatoryLeftName}
-                    onChange={e => setSignatoryLeftName(e.target.value)}
-                    placeholder="জাকারিয়া হাসান"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{isBn ? "ডান স্বাক্ষরকারী" : "Right Signatory"}</label>
-                  <input
-                    style={inputStyle()}
-                    className={inputCls + " text-xs mb-1.5"}
-                    value={signatoryRightTitle}
-                    onChange={e => setSignatoryRightTitle(e.target.value)}
-                    placeholder="সদস্য সচিবঃ"
-                  />
-                  <input
-                    style={inputStyle()}
-                    className={inputCls + " text-xs font-bold"}
-                    value={signatoryRightName}
-                    onChange={e => setSignatoryRightName(e.target.value)}
-                    placeholder="খালিদ হাসান"
-                  />
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 pt-3 border-t">
-                <Btn full icon={Check} onClick={handleSaveLetter}>
-                  {isBn ? "স্মারক রেজিস্টারে সংরক্ষণ করুন" : "Save to Official Register"}
-                </Btn>
-                <div className="flex items-center gap-2">
-                  <Btn full variant="outline" icon={Printer} onClick={handlePrint}>
-                    {isBn ? "প্রিন্ট / PDF ডাউনলোড" : "Print / PDF"}
-                  </Btn>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* LEFT: FORM CONTROLS & TEMPLATES (5 Cols on desktop, toggle on mobile) */}
+            <div className={`lg:col-span-5 space-y-4 ${mobileTab === "preview" ? "hidden lg:block" : "block"}`}>
+              {/* Template Selector Card */}
+              <Card className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-600" />
+                    {isBn ? "রেডিমেড টেমপ্লেট নির্বাচন করুন" : "Choose Letter Template"}
+                  </span>
                   <button
+                    onClick={() => setShowAdjustments(prev => !prev)}
+                    className="text-[11px] text-emerald-800 font-bold flex items-center gap-1 hover:underline"
+                  >
+                    <Sliders size={12} /> {showAdjustments ? (isBn ? "প্যাডিং লুকান" : "Hide Tuning") : (isBn ? "প্যাডিং সমন্বয়" : "Fine Tune Layout")}
+                  </button>
+                </div>
+                <select
+                  onChange={e => handleApplyTemplate(e.target.value)}
+                  style={inputStyle()}
+                  className={inputCls + " text-xs font-semibold"}
+                >
+                  {LETTER_TEMPLATES.map(t => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </select>
+
+                {/* Collapsible Fine Tuning Controls */}
+                {showAdjustments && (
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-[11px] animate-in fade-in duration-150">
+                    <p className="font-bold text-gray-700 border-b pb-1">প্যাডের টেক্সট পজিশন সমন্বয় (Layout Tuning)</p>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-gray-500 font-semibold">তারিখ টপ পজিশন: {dateTopOffset}%</label>
+                        <input
+                          type="range"
+                          min="4"
+                          max="14"
+                          step="0.1"
+                          value={dateTopOffset}
+                          onChange={e => setDateTopOffset(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-amber-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-500 font-semibold">তারিখ ডান থেকে: {dateRightOffset}%</label>
+                        <input
+                          type="range"
+                          min="10"
+                          max="35"
+                          step="0.5"
+                          value={dateRightOffset}
+                          onChange={e => setDateRightOffset(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-amber-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-gray-500 font-semibold">স্মারক নং টপ: {memoTopOffset}%</label>
+                        <input
+                          type="range"
+                          min="10"
+                          max="18"
+                          step="0.1"
+                          value={memoTopOffset}
+                          onChange={e => setMemoTopOffset(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-emerald-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-500 font-semibold">স্মারক নং ডান থেকে: {memoRightOffset}%</label>
+                        <input
+                          type="range"
+                          min="10"
+                          max="35"
+                          step="0.5"
+                          value={memoRightOffset}
+                          onChange={e => setMemoRightOffset(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-emerald-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-gray-500 font-semibold">বক্তব্য টপ পজিশন: {contentTopOffset}%</label>
+                        <input
+                          type="range"
+                          min="14"
+                          max="24"
+                          step="0.5"
+                          value={contentTopOffset}
+                          onChange={e => setContentTopOffset(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-sky-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-500 font-semibold">স্বাক্ষরকারীর গ্যাপ: {signatureGap}px</label>
+                        <input
+                          type="range"
+                          min="15"
+                          max="90"
+                          step="1"
+                          value={signatureGap}
+                          onChange={e => setSignatureGap(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-purple-600"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setDateTopOffset(8.2);
+                        setDateRightOffset(22.0);
+                        setMemoTopOffset(13.2);
+                        setMemoRightOffset(22.0);
+                        setContentTopOffset(17.0);
+                        setSignatureGap(42);
+                        setFontSizeScale(1.0);
+                      }}
+                      className="w-full py-1.5 text-[11px] font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      ডিফল্ট পজিশনে রিসেট করুন (Reset to Standard)
+                    </button>
+                  </div>
+                )}
+              </Card>
+
+              {/* Main Letter Form Card */}
+              <Card className="p-4 space-y-3.5">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={isBn ? "স্মারক নং (Memo No.)" : "Memo Number"}>
+                    <input
+                      style={inputStyle()}
+                      className={inputCls + " font-mono font-bold text-xs"}
+                      value={memoNo}
+                      onChange={e => setMemoNo(e.target.value)}
+                      placeholder="WC/C/2026/01-001"
+                    />
+                  </Field>
+
+                  <Field label={isBn ? "তারিখ (Date)" : "Date"}>
+                    <input
+                      style={inputStyle()}
+                      className={inputCls}
+                      value={letterDate}
+                      onChange={e => setLetterDate(e.target.value)}
+                      placeholder="৩১/০৭/২০২৬"
+                    />
+                  </Field>
+                </div>
+
+                <Field label={isBn ? "প্রাপক / বরাবর (Recipient Details)" : "Recipient Address"}>
+                  <textarea
+                    rows={3}
+                    style={inputStyle()}
+                    className={inputCls}
+                    value={recipient}
+                    onChange={e => setRecipient(e.target.value)}
+                    placeholder="জনাব সাহেদ ইকবাল বাবু..."
+                  />
+                </Field>
+
+                <Field label={isBn ? "প্রাপকের মোবাইল নম্বর (হোয়াটসঅ্যাপের জন্য)" : "Recipient Mobile (for WhatsApp)"}>
+                  <input
+                    style={inputStyle()}
+                    className={inputCls}
+                    value={recipientPhone}
+                    onChange={e => setRecipientPhone(e.target.value)}
+                    placeholder="01711-XXXXXX"
+                  />
+                </Field>
+
+                <Field label={isBn ? "বিষয় (Subject)" : "Subject"}>
+                  <input
+                    style={inputStyle()}
+                    className={inputCls}
+                    value={subject}
+                    onChange={e => setSubject(e.target.value)}
+                    placeholder="বিষয়: ..."
+                  />
+                </Field>
+
+                <Field label={isBn ? "সম্ভাষণ (Salutation)" : "Salutation"}>
+                  <input
+                    style={inputStyle()}
+                    className={inputCls}
+                    value={salutation}
+                    onChange={e => setSalutation(e.target.value)}
+                    placeholder="প্রিয় মহোদয়,"
+                  />
+                </Field>
+
+                <Field label={isBn ? "মূল বক্তব্য (Letter Content / Body)" : "Letter Body"}>
+                  <textarea
+                    rows={7}
+                    style={inputStyle()}
+                    className={inputCls + " leading-relaxed"}
+                    value={body}
+                    onChange={e => setBody(e.target.value)}
+                    placeholder="পত্রের মূল বিবরণ লিখুন..."
+                  />
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3 pt-1 border-t">
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{isBn ? "বাম স্বাক্ষরকারী" : "Left Signatory"}</label>
+                    <input
+                      style={inputStyle()}
+                      className={inputCls + " text-xs mb-1.5"}
+                      value={signatoryLeftTitle}
+                      onChange={e => setSignatoryLeftTitle(e.target.value)}
+                      placeholder="আহ্বায়কঃ"
+                    />
+                    <input
+                      style={inputStyle()}
+                      className={inputCls + " text-xs font-bold"}
+                      value={signatoryLeftName}
+                      onChange={e => setSignatoryLeftName(e.target.value)}
+                      placeholder="জাকারিয়া হাসান"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{isBn ? "ডান স্বাক্ষরকারী" : "Right Signatory"}</label>
+                    <input
+                      style={inputStyle()}
+                      className={inputCls + " text-xs mb-1.5"}
+                      value={signatoryRightTitle}
+                      onChange={e => setSignatoryRightTitle(e.target.value)}
+                      placeholder="সদস্য সচিবঃ"
+                    />
+                    <input
+                      style={inputStyle()}
+                      className={inputCls + " text-xs font-bold"}
+                      value={signatoryRightName}
+                      onChange={e => setSignatoryRightName(e.target.value)}
+                      placeholder="খালিদ হাসান"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 pt-3 border-t">
+                  <Btn full icon={Check} onClick={handleSaveLetter}>
+                    {isBn ? "স্মারক রেজিস্টারে সংরক্ষণ করুন" : "Save to Official Register"}
+                  </Btn>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Btn full variant="outline" icon={Printer} onClick={handlePrint}>
+                      {isBn ? "প্রিন্ট" : "Print"}
+                    </Btn>
+                    <button
+                      type="button"
+                      onClick={handleDownloadDocument}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl font-bold text-xs text-sky-800 bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors shadow-sm"
+                    >
+                      <Download size={14} /> {isBn ? "HTML / PDF" : "Download"}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
                     onClick={() => handleWhatsAppSend()}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
                   >
                     <MessageCircle size={15} /> WhatsApp
                   </button>
                 </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* RIGHT: A4 OFFICIAL LETTERHEAD CANVAS LIVE PREVIEW (7 Cols) */}
-          <div className="lg:col-span-7 flex flex-col items-center">
-            <div className="w-full flex items-center justify-between mb-2 text-xs text-gray-500 font-semibold px-1">
-              <span>{isBn ? "অফিসিয়াল প্যাড প্রিভিউ (A4 Format)" : "Official A4 Letterhead Preview"}</span>
-              <span className="text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded">210mm × 297mm Standard</span>
+              </Card>
             </div>
 
-            {/* A4 CANVAS CONTAINER WITH ACTUAL IMG BACKGROUND */}
-            <div
-              id="official-letterhead-canvas"
-              className="w-full max-w-[620px] aspect-[1/1.414] bg-white rounded-xl shadow-2xl relative overflow-hidden border border-gray-200 select-text"
-              style={{
-                boxSizing: "border-box",
-                color: "#0f172a",
-                fontFamily: "'Inter', 'Kalpurush', 'SolaimanLipi', sans-serif",
-              }}
-            >
-              {/* Full Bleed Official Letterhead Background Image */}
-              <img
-                src="/letterhead.png"
-                alt="Letterhead Background"
-                className="absolute inset-0 w-full h-full object-fill pointer-events-none z-0"
-              />
+            {/* RIGHT: A4 OFFICIAL LETTERHEAD CANVAS LIVE PREVIEW (7 Cols on desktop, toggle on mobile) */}
+            <div className={`lg:col-span-7 flex flex-col items-center w-full max-w-full ${mobileTab === "editor" ? "hidden lg:flex" : "flex"}`}>
+              {/* Preview Control Toolbar */}
+              <div className="w-full flex items-center justify-between mb-2 px-1 text-xs text-gray-600 flex-wrap gap-2">
+                <span className="font-bold flex items-center gap-1.5">
+                  <FileText size={15} className="text-amber-600" />
+                  {isBn ? "অফিসিয়াল প্যাড প্রিভিউ (A4 Format)" : "Official A4 Letterhead Preview"}
+                </span>
 
-              {/* 1. Date (তারিখ) - Placed cleanly inside the top orange bar */}
-              <div
-                className="absolute text-white font-bold tracking-wide select-all z-10"
-                style={{
-                  top: `${dateTopOffset}%`,
-                  right: `${dateRightOffset}%`,
-                  fontSize: `${12.5 * fontSizeScale}px`,
-                }}
-              >
-                তারিখঃ {letterDate}
-              </div>
-
-              {/* 2. Memo No. (স্মারক নং) - Exactly aligned with the red mark in clean WHITE area */}
-              <div
-                className="absolute text-gray-900 font-bold select-all z-10"
-                style={{
-                  top: `${memoTopOffset}%`,
-                  right: `${memoRightOffset}%`,
-                  fontSize: `${12 * fontSizeScale}px`,
-                }}
-              >
-                স্মারক নংঃ <span className="font-mono">{memoNo}</span>
-              </div>
-
-              {/* 3. Main Content Area (বরাবর, বিষয়, সম্ভাষণ, মূল বক্তব্য ও সমাপনী) */}
-              <div
-                className="absolute left-[9%] right-[9%] bottom-[10.5%] flex flex-col justify-between z-10"
-                style={{
-                  top: `${contentTopOffset}%`,
-                }}
-              >
-                {/* Upper Section */}
-                <div
-                  className="space-y-2 text-gray-900"
-                  style={{
-                    fontSize: `${12.5 * fontSizeScale}px`,
-                    lineHeight: "1.7",
-                  }}
-                >
-                  {/* Recipient / বরাবর */}
-                  <div className="space-y-0.5 text-left font-medium">
-                    <p className="font-bold text-gray-950">বরাবর</p>
-                    {recipient.split("\n").map((line, idx) => (
-                      <p key={idx} className="leading-tight text-gray-800">{line}</p>
-                    ))}
-                  </div>
-
-                  {/* Subject / বিষয় */}
-                  {subject && (
-                    <div
-                      className="font-bold text-gray-950 underline decoration-gray-400 decoration-1 underline-offset-4 pt-1 pb-0.5 leading-snug"
-                      style={{
-                        fontSize: `${13 * fontSizeScale}px`,
-                      }}
-                    >
-                      {subject.startsWith("বিষয়") ? subject : `বিষয়: ${subject}`}
-                    </div>
-                  )}
-
-                  {/* Salutation / সম্ভাষণ */}
-                  {salutation && (
-                    <p className="font-semibold text-gray-900">{salutation}</p>
-                  )}
-
-                  {/* Body Paragraphs / মূল বক্তব্য */}
-                  <div className="space-y-2 text-justify">
-                    {body.split("\n\n").map((para, idx) => (
-                      <p key={idx} className="leading-relaxed indent-5">{para}</p>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bottom Section: Closing & Signatures with ample spacing */}
-                <div
-                  className="space-y-1.5 pt-1"
-                  style={{
-                    fontSize: `${12 * fontSizeScale}px`,
-                  }}
-                >
-                  <div className="text-left font-semibold text-gray-800">
-                    <p>নিবেদক</p>
-                    <p className="font-bold text-gray-950">কুঞ্জছায়া ক্লাবের পক্ষে</p>
-                  </div>
-
-                  <div
-                    className="flex justify-between items-end text-gray-900 font-bold"
-                    style={{
-                      paddingTop: `${signatureGap}px`,
-                    }}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCustomZoom(z => Math.max(0.6, z - 0.1))}
+                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-700"
+                    title="Zoom Out"
                   >
-                    <div className="text-left">
-                      <span>{signatoryLeftTitle} </span>
-                      <span>{signatoryLeftName}</span>
-                    </div>
-                    <div className="text-right">
-                      <span>{signatoryRightTitle} </span>
-                      <span>{signatoryRightName}</span>
-                    </div>
-                  </div>
+                    <ZoomOut size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomZoom(1.0)}
+                    className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-gray-700"
+                    title="Fit to screen"
+                  >
+                    {Math.round(effectiveScale * 100)}% Fit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomZoom(z => Math.min(1.8, z + 0.1))}
+                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-700"
+                    title="Zoom In"
+                  >
+                    <ZoomIn size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFullscreenPreview(true)}
+                    className="p-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800"
+                    title="Full Screen Preview"
+                  >
+                    <Maximize2 size={13} />
+                  </button>
                 </div>
+              </div>
+
+              {/* AUTO-SCALING RESPONSIVE A4 CANVAS CONTAINER */}
+              <div
+                ref={canvasContainerRef}
+                className="w-full flex justify-center items-start overflow-hidden py-2 bg-slate-100/70 rounded-2xl border border-slate-200"
+                style={{
+                  minHeight: `${Math.round(1123 * effectiveScale)}px`,
+                  height: `${Math.round(1123 * effectiveScale + 12)}px`,
+                }}
+              >
+                <div
+                  style={{
+                    width: "794px",
+                    height: "1123px",
+                    transform: `scale(${effectiveScale})`,
+                    transformOrigin: "top center",
+                    boxShadow: "0 20px 40px -15px rgba(0,0,0,0.25)",
+                  }}
+                  className="rounded-sm overflow-hidden"
+                >
+                  {renderA4LetterCanvas()}
+                </div>
+              </div>
+
+              {/* Mobile Quick Action Buttons below preview */}
+              <div className="w-full grid grid-cols-3 gap-2 mt-3 lg:hidden">
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="flex items-center justify-center gap-1 py-2 px-3 rounded-xl font-bold text-xs text-white bg-slate-800 shadow-sm"
+                >
+                  <Printer size={14} /> {isBn ? "প্রিন্ট" : "Print"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadDocument}
+                  className="flex items-center justify-center gap-1 py-2 px-3 rounded-xl font-bold text-xs text-sky-800 bg-sky-50 border border-sky-200 shadow-sm"
+                >
+                  <Download size={14} /> {isBn ? "ডাউনলোড" : "Export"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleWhatsAppSend()}
+                  className="flex items-center justify-center gap-1 py-2 px-3 rounded-xl font-bold text-xs text-white bg-emerald-600 shadow-sm"
+                >
+                  <MessageCircle size={14} /> WhatsApp
+                </button>
               </div>
             </div>
           </div>

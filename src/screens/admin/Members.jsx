@@ -75,7 +75,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
   };
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-x-hidden">
       <SectionTitle
         action={
           isTopTier ? (

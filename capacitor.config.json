@@ -1,4 +1,4 @@
-﻿{
+{
   "appId": "club.kunjachaya.app",
   "appName": "Kunjachaya Club",
   "webDir": "dist",
@@ -6,6 +6,6 @@
     "androidScheme": "https"
   },
   "android": {
-    "backgroundColor": "#154212"
+    "backgroundColor": "#fcfdf6"
   }
 }

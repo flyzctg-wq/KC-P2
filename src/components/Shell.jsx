@@ -71,7 +71,7 @@ export default function Shell({ session, view, setView, logout, lang, setLang, t
   const bottomNav = isAdmin ? ADMIN_BOTTOM_NAV : RESIDENT_BOTTOM_NAV;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden" style={{ backgroundColor: C.surface }}>
       {/* Desktop sidebar = "Web Platform" */}
       <aside className="hidden lg:flex lg:w-64 flex-col shrink-0 border-r px-4 py-6" style={{ borderColor: C.outlineVariant, backgroundColor: C.surface }}>
         <div className="flex items-center gap-2 px-2 mb-8">
