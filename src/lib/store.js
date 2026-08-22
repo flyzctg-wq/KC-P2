@@ -111,6 +111,7 @@ async function fetchAll() {
         photoUrl: form.photoUrl || "",
         bio: form.bio || "",
         pledgeAccepted: form.pledgeAccepted ?? true,
+        formScanUrl: p.permissions?.formScanUrl || "",
       };
     }),
     notices: (notices || []).map(n => ({

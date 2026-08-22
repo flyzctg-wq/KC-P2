@@ -3,7 +3,7 @@ import {
   Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
-  FileText, Sun, Moon, Laptop
+  FileText, Sun, Moon, Laptop, Receipt
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
@@ -34,6 +34,7 @@ const ADMIN_NAV = [
   { key: "a-dashboard", label: "dashboard", icon: BarChart3 },
   { key: "a-members", label: "members", icon: Users },
   { key: "a-dues", label: "financials", icon: Wallet },
+  { key: "a-payment-history", label: "paymentHistory", icon: Receipt },
   { key: "chat", label: "chat", icon: MessageCircle },
   { key: "a-notices", label: "notices", icon: Bell },
   { key: "a-letters", label: "letters", icon: FileText },

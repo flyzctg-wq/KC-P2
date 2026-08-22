@@ -152,6 +152,7 @@ export default function App() {
               photoUrl: form.photoUrl || "",
               bio: form.bio || "",
               pledgeAccepted: form.pledgeAccepted ?? true,
+              formScanUrl: profileRow.permissions?.formScanUrl || "",
             };
             if (u.role === "admin" && (u.post === "President" || u.post === "General Secretary")) {
               const fullPerms = {

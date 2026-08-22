@@ -334,7 +334,7 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
 
   // Scanned Form Upload state
   const [scanUploading, setScanUploading] = useState(false);
-  const [scanUrl, setScanUrl] = useState(user.formScanUrl || "");
+  const [scanUrl, setScanUrl] = useState(user.formScanUrl || user.permissions?.formScanUrl || "");
   const [scanPreview, setScanPreview] = useState(false);
   const scanInputRef = React.useRef(null);
 
