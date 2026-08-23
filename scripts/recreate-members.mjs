@@ -34,19 +34,19 @@ const DEFAULT_PASSWORD = "Member@2026";
 
 // 13 members whose auth accounts were deleted — recreate with known profile UUIDs
 const MEMBERS_TO_CREATE = [
-  { id: "242ea4d7-50da-437f-b7eb-e51f366516bf", email: "shaheen@kunjachaya.club",  name: "Manjur Morshed Shaheen" },
-  { id: "64ae6844-7a74-4dc1-aba5-ec552615e720", email: "khaled@kunjachaya.club",   name: "Khaled Mahmud" },
-  { id: "6415a505-1c68-41a7-9098-b130ef8d023c", email: "zakaria@kunjachaya.club",  name: "Zakaria Hasan" },
-  { id: "7d83e9ed-347a-40bb-a654-e02bdf617b33", email: "nurnabi@kunjachaya.club",  name: "Md. Nurnabi" },
-  { id: "28233936-93c5-43a1-b52c-bd238ccbe829", email: "iqbal@kunjachaya.club",    name: "S. M. Iqbal Bahar" },
-  { id: "e5e36214-ae8a-4762-a0ba-9d8968daf568", email: "aminur@kunjachaya.club",   name: "Aminur Rahman" },
-  { id: "88e5eeaf-62fc-432c-b52a-4ed15e4dac22", email: "afsar@kunjachaya.club",    name: "Md. Nurul Afsar" },
-  { id: "473e8da0-c3e8-4692-a8e5-11c9bd6f6995", email: "kafil@kunjachaya.club",    name: "Kafil Uddin" },
-  { id: "7604f0b8-2265-4351-a00f-c5d4884ab82a", email: "azizur@kunjachaya.club",   name: "Azizur Rahman" },
-  { id: "1a89a8a7-b39f-4cf7-8920-a1bb3a3a2167", email: "mehdi@kunjachaya.club",    name: "Mehdi Hasan Babu" },
-  { id: "352f9e27-b903-4453-8de0-536760d32491", email: "humayun@kunjachaya.club",  name: "Md. Humayungir Chowdhury" },
-  { id: "8ffa7ae0-85cf-4307-ada3-32f957aa6673", email: "sourav@kunjachaya.club",   name: "Sourav Ahmad Chowdhury" },
-  { id: "cd77a957-83bf-4df7-a333-f651dbf6672a", email: "jewel@kunjachaya.club",    name: "Jewel Khan" },
+  { id: "242ea4d7-50da-437f-b7eb-e51f366516bf", code: "001", email: "shaheen@kunjachaya.club",  name: "Manjur Morshed Shaheen" },
+  { id: "e5e36214-ae8a-4762-a0ba-9d8968daf568", code: "002", email: "aminur@kunjachaya.club",   name: "Aminur Rahman" },
+  { id: "6415a505-1c68-41a7-9098-b130ef8d023c", code: "003", email: "zakaria@kunjachaya.club",  name: "Zakaria Hasan" },
+  { id: "88e5eeaf-62fc-432c-b52a-4ed15e4dac22", code: "004", email: "afsar@kunjachaya.club",    name: "Md. Nurul Afsar" },
+  { id: "473e8da0-c3e8-4692-a8e5-11c9bd6f6995", code: "005", email: "kafil@kunjachaya.club",    name: "Kafil Uddin" },
+  { id: "7604f0b8-2265-4351-a00f-c5d4884ab82a", code: "006", email: "azizur@kunjachaya.club",   name: "Md. Azizur Rahman" },
+  { id: "1a89a8a7-b39f-4cf7-8920-a1bb3a3a2167", code: "007", email: "mehdi@kunjachaya.club",    name: "Mehdi Hasan Babu" },
+  { id: "352f9e27-b903-4453-8de0-536760d32491", code: "008", email: "humayun@kunjachaya.club",  name: "Md. Humayungir Chowdhury" },
+  { id: "8ffa7ae0-85cf-4307-ada3-32f957aa6673", code: "009", email: "sourav@kunjachaya.club",   name: "Sourav Ahmad Chowdhury" },
+  { id: "cd77a957-83bf-4df7-a333-f651dbf6672a", code: "010", email: "jewel@kunjachaya.club",    name: "Md. Mosleh Uddin Khan Jewel" },
+  { id: "64ae6844-7a74-4dc1-aba5-ec552615e720", code: "011", email: "khaled@kunjachaya.club",   name: "Khaled Mahmud" },
+  { id: "7d83e9ed-347a-40bb-a654-e02bdf617b33", code: "014", email: "nurnabi@kunjachaya.club",  name: "Md. Nur Nabi" },
+  { id: "28233936-93c5-43a1-b52c-bd238ccbe829", code: "013", email: "iqbal@kunjachaya.club",    name: "S. M. Iqbal Bahar" },
 ];
 
 async function recreateMembers() {

@@ -88,6 +88,7 @@ async function fetchAll() {
         permissions: p.permissions || {}, standingCouncil: p.standing_council,
         bloodGroup: p.blood_group, donor: p.donor, earnedBadges: p.earned_badges || [],
         joinedDate: p.joined_date,
+        memberCode: form.memberCode || form.member_code || p.permissions?.memberCode || "",
         nameBn: form.nameBn || "",
         dob: form.dob || "",
         gender: form.gender || "male",

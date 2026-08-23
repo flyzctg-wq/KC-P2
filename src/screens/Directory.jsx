@@ -21,6 +21,7 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
     const matchesSearch = !query ||
       (u.name || "").toLowerCase().includes(query) ||
       (u.nameBn || "").toLowerCase().includes(query) ||
+      (u.memberCode || "").toLowerCase().includes(query) ||
       (u.unit || "").toLowerCase().includes(query) ||
       (u.email || "").toLowerCase().includes(query) ||
       (u.phone || "").toLowerCase().includes(query) ||
@@ -40,7 +41,7 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder={isBn ? "নাম, ইউনিট, মোবাইল নম্বর বা পদবী দিয়ে অনুসন্ধান…" : "Search by name, unit, phone or post…"}
+            placeholder={isBn ? "নাম, কোড, ইউনিট, মোবাইল নম্বর বা পদবী দিয়ে অনুসন্ধান…" : "Search by name, code, unit, phone or post…"}
             style={inputStyle()}
             className={inputCls + " pl-9"}
           />
@@ -86,6 +87,11 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    {u.memberCode && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        #{u.memberCode}
+                      </span>
+                    )}
                     <p className="font-extrabold text-sm truncate text-gray-900">{u.name}</p>
                     {u.post ? (
                       <Badge tone="success">{u.post}</Badge>

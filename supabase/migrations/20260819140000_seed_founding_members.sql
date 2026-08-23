@@ -6,6 +6,7 @@
 create extension if not exists "pgcrypto";
 
 create or replace function seed_club_member(
+  p_member_code text,
   p_email text,
   p_password text,
   p_name text,
@@ -44,7 +45,7 @@ begin
       v_encrypted_pw,
       now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
-      jsonb_build_object('name', p_name, 'phone', p_phone, 'block', p_block, 'unit', p_unit, 'blood_group', p_blood_group),
+      jsonb_build_object('name', p_name, 'phone', p_phone, 'nameBn', p_name_bn, 'memberCode', p_member_code, 'block', p_block, 'unit', p_unit, 'blood_group', p_blood_group),
       now(),
       now(),
       'authenticated',
@@ -71,6 +72,7 @@ begin
     'active',
     true,
     jsonb_build_object(
+      'memberCode', p_member_code,
       'canManageMembers', coalesce((p_permissions->>'canManageMembers')::boolean, false),
       'canManageNotices', coalesce((p_permissions->>'canManageNotices')::boolean, false),
       'canManageFinancials', coalesce((p_permissions->>'canManageFinancials')::boolean, false),
@@ -78,6 +80,7 @@ begin
       'canDeleteItems', coalesce((p_permissions->>'canDeleteItems')::boolean, false),
       'formDetails', jsonb_build_object(
         'nameBn', p_name_bn,
+        'memberCode', p_member_code,
         'pledgeAccepted', true,
         'area', 'কুঞ্জছায়া আবাসিক এলাকা',
         'wardNo', '২নং জালালাবাদ',
@@ -105,115 +108,115 @@ begin
 end;
 $$;
 
--- Seed all 15 Founding Members
+-- Seed all 15 Founding Members (উদ্যোক্তা সদস্যগণ) in Order of Member Codes 001 - 015
 do $$
 begin
-  -- 1. Zakaria Hasan (President)
+  -- 001. Manjur Morshed Shaheen
   perform seed_club_member(
-    'zakaria@kunjachaya.club', 'admin123',
-    'Zakaria Hasan', 'জাকারিয়া হাছান', '+880 1400-601051',
+    '001', 'shaheen@kunjachaya.club', 'member123',
+    'Manjur Morshed Shaheen', 'মনজুর মোর্শেদ শাহীন', '01727-659454',
+    'A', 'A-03', 'resident', 'Founding Member', 'A+', '{}'::jsonb
+  );
+
+  -- 002. Aminur Rahman
+  perform seed_club_member(
+    '002', 'aminur@kunjachaya.club', 'member123',
+    'Aminur Rahman', 'আমিনুর রহমান', '01813-087631',
+    'A', 'A-04', 'resident', 'Founding Member', 'B+', '{}'::jsonb
+  );
+
+  -- 003. Zakaria Hasan (President)
+  perform seed_club_member(
+    '003', 'zakaria@kunjachaya.club', 'admin123',
+    'Zakaria Hasan', 'জাকারিয়া হাছান', '01400-601051',
     'A', 'A-01', 'admin', 'President', 'B+',
     '{"canManageMembers":true,"canManageNotices":true,"canManageFinancials":true,"canManageComplaints":true,"canDeleteItems":true}'::jsonb
   );
 
-  -- 2. Khalid Hasan (General Secretary)
+  -- 004. Md. Nurul Afsar
   perform seed_club_member(
-    'flyzctg@gmail.com', 'admin123',
-    'Khalid Hasan', 'খালিদ হাসান', '+880 1722-227207',
+    '004', 'afsar@kunjachaya.club', 'member123',
+    'Md. Nurul Afsar', 'মোঃ নুরুল আফছার', '01819-393949',
+    'B', 'B-02', 'resident', 'Founding Member', 'O+', '{}'::jsonb
+  );
+
+  -- 005. Kafil Uddin
+  perform seed_club_member(
+    '005', 'kafil@kunjachaya.club', 'member123',
+    'Kafil Uddin', 'কফিল উদ্দিন', '01719-376603',
+    'B', 'B-03', 'resident', 'Founding Member', 'AB+', '{}'::jsonb
+  );
+
+  -- 006. Md. Azizur Rahman
+  perform seed_club_member(
+    '006', 'azizur@kunjachaya.club', 'member123',
+    'Md. Azizur Rahman', 'মোঃ আজিজুর রহমান', '01976-205506',
+    'C', 'C-01', 'resident', 'Founding Member', 'O+', '{}'::jsonb
+  );
+
+  -- 007. Mehdi Hasan Babu
+  perform seed_club_member(
+    '007', 'mehdi@kunjachaya.club', 'member123',
+    'Mehdi Hasan Babu', 'মেহেদী হাসান বাবু', '01903-735545',
+    'C', 'C-02', 'resident', 'Founding Member', 'B+', '{}'::jsonb
+  );
+
+  -- 008. Md. Humayungir Chowdhury
+  perform seed_club_member(
+    '008', 'humayun@kunjachaya.club', 'member123',
+    'Md. Humayungir Chowdhury', 'মোঃ হুমায়ুনগীর চৌধুরী', '01838-357274',
+    'D', 'D-01', 'resident', 'Founding Member', 'A+', '{}'::jsonb
+  );
+
+  -- 009. Sourav Ahmad Chowdhury
+  perform seed_club_member(
+    '009', 'sourav@kunjachaya.club', 'member123',
+    'Sourav Ahmad Chowdhury', 'সৌরভ আহমদ চৌধুরী', '01811-883380',
+    'D', 'D-02', 'resident', 'Founding Member', 'O-', '{}'::jsonb
+  );
+
+  -- 010. Md. Mosleh Uddin Khan Jewel
+  perform seed_club_member(
+    '010', 'jewel@kunjachaya.club', 'member123',
+    'Md. Mosleh Uddin Khan Jewel', 'মোঃ মোসলেহ্ উদ্দিন খান জুয়েল', '01814-810197',
+    'E', 'E-01', 'resident', 'Founding Member', 'B-', '{}'::jsonb
+  );
+
+  -- 011. Khaled Mahmud
+  perform seed_club_member(
+    '011', 'khaled@kunjachaya.club', 'member123',
+    'Khaled Mahmud', 'খালেদ মাহমুদ', '01711-268247',
+    'E', 'E-02', 'resident', 'Founding Member', 'O+', '{}'::jsonb
+  );
+
+  -- 012. Khalid Hasan (General Secretary)
+  perform seed_club_member(
+    '012', 'flyzctg@gmail.com', 'admin123',
+    'Khalid Hasan', 'খালিদ হাসান', '01722-227207',
     'A', 'A-02', 'admin', 'General Secretary', 'A+',
     '{"canManageMembers":true,"canManageNotices":true,"canManageFinancials":true,"canManageComplaints":true,"canDeleteItems":true}'::jsonb
   );
 
-  -- 3. Golam Sarwar Jony (Treasurer)
+  -- 013. S. M. Iqbal Bahar
   perform seed_club_member(
-    'treasurer@kunjachaya.club', 'treasurer123',
-    'Golam Sarwar Jony', 'গোলাম সরোয়ার জনি', '+880 1787-268864',
-    'B', 'B-01', 'admin', 'Treasurer', 'O+',
-    '{"canManageMembers":false,"canManageNotices":false,"canManageFinancials":true,"canManageComplaints":false,"canDeleteItems":false}'::jsonb
-  );
-
-  -- 4. Manjur Morshed Shaheen
-  perform seed_club_member(
-    'shaheen@kunjachaya.club', 'member123',
-    'Manjur Morshed Shaheen', 'মঞ্জুর মোর্শেদ শাহীন', '+880 1727-659454',
-    'A', 'A-03', 'resident', 'Founding Member', 'A+', '{}'::jsonb
-  );
-
-  -- 5. Aminur Rahman
-  perform seed_club_member(
-    'aminur@kunjachaya.club', 'member123',
-    'Aminur Rahman', 'আমিনুর রহমান', '+880 1813-087631',
-    'A', 'A-04', 'resident', 'Founding Member', 'B+', '{}'::jsonb
-  );
-
-  -- 6. Md. Nurul Afsar
-  perform seed_club_member(
-    'afsar@kunjachaya.club', 'member123',
-    'Md. Nurul Afsar', 'মোঃ নুরুল আফছার', '+880 1819-393949',
-    'B', 'B-02', 'resident', 'Founding Member', 'O+', '{}'::jsonb
-  );
-
-  -- 7. Kafil Uddin
-  perform seed_club_member(
-    'kafil@kunjachaya.club', 'member123',
-    'Kafil Uddin', 'কফিল উদ্দিন', '+880 1719-376603',
-    'B', 'B-03', 'resident', 'Founding Member', 'AB+', '{}'::jsonb
-  );
-
-  -- 8. Azizur Rahman
-  perform seed_club_member(
-    'azizur@kunjachaya.club', 'member123',
-    'Azizur Rahman', 'আজিজুর রহমান', '+880 1976-205506',
-    'C', 'C-01', 'resident', 'Founding Member', 'O+', '{}'::jsonb
-  );
-
-  -- 9. Mehdi Hasan Babu
-  perform seed_club_member(
-    'mehdi@kunjachaya.club', 'member123',
-    'Mehdi Hasan Babu', 'মেহেদী হাসান বাবু', '+880 1903-735545',
-    'C', 'C-02', 'resident', 'Founding Member', 'B+', '{}'::jsonb
-  );
-
-  -- 10. Md. Humayungir Chowdhury
-  perform seed_club_member(
-    'humayun@kunjachaya.club', 'member123',
-    'Md. Humayungir Chowdhury', 'মোঃ হুমায়ুনগীর চৌধুরী', '+880 1838-357274',
-    'D', 'D-01', 'resident', 'Founding Member', 'A+', '{}'::jsonb
-  );
-
-  -- 11. Sourav Ahmad Chowdhury
-  perform seed_club_member(
-    'sourav@kunjachaya.club', 'member123',
-    'Sourav Ahmad Chowdhury', 'সৌরভ আহমদ চৌধুরী', '+880 1811-883380',
-    'D', 'D-02', 'resident', 'Founding Member', 'O-', '{}'::jsonb
-  );
-
-  -- 12. Jewel Khan
-  perform seed_club_member(
-    'jewel@kunjachaya.club', 'member123',
-    'Jewel Khan', 'জুয়েল খান', '+880 1814-810197',
-    'E', 'E-01', 'resident', 'Founding Member', 'B-', '{}'::jsonb
-  );
-
-  -- 13. Khaled Mahmud
-  perform seed_club_member(
-    'khaled@kunjachaya.club', 'member123',
-    'Khaled Mahmud', 'খালেদ মাহমুদ', '+880 1711-268247',
-    'E', 'E-02', 'resident', 'Founding Member', 'O+', '{}'::jsonb
-  );
-
-  -- 14. S. M. Iqbal Bahar
-  perform seed_club_member(
-    'iqbal@kunjachaya.club', 'member123',
-    'S. M. Iqbal Bahar', 'এস. এম. ইকবাল বাহার', '+880 1911-841318',
+    '013', 'iqbal@kunjachaya.club', 'member123',
+    'S. M. Iqbal Bahar', 'এস. এম. ইকবাল বাহার', '01911-841318',
     'E', 'E-03', 'resident', 'Founding Member', 'A-', '{}'::jsonb
   );
 
-  -- 15. Md. Nur Nabi
+  -- 014. Md. Nur Nabi
   perform seed_club_member(
-    'nurnabi@kunjachaya.club', 'member123',
-    'Md. Nur Nabi', 'মোঃ নূর নবী', '+880 1913-330703',
+    '014', 'nurnabi@kunjachaya.club', 'member123',
+    'Md. Nur Nabi', 'মোঃ নূর নবী', '01913-330703',
     'E', 'E-04', 'resident', 'Founding Member', 'B+', '{}'::jsonb
+  );
+
+  -- 015. Golam Sarwar Jony (Treasurer)
+  perform seed_club_member(
+    '015', 'treasurer@kunjachaya.club', 'treasurer123',
+    'Golam Sarwar Jony', 'গোলাম সরোয়ার জনি', '01787-268864',
+    'B', 'B-01', 'admin', 'Treasurer', 'O+',
+    '{"canManageMembers":false,"canManageNotices":false,"canManageFinancials":true,"canManageComplaints":false,"canDeleteItems":false}'::jsonb
   );
 end;
 $$;

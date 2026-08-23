@@ -189,6 +189,11 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
+                      {u.memberCode && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          #{u.memberCode}
+                        </span>
+                      )}
                       <p className="font-extrabold text-sm truncate text-gray-900">{u.name}</p>
                       {u.post ? (
                         <Badge tone="success">{u.post}</Badge>
