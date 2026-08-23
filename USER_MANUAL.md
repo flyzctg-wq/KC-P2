@@ -61,12 +61,12 @@ The system categorizes users into distinct constitutional authority levels:
 ### 🇬🇧 English
 - **Directory Search**: Search instantly by Member Code (`#001`–`#015`), Name (English or Bengali), Mobile Number, or Block.
 - **Direct Connect**: Tap the **Call** icon to dial or the **WhatsApp** icon to start a chat.
-- **Form-2 Digital Profile**: Click **Profile** to update personal details, emergency alternate phone, holding info, NID number, and upload/view scanned physical Form-2 registration papers.
+- **Form-2 Digital Profile & Photo Capture**: Click **Profile** to update personal details, emergency alternate phone, holding info, NID number, and upload/view scanned physical Form-2 registration papers. You can take a live photo using the **built-in Camera** (with oval face guide, switch camera, and snapshot preview) or upload from files.
 
 ### 🇧🇩 বাংলা
 - **ডিরেক্টরি অনুসন্ধান**: মেম্বার কোড (`#001`–`#015`), বাংলা বা ইংরেজি নাম, মোবাইল নম্বর বা ব্লক দিয়ে দ্রুত সদস্য খুঁজুন।
 - **সরাসরি যোগাযোগ**: কল বা হোয়াটসঅ্যাপ বাটনে ক্লিক করে এক ট্যাপে কথা বলুন বা বার্তা পাঠান।
-- **ফর্ম-২ পূর্ণাঙ্গ প্রোফাইল**: **প্রোফাইল** অপশনে গিয়ে পিতা-মাতার নাম, পেশা, এনআইডি, স্থায়ী ঠিকানা এবং হার্ডকপি ফর্ম-২ এর স্ক্যান কপি আপলোড ও যাচাই করুন।
+- **ফর্ম-২ পূর্ণাঙ্গ প্রোফাইল ও ক্যামেরা ছবি তোলা**: **প্রোফাইল** অপশনে গিয়ে পিতা-মাতার নাম, পেশা, এনআইডি, স্থায়ী ঠিকানা এবং হার্ডকপি ফর্ম-২ এর স্ক্যান কপি আপলোড ও যাচাই করুন। **ইন-অ্যাপ ক্যামেরা** দিয়ে সরাসরি সেলফি/পাসপোর্ট ছবি তুলুন (ফেস গাইডিং ও প্রিভিউ সুবিধা সহ) অথবা গ্যালারি থেকে ফাইল আপলোড করুন।
 
 ---
 

@@ -1,8 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   User, Phone, Mail, MapPin, Heart, Shield, Check, Printer, FileText, Calendar,
   Building, Award, Briefcase, GraduationCap, Home, Camera, Upload, Trash2, Image as ImageIcon,
-  Lock, Key, Eye, EyeOff, ScanLine, ZoomIn, ExternalLink, Sun, Moon, Laptop, Palette
+  Lock, Key, Eye, EyeOff, ScanLine, ZoomIn, ExternalLink, Sun, Moon, Laptop, Palette,
+  RefreshCw, RotateCcw, AlertCircle, X
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Modal, SectionTitle } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
@@ -20,7 +21,17 @@ export default function Profile({
   const isBn = lang === "bn";
   const s = session || {};
   const fileInputRef = useRef(null);
+  const nativeCameraInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
   const [scanModal, setScanModal] = useState(false);
+  const [cameraModal, setCameraModal] = useState(false);
+  const [photoChoiceModal, setPhotoChoiceModal] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState("user"); // "user" or "environment"
+  const [cameraError, setCameraError] = useState("");
+  const [isCameraStarting, setIsCameraStarting] = useState(false);
+  const [capturedSnapshot, setCapturedSnapshot] = useState(null);
 
   // Initialize form state with Form 2 schema fields
   const [form, setForm] = useState({
@@ -222,8 +233,8 @@ export default function Profile({
       toast(isBn ? "অনুগ্রহ করে একটি ছবি ফাইল (.jpg, .png) নির্বাচন করুন।" : "Please select an image file.", "error");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      toast(isBn ? "ছবির সাইজ ৮ মেগাবাইটের কম হতে হবে।" : "Image size must be under 8MB.", "error");
+    if (file.size > 12 * 1024 * 1024) {
+      toast(isBn ? "ছবির সাইজ ১২ মেগাবাইটের কম হতে হবে।" : "Image size must be under 12MB.", "error");
       return;
     }
 
@@ -232,7 +243,7 @@ export default function Profile({
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const maxDim = 380;
+        const maxDim = 420;
         let width = img.width;
         let height = img.height;
         if (width > height) {
@@ -250,7 +261,7 @@ export default function Profile({
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
         updateField("photoUrl", dataUrl);
         // Automatically save to database immediately
         save(dataUrl);
@@ -263,8 +274,125 @@ export default function Profile({
   const removePhoto = () => {
     updateField("photoUrl", "");
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (nativeCameraInputRef.current) nativeCameraInputRef.current.value = "";
     save("");
   };
+
+  // WebRTC Camera Controls
+  const stopCamera = () => {
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach(t => t.stop());
+      } catch (e) {
+        console.warn("Track stop error:", e);
+      }
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const startCamera = async (facing = cameraFacing) => {
+    stopCamera();
+    setCameraError("");
+    setIsCameraStarting(true);
+    setCapturedSnapshot(null);
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        throw new Error("getUserMedia not supported");
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: facing,
+          width: { ideal: 720 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => {});
+      }
+    } catch (err) {
+      console.warn("Camera start error:", err);
+      setCameraError(
+        isBn
+          ? "ক্যামেরা চালু করা সম্ভব হয়নি। ব্রাউজারে ক্যামেরার অনুমতি দিন অথবা সরাসরি ডিভাইস ক্যামেরা অ্যাপ ব্যবহার করুন।"
+          : "Could not access camera. Please grant camera permission or use device camera."
+      );
+    } finally {
+      setIsCameraStarting(false);
+    }
+  };
+
+  const openCamera = () => {
+    setCapturedSnapshot(null);
+    setCameraModal(true);
+    setTimeout(() => {
+      startCamera(cameraFacing);
+    }, 150);
+  };
+
+  const closeCamera = () => {
+    stopCamera();
+    setCapturedSnapshot(null);
+    setCameraModal(false);
+    setCameraError("");
+  };
+
+  const toggleCameraFacing = () => {
+    const nextFacing = cameraFacing === "user" ? "environment" : "user";
+    setCameraFacing(nextFacing);
+    startCamera(nextFacing);
+  };
+
+  const takeSnapshot = () => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return;
+
+    const canvas = document.createElement("canvas");
+    const videoWidth = video.videoWidth || 640;
+    const videoHeight = video.videoHeight || 640;
+
+    const size = Math.min(videoWidth, videoHeight);
+    const startX = (videoWidth - size) / 2;
+    const startY = (videoHeight - size) / 2;
+
+    const outputSize = 400;
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    const ctx = canvas.getContext("2d");
+
+    if (cameraFacing === "user") {
+      ctx.translate(outputSize, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(video, startX, startY, size, size, 0, 0, outputSize, outputSize);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.86);
+    setCapturedSnapshot(dataUrl);
+    stopCamera();
+  };
+
+  const retakeSnapshot = () => {
+    setCapturedSnapshot(null);
+    startCamera(cameraFacing);
+  };
+
+  const acceptSnapshot = () => {
+    if (!capturedSnapshot) return;
+    updateField("photoUrl", capturedSnapshot);
+    save(capturedSnapshot);
+    closeCamera();
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const religions = [
     { key: "Islam", label: isBn ? "ইসলাম" : "Islam" },
@@ -282,12 +410,22 @@ export default function Profile({
 
   return (
     <div className="max-w-4xl mx-auto pb-12">
-      {/* Hidden File Input for Image Upload */}
+      {/* Hidden File Input for Gallery / File Upload */}
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleImageUpload}
         accept="image/*"
+        className="hidden"
+      />
+
+      {/* Hidden Native Camera Capture Input for direct device camera */}
+      <input
+        type="file"
+        ref={nativeCameraInputRef}
+        capture="user"
+        accept="image/*"
+        onChange={handleImageUpload}
         className="hidden"
       />
 
@@ -326,20 +464,23 @@ export default function Profile({
           <div className="relative group shrink-0">
             <Avatar name={form.name || session.name} photoUrl={form.photoUrl || session.photoUrl} size={84} />
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute inset-0 rounded-full bg-black/40 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-lg"
-              title={isBn ? "ছবি পরিবর্তন করুন" : "Upload Photo"}
+              type="button"
+              onClick={() => setPhotoChoiceModal(true)}
+              className="absolute inset-0 rounded-full bg-black/50 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-lg backdrop-blur-xs"
+              title={isBn ? "ছবি পরিবর্তন / ক্যামেরা" : "Change Photo / Camera"}
             >
-              <Camera size={18} />
-              <span className="text-[9px] font-bold mt-0.5">{isBn ? "আপলোড" : "Upload"}</span>
+              <Camera size={20} />
+              <span className="text-[9px] font-bold mt-0.5">{isBn ? "ক্যামেরা" : "Camera"}</span>
             </button>
-            <div
-              className="absolute -bottom-1 -right-1 p-1.5 rounded-full text-white text-[10px] flex items-center justify-center shadow"
+            <button
+              type="button"
+              onClick={() => setPhotoChoiceModal(true)}
+              className="absolute -bottom-1 -right-1 p-1.5 rounded-full text-white text-[10px] flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
               style={{ backgroundColor: C.primary }}
-              title="Official Photo"
+              title={isBn ? "ছবি তুলুন বা আপলোড করুন" : "Take photo or upload"}
             >
-              <Camera size={12} />
-            </div>
+              <Camera size={13} />
+            </button>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -392,7 +533,7 @@ export default function Profile({
       <Card className="p-5 mb-6 border-dashed border-2" style={{ borderColor: C.outlineVariant }}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-24 h-28 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-2 text-center relative overflow-hidden bg-gray-50" style={{ borderColor: C.primary }}>
+            <div className="w-24 h-28 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-2 text-center relative overflow-hidden bg-gray-50 shrink-0" style={{ borderColor: C.primary }}>
               {form.photoUrl ? (
                 <img
                   src={form.photoUrl}
@@ -415,26 +556,35 @@ export default function Profile({
               </h4>
               <p className="text-xs text-gray-500 max-w-md">
                 {isBn
-                  ? "কুঞ্জছায়া ক্লাব সদস্য ফরম (ফরম-২) অনুসারে সদস্য শনাক্তকরণে ১ কপি স্পষ্ট পাসপোর্ট সাইজ ছবি আপলোড করুন।"
-                  : "Upload a clear passport size photograph for official membership verification and directory identification."}
+                  ? "কুঞ্জছায়া ক্লাব সদস্য ফরম (ফরম-২) অনুসারে ক্যামেরা দিয়ে সরাসরি ছবি তুলুন অথবা গ্যালারি থেকে ১ কপি স্পষ্ট পাসপোর্ট সাইজ ছবি আপলোড করুন।"
+                  : "Capture directly from your camera or upload a clear passport size photograph for official membership verification."}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Btn
               size="sm"
+              icon={Camera}
+              onClick={openCamera}
+            >
+              {isBn ? "ক্যামেরা দিয়ে তুলুন" : "Capture Camera"}
+            </Btn>
+            <Btn
+              size="sm"
+              variant="outline"
               icon={Upload}
               onClick={() => fileInputRef.current?.click()}
             >
-              {form.photoUrl ? (isBn ? "ছবি পরিবর্তন" : "Change Photo") : (isBn ? "ছবি আপলোড করুন" : "Upload Photo")}
+              {isBn ? "ফাইল আপলোড" : "Upload File"}
             </Btn>
             {form.photoUrl && (
               <Btn
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 icon={Trash2}
                 onClick={removePhoto}
+                className="text-rose-600 hover:bg-rose-50"
               >
                 {isBn ? "মুছুন" : "Remove"}
               </Btn>
@@ -1173,6 +1323,163 @@ export default function Profile({
         </div>
 
       </div>
+
+      {/* Quick Photo Action Choice Modal */}
+      <Modal
+        open={photoChoiceModal}
+        onClose={() => setPhotoChoiceModal(false)}
+        title={isBn ? "প্রোফাইল ছবি নির্বাচন" : "Select Profile Photo"}
+        width="max-w-sm"
+      >
+        <div className="space-y-3 py-1">
+          <button
+            type="button"
+            onClick={() => { setPhotoChoiceModal(false); openCamera(); }}
+            className="w-full p-3.5 rounded-2xl flex items-center gap-3.5 border text-left hover:bg-emerald-50/70 transition-colors"
+            style={{ borderColor: C.outlineVariant }}
+          >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-800 shrink-0">
+              <Camera size={20} />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-gray-900">{isBn ? "ক্যামেরা দিয়ে ছবি তুলুন" : "Capture from Camera"}</p>
+              <p className="text-xs text-gray-500">{isBn ? "সরাসরি সেলফি বা পাসপোর্ট ছবি তুলুন" : "Take a live photo using camera"}</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setPhotoChoiceModal(false); fileInputRef.current?.click(); }}
+            className="w-full p-3.5 rounded-2xl flex items-center gap-3.5 border text-left hover:bg-blue-50/70 transition-colors"
+            style={{ borderColor: C.outlineVariant }}
+          >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-800 shrink-0">
+              <Upload size={20} />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-gray-900">{isBn ? "গ্যালারি / ফাইল থেকে আপলোড" : "Upload from Device"}</p>
+              <p className="text-xs text-gray-500">{isBn ? "ডিভাইস থেকে JPG/PNG ছবি বেছে নিন" : "Browse gallery or files"}</p>
+            </div>
+          </button>
+
+          {form.photoUrl && (
+            <button
+              type="button"
+              onClick={() => { setPhotoChoiceModal(false); removePhoto(); }}
+              className="w-full p-3.5 rounded-2xl flex items-center gap-3.5 border border-rose-200 text-left hover:bg-rose-50/70 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-100 text-rose-800 shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-rose-700">{isBn ? "বর্তমান ছবি মুছুন" : "Remove Current Photo"}</p>
+                <p className="text-xs text-rose-500">{isBn ? "ছবি মুছে প্রাথমিক রূপ ফিরিয়ে নিন" : "Reset photo to default"}</p>
+              </div>
+            </button>
+          )}
+        </div>
+      </Modal>
+
+      {/* Interactive Camera Capture Modal */}
+      <Modal
+        open={cameraModal}
+        onClose={closeCamera}
+        title={isBn ? "ক্যামেরা দিয়ে ছবি তুলুন" : "Capture Identification Photo"}
+        width="max-w-md"
+      >
+        <div className="flex flex-col items-center py-1">
+          {cameraError ? (
+            <div className="w-full p-4 rounded-2xl text-center" style={{ backgroundColor: C.errorContainer, color: C.onErrorContainer }}>
+              <AlertCircle size={24} className="mx-auto mb-2" />
+              <p className="text-xs font-semibold">{cameraError}</p>
+              <div className="mt-4 flex flex-col sm:flex-row justify-center gap-2">
+                <Btn size="sm" icon={Camera} onClick={() => { closeCamera(); nativeCameraInputRef.current?.click(); }}>
+                  {isBn ? "ডিভাইস ক্যামেরা অ্যাপ খুলুন" : "Open Camera App"}
+                </Btn>
+                <Btn size="sm" variant="outline" icon={Upload} onClick={() => { closeCamera(); fileInputRef.current?.click(); }}>
+                  {isBn ? "গ্যালারি থেকে বেছে নিন" : "Choose from Gallery"}
+                </Btn>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full flex flex-col items-center">
+              {/* Viewfinder Frame */}
+              <div className="relative w-64 h-64 sm:w-72 sm:h-72 bg-black rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center border-4 border-emerald-600">
+                {capturedSnapshot ? (
+                  <img src={capturedSnapshot} alt="Snapshot Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <video
+                      ref={videoRef}
+                      playsInline
+                      muted
+                      autoPlay
+                      className={`w-full h-full object-cover ${cameraFacing === "user" ? "-scale-x-100" : ""}`}
+                    />
+                    {/* Passport Oval Framing Guide */}
+                    <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+                      <div className="w-44 h-52 border-2 border-dashed border-white/80 rounded-full flex items-center justify-center shadow-sm">
+                        <div className="w-32 h-40 border border-white/40 rounded-full" />
+                      </div>
+                      <span className="absolute bottom-2 text-[10px] text-white/95 bg-black/60 px-2.5 py-0.5 rounded-full backdrop-blur-xs font-semibold">
+                        {isBn ? "বৃত্তে মুখমণ্ডল সোজা রাখুন" : "Align face inside frame"}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Viewfinder Controls */}
+              <div className="mt-5 w-full flex items-center justify-center gap-3">
+                {capturedSnapshot ? (
+                  <>
+                    <Btn
+                      variant="outline"
+                      icon={RotateCcw}
+                      onClick={retakeSnapshot}
+                    >
+                      {isBn ? "আবার তুলুন" : "Retake"}
+                    </Btn>
+                    <Btn
+                      icon={Check}
+                      onClick={acceptSnapshot}
+                    >
+                      {isBn ? "ছবিটি ব্যবহার করুন" : "Use Photo"}
+                    </Btn>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={toggleCameraFacing}
+                      className="p-3 rounded-full border hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      style={{ borderColor: C.outlineVariant, color: C.onSurface }}
+                      title={isBn ? "ক্যামেরা পরিবর্তন করুন" : "Switch Camera"}
+                    >
+                      <RefreshCw size={17} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={takeSnapshot}
+                      className="px-6 py-2.5 rounded-full font-bold text-white shadow-lg flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
+                      style={{ backgroundColor: C.primary }}
+                    >
+                      <Camera size={17} />
+                      <span>{isBn ? "ছবি তুলুন" : "Capture"}</span>
+                    </button>
+                    <Btn
+                      variant="ghost"
+                      onClick={closeCamera}
+                    >
+                      {isBn ? "বাতিল" : "Cancel"}
+                    </Btn>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
