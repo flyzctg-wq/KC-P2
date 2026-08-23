@@ -26,6 +26,7 @@ const Officers = lazy(() => import("./screens/Officers"));
 const Constitution = lazy(() => import("./screens/Constitution"));
 const Events = lazy(() => import("./screens/Events"));
 const Legal = lazy(() => import("./screens/Legal"));
+const Settings = lazy(() => import("./screens/Settings"));
 
 const AdminDashboard = lazy(() => import("./screens/admin/Dashboard"));
 const AdminMembers = lazy(() => import("./screens/admin/Members"));
@@ -46,11 +47,17 @@ function ScreenFallback() {
   );
 }
 
-export default function Router({ session, db, persist, view, setView, toast, logActivity, setSession, lang, t, theme, setTheme }) {
+export default function Router({
+  session, db, persist, view, setView, toast, logActivity, setSession,
+  lang, setLang, t, theme, setTheme, fontSize, setFontSize, appSettings, setAppSettings
+}) {
   const [params, setParams] = useState({});
   const go = (v, p = {}) => { setParams(p); setView(v); };
 
-  const props = { session, db, persist, toast, logActivity, go, params, setSession, lang, t, theme, setTheme };
+  const props = {
+    session, db, persist, toast, logActivity, go, params, setSession,
+    lang, setLang, t, theme, setTheme, fontSize, setFontSize, appSettings, setAppSettings
+  };
 
   const Screen = (() => {
     switch (view) {
@@ -84,6 +91,7 @@ export default function Router({ session, db, persist, view, setView, toast, log
       case "events": return Events;
       case "constitution": return Constitution;
       case "legal": return Legal;
+      case "settings": return Settings;
       default: return ResidentHome;
     }
   })();

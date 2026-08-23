@@ -3,7 +3,7 @@ import {
   Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
-  FileText, Sun, Moon, Laptop, Receipt
+  FileText, Sun, Moon, Laptop, Receipt, Settings
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
@@ -27,6 +27,7 @@ const RESIDENT_NAV = [
   { key: "events", label: "events", icon: CalendarRange },
   { key: "constitution", label: "constitution", icon: BookOpen },
   { key: "r-tickets", label: "tickets", icon: LifeBuoy },
+  { key: "settings", label: "settings", icon: Settings },
   { key: "r-profile", label: "profile", icon: User },
 ];
 
@@ -51,7 +52,7 @@ const ADMIN_NAV = [
   { key: "constitution", label: "constitution", icon: BookOpen },
   { key: "a-handover", label: "handover", icon: ArrowLeftRight },
   { key: "a-tickets", label: "tickets", icon: LifeBuoy },
-
+  { key: "settings", label: "settings", icon: Settings },
   { key: "r-profile", label: "profile", icon: User },
 ];
 
@@ -149,6 +150,22 @@ export default function Shell({
             </span>
           </button>
 
+          {/* Desktop Settings Shortcut */}
+          <button
+            onClick={() => setView("settings")}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            style={view === "settings" ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
+            title="App Settings"
+          >
+            <span className="flex items-center gap-2">
+              <Settings size={14} />
+              {lang === "bn" ? "অ্যাপ সেটিংস" : "App Settings"}
+            </span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>
+              v1.8
+            </span>
+          </button>
+
           <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
             <Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}
           </button>
@@ -178,6 +195,16 @@ export default function Shell({
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDarkMode ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
+            </button>
+
+            {/* Mobile Settings Direct Button */}
+            <button
+              onClick={() => setView("settings")}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              style={{ color: view === "settings" ? C.primary : C.onSurfaceVariant }}
+              title="Settings"
+            >
+              <Settings size={17} />
             </button>
 
             {/* Language Selector */}

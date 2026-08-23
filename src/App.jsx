@@ -29,6 +29,46 @@ export default function App() {
   const [newPassword, setNewPassword] = useState("");
   const [showNewPw, setShowNewPw] = useState(false);
   const [savingNewPw, setSavingNewPw] = useState(false);
+
+  // Global Font Size and App Preferences for Android & Web
+  const [fontSize, setFontSize] = useState(() => {
+    try {
+      return localStorage.getItem("kc_font_size") || "normal";
+    } catch (_) {
+      return "normal";
+    }
+  });
+
+  const [appSettings, setAppSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem("kc_app_settings");
+      if (saved) return JSON.parse(saved);
+    } catch (_) {}
+    return {
+      pushNotifications: true,
+      soundEnabled: true,
+      duesReminder: true,
+      noticeAlerts: true,
+      electionAlerts: true,
+      hapticFeedback: true,
+      dataSaver: false,
+    };
+  });
+
+  useEffect(() => {
+    try {
+      const sizes = { small: "14px", normal: "16px", large: "18px", xlarge: "20px" };
+      document.documentElement.style.fontSize = sizes[fontSize] || "16px";
+      localStorage.setItem("kc_font_size", fontSize);
+    } catch (_) {}
+  }, [fontSize]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("kc_app_settings", JSON.stringify(appSettings));
+    } catch (_) {}
+  }, [appSettings]);
+
   const t = STR[lang];
 
   const toast = useCallback((msg, type = "success") => {
@@ -539,7 +579,7 @@ export default function App() {
         ) : (
           <Shell session={session} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
             navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}>
-            <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} t={t} theme={theme} setTheme={setTheme} />
+            <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings} />
           </Shell>
         )}
       </div>

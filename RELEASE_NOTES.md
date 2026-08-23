@@ -1,5 +1,27 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v1.8.0] — 2026-08-23
+### ⚙️ Dedicated Android App Settings & Accessibility Engine (`Settings.jsx`)
+
+**New Features & Preferences**:
+1. **🎨 Display & Accessibility**:
+   - **4-Level Text & Font Scaling**: Small (14px), Normal (16px), Large (18px), Extra Large (20px) with dynamic root scaling and live Bengali/English preview card.
+   - **Theme Selector**: Instant Light (লাইট), Dark (ডার্ক), and System Auto (সিস্টেম অনুকরণ) switcher.
+   - **Language Toggle**: One-tap switch between Bengali and English.
+2. **🔔 Notifications & Alert Controls**:
+   - **Device Push Notifications**: Direct system permission trigger via `Notification.requestPermission()`.
+   - **Custom Alert Toggles**: Notice board alerts, Monthly dues deadlines (10th of every month), Election & ballot alerts, Audio sound effects, and Haptic feedback.
+3. **💾 Storage & Offline Cache Management**:
+   - Live cache size calculator with "Clear Offline Cache" action button.
+   - Data Saver Mode for mobile networks.
+   - Manual "Sync Data Now" cloud synchronization button.
+4. **🛡️ App Security & System Info**:
+   - Society Registration reference, Constitutional framework (Articles 1–32), and Supabase PostgreSQL live connection indicator (`Connected 🟢`).
+5. **Quick Navigation**:
+   - Direct Settings gear shortcut in mobile top bar, desktop sidebar, and resident/admin navigation menus.
+
+---
+
 ## [v1.7.1] — 2026-08-23
 ### 📷 Permanent Support Ticket Attachment Serialization Engine
 
