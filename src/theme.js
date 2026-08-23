@@ -34,6 +34,10 @@ export const C = {
   onErrorContainer: "var(--c-on-error-container, #93000a)",
   gold: "var(--c-gold, #a06a00)",
   goldContainer: "var(--c-gold-container, #ffe3ac)",
+  successContainer: "var(--c-success-container, #d2e6c0)",
+  onSuccessContainer: "var(--c-on-success-container, #154212)",
+  infoContainer: "var(--c-info-container, #dbe6ff)",
+  onInfoContainer: "var(--c-on-info-container, #1e3a8a)",
 };
 
 export const STR = {

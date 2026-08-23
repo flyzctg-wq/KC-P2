@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Receipt, Search, Filter, Download, Printer, ChevronDown, ChevronUp,
   TrendingUp, TrendingDown, DollarSign, Users, Calendar, X,
@@ -293,8 +293,9 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
                       <td className="px-3 py-2 text-gray-600 whitespace-nowrap text-[10px]">{u.block||"—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-semibold text-gray-700">{monthLabel(d.month)}</td>
                       <td className="px-3 py-2 whitespace-nowrap"><span className="text-[10px] font-semibold text-gray-600">{CHARGE_TYPE_LABELS[d.chargeType]||d.chargeTitle||"Monthly"}</span></td>
-                      <td className="px-3 py-2 font-bold text-gray-800 whitespace-nowrap">৳{currency(d.amount)}</td>
-                      <td className="px-3 py-2 font-black whitespace-nowrap" style={{ color: isPaid ? "#15803d" : "#d1d5db" }}>{isPaid ? `৳${currency(received)}` : "—"}</td>
+                      <td className="px-3 py-2 font-black whitespace-nowrap">
+                        {isPaid ? <span className="text-emerald-700 dark:text-emerald-400 font-black">৳{currency(received)}</span> : <span className="text-gray-400">—</span>}
+                      </td>
                       <td className="px-3 py-2 whitespace-nowrap">{Number(d.discount)>0 ? <span className="font-semibold text-amber-700">৳{currency(d.discount)}</span> : <span className="text-gray-300">—</span>}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{balance>0 ? <span className="font-bold text-rose-600">৳{currency(balance)}</span> : <span className="text-emerald-600 font-bold text-[10px]">✓ Clear</span>}</td>
                       <td className="px-3 py-2"><StatusBadge status={d.status} /></td>

@@ -28,6 +28,10 @@
   --c-on-error-container: #93000a;
   --c-gold: #a06a00;
   --c-gold-container: #ffe3ac;
+  --c-success-container: #d2e6c0;
+  --c-on-success-container: #154212;
+  --c-info-container: #dbe6ff;
+  --c-on-info-container: #1e3a8a;
   color-scheme: light;
 }
 
@@ -42,21 +46,25 @@
   --c-tertiary: #fb923c;
   --c-tertiary-container: #7c2d12;
   --c-on-tertiary-container: #ffedd5;
-  --c-background: #0b0f0b;
-  --c-surface: #141a13;
-  --c-surface-variant: #1e261d;
-  --c-surface-container: #192118;
-  --c-surface-container-low: #101610;
-  --c-surface-container-high: #242f22;
-  --c-on-surface: #f1f5f0;
-  --c-on-surface-variant: #a3b09e;
-  --c-outline: #505f4c;
-  --c-outline-variant: #253322;
+  --c-background: #0b100b;
+  --c-surface: #131a13;
+  --c-surface-variant: #1c261c;
+  --c-surface-container: #172117;
+  --c-surface-container-low: #0f150f;
+  --c-surface-container-high: #212d20;
+  --c-on-surface: #f3f7f2;
+  --c-on-surface-variant: #a6b7a3;
+  --c-outline: #556752;
+  --c-outline-variant: #253323;
   --c-error: #f87171;
   --c-error-container: #450a0a;
   --c-on-error-container: #fecaca;
   --c-gold: #fbbf24;
   --c-gold-container: #451a03;
+  --c-success-container: #143818;
+  --c-on-success-container: #86efac;
+  --c-info-container: #172554;
+  --c-on-info-container: #93c5fd;
   color-scheme: dark;
 }
 
@@ -84,7 +92,11 @@ body {
   background-color: var(--c-background);
 }
 
-/* Dark mode adjustments for cards and text */
+/* ==========================================================================
+   Comprehensive Dark Mode Overrides & Contrast Enforcers
+   ========================================================================== */
+
+/* Form Elements */
 .dark input,
 .dark select,
 .dark textarea {
@@ -93,7 +105,187 @@ body {
   border-color: var(--c-outline-variant) !important;
 }
 
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #71836e !important;
+}
+
 .dark select option {
-  background-color: #141a13;
-  color: #f1f5f0;
+  background-color: #131a13 !important;
+  color: #f3f7f2 !important;
+}
+
+/* Headings & Heavy Texts (Dark text in light mode -> crisp high-contrast white in dark mode) */
+.dark .text-gray-950,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-slate-950,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-zinc-900,
+.dark .text-zinc-800 {
+  color: var(--c-on-surface) !important;
+}
+
+/* Body & Medium Contrast Labels */
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark .text-slate-700,
+.dark .text-slate-600,
+.dark .text-zinc-700,
+.dark .text-zinc-600 {
+  color: var(--c-on-surface-variant) !important;
+}
+
+/* Secondary Subtext & Footers */
+.dark .text-gray-500,
+.dark .text-gray-400,
+.dark .text-slate-500,
+.dark .text-slate-400,
+.dark .text-zinc-500,
+.dark .text-zinc-400 {
+  color: #8c9d89 !important;
+}
+
+/* Backgrounds (No popping bright whites or washed out gray backgrounds in dark mode) */
+.dark .bg-gray-50,
+.dark .bg-slate-50,
+.dark .bg-zinc-50 {
+  background-color: var(--c-surface-container-low) !important;
+}
+
+.dark .bg-gray-100,
+.dark .bg-slate-100,
+.dark .bg-zinc-100 {
+  background-color: var(--c-surface-container) !important;
+}
+
+.dark .bg-white {
+  background-color: var(--c-surface) !important;
+}
+
+/* Borders */
+.dark .border-gray-50,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-zinc-200 {
+  border-color: var(--c-outline-variant) !important;
+}
+
+/* Emerald Accents in Dark Mode */
+.dark .text-emerald-950,
+.dark .text-emerald-900,
+.dark .text-emerald-800 {
+  color: #86efac !important;
+}
+
+.dark .text-emerald-700 {
+  color: #4ade80 !important;
+}
+
+.dark .bg-emerald-50,
+.dark .bg-emerald-100 {
+  background-color: rgba(22, 101, 52, 0.28) !important;
+}
+
+.dark .border-emerald-200,
+.dark .border-emerald-300 {
+  border-color: rgba(74, 222, 128, 0.28) !important;
+}
+
+/* Rose / Red Alerts & Badges in Dark Mode */
+.dark .text-rose-950,
+.dark .text-rose-900,
+.dark .text-rose-800,
+.dark .text-rose-700,
+.dark .text-red-800,
+.dark .text-red-700 {
+  color: #fca5a5 !important;
+}
+
+.dark .bg-rose-50,
+.dark .bg-rose-100,
+.dark .bg-red-50,
+.dark .bg-red-100 {
+  background-color: rgba(127, 29, 29, 0.28) !important;
+}
+
+.dark .border-rose-200,
+.dark .border-rose-300,
+.dark .border-red-200 {
+  border-color: rgba(248, 113, 113, 0.28) !important;
+}
+
+/* Amber / Warning Badges in Dark Mode */
+.dark .text-amber-950,
+.dark .text-amber-900,
+.dark .text-amber-800 {
+  color: #fde68a !important;
+}
+
+.dark .text-amber-700 {
+  color: #fbbf24 !important;
+}
+
+.dark .bg-amber-50,
+.dark .bg-amber-100,
+.dark .bg-yellow-50 {
+  background-color: rgba(120, 53, 15, 0.28) !important;
+}
+
+.dark .border-amber-200,
+.dark .border-amber-300,
+.dark .border-yellow-200 {
+  border-color: rgba(251, 191, 36, 0.28) !important;
+}
+
+/* Blue / Info Badges in Dark Mode */
+.dark .text-blue-950,
+.dark .text-blue-900,
+.dark .text-blue-800,
+.dark .text-blue-700 {
+  color: #93c5fd !important;
+}
+
+.dark .bg-blue-50,
+.dark .bg-blue-100 {
+  background-color: rgba(30, 58, 138, 0.28) !important;
+}
+
+.dark .border-blue-200,
+.dark .border-blue-300 {
+  border-color: rgba(96, 165, 250, 0.28) !important;
+}
+
+/* Table Enhancements in Dark Mode */
+.dark table th {
+  background-color: var(--c-surface-container) !important;
+  color: var(--c-on-surface-variant) !important;
+}
+
+.dark table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Custom Scrollbar for Sleek Dark Theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-outline-variant);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-outline);
 }

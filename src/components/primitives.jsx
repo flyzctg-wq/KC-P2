@@ -31,19 +31,26 @@ export function Card({ children, className = "", style = {}, onClick }) {
   );
 }
 
-export function Badge({ children, tone = "neutral" }) {
+export function Badge({ children, tone = "neutral", className = "" }) {
   const tones = {
     neutral: { bg: C.surfaceContainerHigh, fg: C.onSurfaceVariant },
-    success: { bg: "#d2e6c0", fg: C.primaryContainer },
+    success: { bg: C.successContainer, fg: C.onSuccessContainer },
     warning: { bg: C.goldContainer, fg: C.gold },
     danger: { bg: C.errorContainer, fg: C.onErrorContainer },
     error: { bg: C.errorContainer, fg: C.onErrorContainer },
-    info: { bg: "#dbe6ff", fg: "#1e3a8a" },
-    primary: { bg: C.primaryContainer, fg: "#ffffff" },
+    info: { bg: C.infoContainer, fg: C.onInfoContainer },
+    primary: { bg: C.primaryContainer, fg: C.onPrimaryContainer },
     secondary: { bg: C.secondaryContainer, fg: C.onSecondaryContainer },
   };
   const t = tones[tone] || tones.neutral;
-  return <span style={{ backgroundColor: t.bg, color: t.fg }} className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide">{children}</span>;
+  return (
+    <span
+      style={{ backgroundColor: t.bg, color: t.fg }}
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-colors ${className}`}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function Field({ label, children }) {
@@ -64,24 +71,20 @@ export function Avatar({ name = "User", photoUrl, size = 36, className = "" }) {
         alt={name}
         onError={() => setHasError(true)}
         style={{ width: size, height: size }}
-        className={`rounded-full object-cover shrink-0 border border-emerald-950/10 shadow-sm select-none ${className}`}
+        className={`rounded-full object-cover shrink-0 border border-black/10 dark:border-white/10 shadow-sm select-none ${className}`}
       />
     );
   }
 
-  const h = avatarHue(name);
   return (
     <div
       style={{
         width: size,
         height: size,
-        background: `linear-gradient(135deg, hsl(${h}, 55%, 88%), hsl(${h + 35}, 50%, 78%))`,
-        color: `hsl(${h}, 60%, 22%)`,
         fontSize: size * 0.36,
       }}
-      className={`rounded-full flex items-center justify-center font-black shrink-0 border border-black/5 shadow-inner select-none relative overflow-hidden ${className}`}
+      className={`rounded-full flex items-center justify-center font-black shrink-0 border border-black/10 dark:border-white/10 shadow-inner select-none relative overflow-hidden bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-900 dark:from-emerald-900/80 dark:to-emerald-800/90 dark:text-emerald-100 ${className}`}
     >
-      <div className="absolute inset-0 bg-white/20 pointer-events-none" />
       <span className="relative z-10 tracking-tight">{initials(name)}</span>
     </div>
   );
@@ -104,9 +107,9 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }} className={`w-full ${width} rounded-t-3xl sm:rounded-3xl max-h-[88vh] overflow-y-auto border shadow-2xl`}>
-        <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
+        <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b z-10 backdrop-blur-md" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
           <h3 className="font-bold text-base" style={{ color: C.onSurface }}>{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:opacity-70" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:opacity-70 transition-opacity" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>
@@ -127,8 +130,8 @@ export function Toasts({ toasts }) {
   return (
     <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 items-end pointer-events-none">
       {toasts.map(t => (
-        <div key={t.id} style={{ backgroundColor: t.type === "error" ? C.error : C.primary, color: "#fff" }}
-          className="px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg flex items-center gap-2 animate-[fadeIn_0.2s_ease]">
+        <div key={t.id} style={{ backgroundColor: t.type === "error" ? C.error : C.primary, color: t.type === "error" ? "#fff" : C.onPrimary }}
+          className="px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xl flex items-center gap-2 animate-[fadeIn_0.2s_ease]">
           {t.type === "error" ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
           {t.msg}
         </div>
@@ -138,11 +141,11 @@ export function Toasts({ toasts }) {
 }
 
 export function StatMini({ icon: Icon, label, value, tone = "neutral", onClick }) {
-  const tones = { warning: C.gold, success: C.primaryContainer, info: "#1e3a8a", neutral: C.onSurfaceVariant };
+  const tones = { warning: C.gold, success: C.primary, info: C.onInfoContainer, neutral: C.onSurfaceVariant };
   return (
     <Card className="p-4 cursor-pointer" onClick={onClick}>
       <Icon size={18} style={{ color: tones[tone] }} />
-      <p className="text-2xl font-extrabold mt-2 heading">{value}</p>
+      <p className="text-2xl font-extrabold mt-2 heading" style={{ color: C.onSurface }}>{value}</p>
       <p className="text-xs font-medium" style={{ color: C.onSurfaceVariant }}>{label}</p>
     </Card>
   );
