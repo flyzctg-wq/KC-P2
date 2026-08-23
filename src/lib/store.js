@@ -130,23 +130,44 @@ async function fetchAll() {
     })),
     votes: (votes || []).map(v => ({ id: v.id, electionId: v.election_id, position: v.position, candidateId: v.candidate_id, voterId: v.voter_id, timestamp: v.created_at })),
     tickets: (tickets || []).map(t => {
+      let desc = t.description || "";
       let atts = t.attachments || [];
-      if (typeof atts === "string") {
-        try { atts = JSON.parse(atts); } catch (_) { atts = []; }
+
+      // 1. Extract attachments embedded in description if present
+      if (typeof desc === "string" && desc.includes("<!--KC_ATTACHMENTS-->")) {
+        const match = desc.match(/<!--KC_ATTACHMENTS-->([\s\S]*?)<!--\/KC_ATTACHMENTS-->/);
+        if (match) {
+          try {
+            const parsed = JSON.parse(match[1]);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              atts = parsed;
+            }
+          } catch (_) {}
+          // Strip the attachment marker from display description
+          desc = desc.replace(/<!--KC_ATTACHMENTS-->[\s\S]*?<!--\/KC_ATTACHMENTS-->/, "").trim();
+        }
       }
+
+      // 2. Fallback: direct column or JSON string
+      if ((!atts || atts.length === 0) && typeof t.attachments === "string") {
+        try { atts = JSON.parse(t.attachments); } catch (_) {}
+      }
+
+      // 3. Fallback: check localStorage cache
       if (!Array.isArray(atts) || atts.length === 0) {
         try {
           const cached = localStorage.getItem(`kc_ticket_att_${t.id}`);
           if (cached) atts = JSON.parse(cached);
         } catch (_) {}
       }
+
       return {
         id: t.id,
         residentId: t.resident_id,
         residentName: t.resident_name,
         subject: t.subject,
         category: t.category,
-        description: t.description,
+        description: desc,
         attachments: Array.isArray(atts) ? atts : [],
         status: t.status,
         response: t.response,

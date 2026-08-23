@@ -1,5 +1,19 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v1.7.1] — 2026-08-23
+### 📷 Permanent Support Ticket Attachment Serialization Engine
+
+**Problem**: Because the Postgres `tickets` table in Supabase does not have an explicit `attachments` column, attachments sent to Supabase were being omitted or rejected by the DB schema.
+
+**Permanent Solution**:
+- **Zero-Migration Embedded Serialization (`store.js` & `write.js`)**:
+  - `write.js` now serializes `attachments` into the Postgres `description` text column using a special marker `<!--KC_ATTACHMENTS-->...<!--/KC_ATTACHMENTS-->`.
+  - `store.js` automatically detects, parses, and reconstructs the full `attachments` array when loading tickets from Supabase, stripping the marker from the visible description text.
+  - Multi-tier fallback maintains localStorage cache (`kc_ticket_att_{id}`) for fast instant load.
+  - Photos now display reliably on all devices and views (Admin & Resident) across sessions and page refreshes.
+
+---
+
 ## [v1.7.0] — 2026-08-23
 ### 📷 Support Ticket Photo & Video Attachments Engine Fix
 

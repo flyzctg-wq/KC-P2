@@ -153,14 +153,22 @@ export async function syncChanges(prevDb, nextDb) {
   });
 
   await syncTable("tickets", prevDb.tickets, nextDb.tickets, t => {
-    const row = {
-      id: t.id, resident_id: t.residentId, resident_name: t.residentName, subject: t.subject,
-      category: t.category, description: t.description, status: t.status, response: t.response,
-    };
-    if (t.attachments && Array.isArray(t.attachments)) {
-      row.attachments = t.attachments;
+    let fullDescription = t.description || "";
+    if (t.attachments && Array.isArray(t.attachments) && t.attachments.length > 0) {
+      if (!fullDescription.includes("<!--KC_ATTACHMENTS-->")) {
+        fullDescription = `${fullDescription}\n\n<!--KC_ATTACHMENTS-->${JSON.stringify(t.attachments)}<!--/KC_ATTACHMENTS-->`;
+      }
     }
-    return row;
+    return {
+      id: t.id,
+      resident_id: t.residentId,
+      resident_name: t.residentName,
+      subject: t.subject,
+      category: t.category,
+      description: fullDescription,
+      status: t.status,
+      response: t.response,
+    };
   });
 
   // activity is append-only — only ever insert new entries, never diff/delete
