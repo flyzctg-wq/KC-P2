@@ -7,6 +7,7 @@ import {
   Receipt, ArrowRight, Share2, CheckSquare, Square, X
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
+import InvoiceReceiptModal from "../../components/InvoiceReceiptModal";
 import { C, BLOCKS, MEMBER_CLASSES } from "../../theme";
 import { uid, currency, monthLabel, currentMonthYM, fmtDate, cleanPhone } from "../../utils";
 
@@ -70,8 +71,9 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   const allExpenses = useMemo(() => db.expenses || [], [db.expenses]);
 
   // Dynamic Officers Info for Reminders & Invoices
-  const treasurerUser = useMemo(() => activeResidents.find(u => u.post === "Treasurer") || { phone: "01787-268864", name: "Golam Sarwar Jony" }, [activeResidents]);
-  const gsUser = useMemo(() => activeResidents.find(u => u.post === "General Secretary") || { phone: "01722-227207", name: "Khalid Hasan" }, [activeResidents]);
+  const treasurerUser = useMemo(() => activeResidents.find(u => u.post === "Treasurer") || { phone: "01787-268864", name: "Golam Sarwar Jony", nameBn: "গোলাম সরোয়ার জনি" }, [activeResidents]);
+  const gsUser = useMemo(() => activeResidents.find(u => u.post === "General Secretary") || { phone: "01722-227207", name: "Khalid Hasan", nameBn: "খালিদ হাসান" }, [activeResidents]);
+  const presidentUser = useMemo(() => activeResidents.find(u => u.post === "President") || { phone: "01400-601051", name: "Zakaria Hasan", nameBn: "জাকারিয়া হাছান" }, [activeResidents]);
 
   // Comprehensive Financial Metrics
   const currentMonthDues = allDues.filter(d => !selectedMonth || selectedMonth === "all" || d.month === selectedMonth);
@@ -1003,107 +1005,18 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
       </Modal>
 
       {/* ========================================================================= */}
-      {/* GENERATE INVOICE MODAL & PRINTABLE VOUCHER                                */}
+      {/* OFFICIAL LETTER PAD INVOICE & MONEY RECEIPT MODAL                         */}
       {/* ========================================================================= */}
-      <Modal
+      <InvoiceReceiptModal
         open={!!invoiceModal}
         onClose={() => setInvoiceModal(null)}
-        title="Official Invoice / Money Receipt"
-        width="max-w-xl"
-      >
-        {invoiceModal && (
-          <div className="space-y-4 py-2 text-xs">
-            {/* Printable Invoice Card */}
-            <div className="p-5 rounded-2xl border border-gray-300 bg-white space-y-4 shadow-sm">
-              <div className="flex items-start justify-between border-b pb-3">
-                <div>
-                  <h3 className="font-black text-base text-emerald-950 heading">KUNJACHAYA CLUB</h3>
-                  <p className="text-[11px] text-gray-500">Kunjachaya R/A, Bayezid Bostami Road, Jalalabad, Chattogram</p>
-                  <p className="text-[10px] font-bold text-emerald-800 mt-0.5">OFFICIAL INVOICE & MONEY RECEIPT</p>
-                </div>
-                <div className="text-right">
-                  <span className={`inline-block px-3 py-1 rounded-full font-black text-xs text-white ${invoiceModal.status === "paid" ? "bg-emerald-600" : "bg-rose-600"}`}>
-                    {invoiceModal.status === "paid" ? "PAID" : "DUE"}
-                  </span>
-                  <p className="font-mono text-[10px] text-gray-400 mt-1">INV-{invoiceModal.id.slice(-6).toUpperCase()}</p>
-                </div>
-              </div>
-
-              {/* Member Details */}
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 text-xs">
-                <div>
-                  <span className="text-[10px] text-gray-400 block">BILLED TO:</span>
-                  <p className="font-black text-gray-900 text-sm">{invoiceModal.resident?.name || "Member Name"}</p>
-                  <p className="text-gray-600">Block {invoiceModal.resident?.block || "A"} (Unit {invoiceModal.resident?.unit || "01"})</p>
-                  <p className="font-semibold text-gray-700">{invoiceModal.resident?.phone || "—"}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-gray-400 block">BILLING INFO:</span>
-                  <p className="font-bold text-gray-800">Month: {monthLabel(invoiceModal.month)}</p>
-                  <p className="text-gray-600">Due Date: {invoiceModal.dueDate || `${invoiceModal.month}-15`}</p>
-                  {invoiceModal.paidDate && (
-                    <p className="text-emerald-700 font-semibold">Paid: {fmtDate(invoiceModal.paidDate)}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Line Items */}
-              <table className="w-full border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-100 text-gray-700 font-bold border-b">
-                    <th className="p-2 text-left">Description</th>
-                    <th className="p-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  <tr>
-                    <td className="p-2.5 font-semibold text-gray-800">
-                      {invoiceModal.chargeTitle || `Monthly Subscription - ${monthLabel(invoiceModal.month)}`}
-                    </td>
-                    <td className="p-2.5 text-right font-mono font-bold text-gray-900">
-                      {currency(invoiceModal.amount)}
-                    </td>
-                  </tr>
-                  {invoiceModal.discount > 0 && (
-                    <tr className="text-gray-500">
-                      <td className="p-2.5 italic">Discount / Waiver</td>
-                      <td className="p-2.5 text-right font-mono text-emerald-700">-{currency(invoiceModal.discount)}</td>
-                    </tr>
-                  )}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 font-black text-sm bg-slate-50">
-                    <td className="p-2.5 text-gray-900">Total Balance Due</td>
-                    <td className="p-2.5 text-right font-mono text-rose-700">
-                      {invoiceModal.status === "paid" ? "৳0.00" : currency(invoiceModal.amount)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-
-              {/* Signatures */}
-              <div className="flex justify-between pt-6 text-center text-[10px] text-gray-500 border-t">
-                <div>
-                  <div className="w-28 border-b border-gray-400 mb-1 mx-auto" />
-                  <p className="font-bold text-gray-800">Treasurer</p>
-                  <p>{treasurerUser.name}</p>
-                </div>
-                <div>
-                  <div className="w-28 border-b border-gray-400 mb-1 mx-auto" />
-                  <p className="font-bold text-gray-800">General Secretary</p>
-                  <p>{gsUser.name}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 pt-1">
-              <Btn full variant="outline" onClick={() => setInvoiceModal(null)}>Close</Btn>
-              <Btn full icon={Printer} onClick={() => window.print()}>Print Invoice</Btn>
-            </div>
-          </div>
-        )}
-      </Modal>
+        invoice={invoiceModal}
+        treasurer={treasurerUser}
+        gs={gsUser}
+        president={presidentUser}
+        lang={lang}
+        toast={toast}
+      />
 
       {/* MODAL: ISSUE REGULAR MONTHLY DUES */}
       <Modal open={monthlyModal} onClose={() => setMonthlyModal(false)} title={isBn ? "নিয়মিত মাসিক চাঁদা জারি করুন" : "Issue Monthly Subscriptions"}>

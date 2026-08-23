@@ -4,9 +4,10 @@ import {
   TrendingUp, TrendingDown, DollarSign, Users, Calendar, X,
   CheckCircle2, Clock, CreditCard, Banknote, Smartphone,
   BarChart3, ArrowLeft, FileSpreadsheet, SlidersHorizontal,
-  Building, AlertTriangle, RefreshCw
+  Building, AlertTriangle, RefreshCw, FileText
 } from "lucide-react";
 import { Card, Badge, inputCls, inputStyle, Empty, SectionTitle } from "../../components/primitives";
+import InvoiceReceiptModal from "../../components/InvoiceReceiptModal";
 import { C, BLOCKS } from "../../theme";
 import { currency, monthLabel, fmtDate } from "../../utils";
 
@@ -85,9 +86,14 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
 
   const allDues = useMemo(() => db.dues || [], [db.dues]);
   const allUsers = useMemo(() => db.users || [], [db.users]);
+
+  const treasurerUser = useMemo(() => allUsers.find(u => u.post === "Treasurer") || { name: "Golam Sarwar Jony", nameBn: "গোলাম সরোয়ার জনি", post: "Treasurer" }, [allUsers]);
+  const gsUser = useMemo(() => allUsers.find(u => u.post === "General Secretary") || { name: "Khalid Hasan", nameBn: "খালিদ হাসান", post: "General Secretary" }, [allUsers]);
+  const presidentUser = useMemo(() => allUsers.find(u => u.post === "President") || { name: "Zakaria Hasan", nameBn: "জাকারিয়া হাছান", post: "President" }, [allUsers]);
 
   const availableMonths = useMemo(() => {
     return [...new Set(allDues.map(d => d.month).filter(Boolean))].sort().reverse();
@@ -272,7 +278,7 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
             <table className="w-full text-xs" style={{ minWidth: "1200px" }}>
               <thead>
                 <tr className="border-b" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
-                  {["#","Paid Date","Unit","Member Name","Mobile","Block","Period","Type","Bill ৳","Received ৳","Discount ৳","Balance ৳","Status","Receipt No","Method","Collected By","Remarks"].map((col,i) => (
+                  {["#","Paid Date","Unit","Member Name","Mobile","Block","Period","Type","Bill ৳","Received ৳","Discount ৳","Balance ৳","Status","Receipt No","Method","Collected By","Remarks","Receipt"].map((col,i) => (
                     <th key={i} className="px-3 py-2.5 text-left font-bold whitespace-nowrap text-[10px] uppercase tracking-wide" style={{ color: C.onSurfaceVariant }}>{col}</th>
                   ))}
                 </tr>
@@ -303,6 +309,16 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
                       <td className="px-3 py-2"><MethodBadge method={d.method} /></td>
                       <td className="px-3 py-2 whitespace-nowrap text-gray-700 font-semibold text-[10px]">{d.collectedBy||<span className="text-gray-300">—</span>}</td>
                       <td className="px-3 py-2 text-gray-500 max-w-[140px] truncate text-[10px]">{d.note||<span className="text-gray-200">—</span>}</td>
+                      <td className="px-3 py-2 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedReceipt(d)}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] inline-flex items-center gap-1 transition-colors shadow-xs"
+                          title={isBn ? "অফিসিয়াল প্যাড রসিদ দেখুন" : "View Official Receipt"}
+                        >
+                          <FileText size={12} /> {isBn ? "রসিদ" : "Receipt"}
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -314,7 +330,7 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
                   <td className="px-3 py-2.5 text-xs font-black text-emerald-700">৳{currency(totalCollected)}</td>
                   <td className="px-3 py-2.5 text-xs font-black text-amber-700">৳{currency(totalDiscount)}</td>
                   <td className="px-3 py-2.5 text-xs font-black text-rose-700">৳{currency(totalPending)}</td>
-                  <td colSpan={5} />
+                  <td colSpan={6} />
                 </tr>
               </tfoot>
             </table>
@@ -332,6 +348,17 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
       <p className="text-[10px] text-gray-400 text-center pb-2">
         {isBn ? `মোট ${allDues.length}টি লেনদেন • কুঞ্জছায়া ক্লাব ফিনান্সিয়াল লেজার` : `${allDues.length} total transactions • Kunjachaya Club Financial Ledger`}
       </p>
+
+      {/* Official Letter Pad Money Receipt Modal */}
+      <InvoiceReceiptModal
+        open={!!selectedReceipt}
+        onClose={() => setSelectedReceipt(null)}
+        invoice={selectedReceipt}
+        treasurer={treasurerUser}
+        gs={gsUser}
+        president={presidentUser}
+        lang={lang}
+      />
     </div>
   );
 }

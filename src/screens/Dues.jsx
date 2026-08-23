@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Wallet, CreditCard, Loader2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Wallet, CreditCard, Loader2, FileText, Printer } from "lucide-react";
 import { Btn, Card, Badge, Empty, Modal, SectionTitle } from "../components/primitives";
+import InvoiceReceiptModal from "../components/InvoiceReceiptModal";
 import { C } from "../theme";
 import { currency, monthLabel } from "../utils";
 import { startDuesPayment } from "../lib/payments";
@@ -9,8 +10,15 @@ import { trackEvent } from "../lib/analytics";
 export default function Dues({ session, db, toast, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [payModal, setPayModal] = useState(null);
+  const [receiptModal, setReceiptModal] = useState(null);
   const [paying, setPaying] = useState(false);
-  const mine = db.dues.filter(d => d.residentId === session.id).sort((a, b) => b.month.localeCompare(a.month));
+
+  const allUsers = useMemo(() => db.users || [], [db.users]);
+  const treasurerUser = useMemo(() => allUsers.find(u => u.post === "Treasurer") || { name: "Golam Sarwar Jony", nameBn: "গোলাম সরোয়ার জনি", post: "Treasurer" }, [allUsers]);
+  const gsUser = useMemo(() => allUsers.find(u => u.post === "General Secretary") || { name: "Khalid Hasan", nameBn: "খালিদ হাসান", post: "General Secretary" }, [allUsers]);
+  const presidentUser = useMemo(() => allUsers.find(u => u.post === "President") || { name: "Zakaria Hasan", nameBn: "জাকারিয়া হাছান", post: "President" }, [allUsers]);
+
+  const mine = (db.dues || []).filter(d => d.residentId === session.id).sort((a, b) => b.month.localeCompare(a.month));
   const totalDue = mine.filter(d => d.status !== "paid").reduce((s, d) => s + d.amount, 0);
 
   const pay = async (due) => {
@@ -41,13 +49,26 @@ export default function Dues({ session, db, toast, lang = "en", t = {} }) {
               <p className="font-bold text-sm">{monthLabel(d.month)}</p>
               <p className="text-xs" style={{ color: C.onSurfaceVariant }}>{currency(d.amount)}{d.ref ? ` · ${d.ref}` : ""}</p>
             </div>
-            {d.status === "paid" ? (
-              <Badge tone="success">{isBn ? "পরিশোধিত" : "Paid"}</Badge>
-            ) : (
-              <Btn size="sm" onClick={() => setPayModal(d)}>
-                {isBn ? "পরিশোধ করুন" : "Pay now"}
-              </Btn>
-            )}
+            <div className="flex items-center gap-2">
+              {d.status === "paid" ? (
+                <>
+                  <Badge tone="success">{isBn ? "পরিশোধিত" : "Paid"}</Badge>
+                  <button
+                    type="button"
+                    onClick={() => setReceiptModal({ ...d, resident: session })}
+                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex items-center gap-1 transition-colors"
+                    title={isBn ? "অফিসিয়াল প্যাড রসিদ দেখুন" : "View Official Receipt"}
+                  >
+                    <FileText size={14} />
+                    <span className="text-[10px] hidden sm:inline">{isBn ? "রসিদ" : "Receipt"}</span>
+                  </button>
+                </>
+              ) : (
+                <Btn size="sm" onClick={() => setPayModal(d)}>
+                  {isBn ? "পরিশোধ করুন" : "Pay now"}
+                </Btn>
+              )}
+            </div>
           </Card>
         ))}
         {mine.length === 0 && (
@@ -81,6 +102,18 @@ export default function Dues({ session, db, toast, lang = "en", t = {} }) {
           </div>
         )}
       </Modal>
+
+      {/* Official Letter Pad Money Receipt Modal for Resident */}
+      <InvoiceReceiptModal
+        open={!!receiptModal}
+        onClose={() => setReceiptModal(null)}
+        invoice={receiptModal}
+        treasurer={treasurerUser}
+        gs={gsUser}
+        president={presidentUser}
+        lang={lang}
+        toast={toast}
+      />
     </div>
   );
 }
