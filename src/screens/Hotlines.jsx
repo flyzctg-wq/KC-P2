@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Plus, Phone, Trash2, PhoneCall, Siren } from "lucide-react";
+import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
+import CommunityMap from "../components/CommunityMap";
 import { C } from "../theme";
 import { uid } from "../utils";
 
@@ -42,6 +43,12 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
       <div className="mb-5 p-3.5 rounded-xl text-xs flex items-center gap-2" style={{ backgroundColor: C.errorContainer, color: C.onErrorContainer }}>
         <Siren size={16} /> {isBn ? "যেকোনো জীবন ও সম্পদের জরুরি বিপদে প্রথমে ৯৯৯-এ কল দিন — এরপর সংশ্লিষ্ট নির্বাহী কর্মকর্তাদের সাথে যোগাযোগ করুন।" : "In a life-threatening emergency, call 999 first — then notify an EC lead below."}
       </div>
+
+      {/* Community Geographic Map & Navigation */}
+      <div className="mb-6">
+        <CommunityMap lang={lang} toast={toast} />
+      </div>
+
       {groups.map(g => {
         const items = list.filter(c => c.category === g.key);
         if (!items.length) return null;

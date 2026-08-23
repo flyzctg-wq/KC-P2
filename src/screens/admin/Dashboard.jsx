@@ -1,6 +1,7 @@
 import React from "react";
 import { Vote, LifeBuoy, TrendingUp, UserCheck, FileText } from "lucide-react";
 import { Card, SectionTitle, StatMini } from "../../components/primitives";
+import CommunityMap from "../../components/CommunityMap";
 import { C, MEMBER_CLASSES } from "../../theme";
 import { currency, monthLabel, currentMonthYM } from "../../utils";
 
@@ -91,6 +92,11 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
         <span className="px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-slate-800 group-hover:bg-slate-900 shrink-0">
           {isBn ? "পত্র লিখুন" : "Open Suite"} →
         </span>
+      </div>
+
+      {/* Community Geographic Map */}
+      <div className="mt-4">
+        <CommunityMap lang={lang} />
       </div>
     </div>
   );

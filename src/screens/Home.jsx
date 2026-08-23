@@ -1,10 +1,11 @@
 import React from "react";
-import { Bell, Wallet, Vote, LifeBuoy, ChevronRight } from "lucide-react";
+import { Bell, Wallet, Vote, LifeBuoy, ChevronRight, MapPin } from "lucide-react";
 import { Btn, Card, Badge, SectionTitle, StatMini } from "../components/primitives";
+import CommunityMap from "../components/CommunityMap";
 import { C } from "../theme";
 import { fmtDate } from "../utils";
 
-export default function ResidentHome({ session, db, go, lang = "en", t = {} }) {
+export default function ResidentHome({ session, db, go, lang = "en", t = {}, toast }) {
   const isBn = lang === "bn";
   const myDues = db.dues.filter(d => d.residentId === session.id);
   const pending = myDues.filter(d => d.status !== "paid");
@@ -75,6 +76,11 @@ export default function ResidentHome({ session, db, go, lang = "en", t = {} }) {
           </div>
         </Card>
       )}
+
+      {/* Community Location Map */}
+      <div className="mb-6">
+        <CommunityMap lang={lang} toast={toast} />
+      </div>
 
       <SectionTitle
         action={
