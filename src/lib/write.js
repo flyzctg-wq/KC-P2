@@ -143,10 +143,25 @@ export async function syncChanges(prevDb, nextDb) {
   }
   // votes intentionally NOT synced here — see file header.
 
-  await syncTable("tickets", prevDb.tickets, nextDb.tickets, t => ({
-    id: t.id, resident_id: t.residentId, resident_name: t.residentName, subject: t.subject,
-    category: t.category, description: t.description, status: t.status, response: t.response,
-  }));
+  // Cache ticket attachments locally so they persist instantly across views
+  (nextDb.tickets || []).forEach(t => {
+    if (t.attachments && Array.isArray(t.attachments) && t.attachments.length > 0) {
+      try {
+        localStorage.setItem(`kc_ticket_att_${t.id}`, JSON.stringify(t.attachments));
+      } catch (_) {}
+    }
+  });
+
+  await syncTable("tickets", prevDb.tickets, nextDb.tickets, t => {
+    const row = {
+      id: t.id, resident_id: t.residentId, resident_name: t.residentName, subject: t.subject,
+      category: t.category, description: t.description, status: t.status, response: t.response,
+    };
+    if (t.attachments && Array.isArray(t.attachments)) {
+      row.attachments = t.attachments;
+    }
+    return row;
+  });
 
   // activity is append-only — only ever insert new entries, never diff/delete
   const prevActivityIds = new Set((prevDb.activity || []).map(a => a.id));

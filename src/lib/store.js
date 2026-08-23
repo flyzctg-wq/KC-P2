@@ -129,7 +129,30 @@ async function fetchAll() {
       nominations: (nominationsByElection[e.id] || []).map(n => ({ id: n.id, userId: n.user_id, userName: n.user_name, position: n.position, manifesto: n.manifesto, status: n.status })),
     })),
     votes: (votes || []).map(v => ({ id: v.id, electionId: v.election_id, position: v.position, candidateId: v.candidate_id, voterId: v.voter_id, timestamp: v.created_at })),
-    tickets: (tickets || []).map(t => ({ id: t.id, residentId: t.resident_id, residentName: t.resident_name, subject: t.subject, category: t.category, description: t.description, status: t.status, response: t.response, date: t.created_at })),
+    tickets: (tickets || []).map(t => {
+      let atts = t.attachments || [];
+      if (typeof atts === "string") {
+        try { atts = JSON.parse(atts); } catch (_) { atts = []; }
+      }
+      if (!Array.isArray(atts) || atts.length === 0) {
+        try {
+          const cached = localStorage.getItem(`kc_ticket_att_${t.id}`);
+          if (cached) atts = JSON.parse(cached);
+        } catch (_) {}
+      }
+      return {
+        id: t.id,
+        residentId: t.resident_id,
+        residentName: t.resident_name,
+        subject: t.subject,
+        category: t.category,
+        description: t.description,
+        attachments: Array.isArray(atts) ? atts : [],
+        status: t.status,
+        response: t.response,
+        date: t.created_at,
+      };
+    }),
     activity: (activity || []).map(a => ({ id: a.id, actor: a.actor, action: a.action, date: a.created_at })).reverse(),
     emergencyContacts: (emergencyContacts || []).map(c => ({ id: c.id, name: c.name, role: c.role, phone: c.phone, category: c.category })),
     agmEvents: (agmEvents || []).map(ev => ({

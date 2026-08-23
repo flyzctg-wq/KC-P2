@@ -1,5 +1,25 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v1.7.0] — 2026-08-23
+### 📷 Support Ticket Photo & Video Attachments Engine Fix
+
+**Problem**: Uploaded photos and short videos in resident support tickets were not appearing after saving/reloading, and in some views caused a media rendering fallback error.
+
+**Root Causes & Solutions Fixed**:
+1. **Attachment Data Persistence (`store.js` & `write.js`)**:
+   - `store.js` tickets mapper was omitting `attachments` when fetching records, causing attachments to vanish upon state refresh. Added full `attachments` array and JSON string parsing support.
+   - Added automatic localStorage caching for ticket media attachments (`kc_ticket_att_{id}`) to ensure instant local persistence and zero data loss across reloads.
+   - `write.js` now includes the `attachments` payload during sync.
+2. **Client-Side Image Auto-Compression**:
+   - Camera and gallery photos are now auto-compressed via HTML5 Canvas (max 1280px dimension, JPEG 0.82) before storage. This prevents huge dataURL payloads and ensures smooth rendering on both mobile and desktop.
+3. **Media Preview & Download**:
+   - Added direct file download buttons inside the full-screen media preview modal for both photos and short videos.
+   - Added image `onError` handling to prevent rendering crashes if an attachment format is invalid.
+4. **Dark Mode UI Consistency**:
+   - Fixed contrast and background tokens across `Tickets.jsx` and `admin/Tickets.jsx` to adhere to full dark/light theme tokens (`C.onSurface`, `C.onSurfaceVariant`, `C.surfaceContainer`).
+
+---
+
 ## [v1.5.0] — 2026-08-23
 ### 🔍 Governance Audit Log — Signal vs. Noise Filter
 
