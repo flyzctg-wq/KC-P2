@@ -1,6 +1,25 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v1.5.0] — 2026-08-23
+### 🔍 Governance Audit Log — Signal vs. Noise Filter
+
+**Problem**: The Audit Log was showing all activity entries including routine operational actions (emergency contact adds/removes, repeated membership form uploads, test entries, handover toggles, ticket submissions) — making it hard to find meaningful governance records.
+
+**Solution**: Introduced a `NOISE_PATTERNS` blocklist in `Audit.jsx`. The Governance Audit Log now **only shows significant accountability-level actions**:
+- ✅ **Kept**: Dues issued, financial transactions, membership approvals/rejections/kickouts, role changes, badge awards, election votes, official letter issuance, amendment ratifications, notice publish/delete, AGM minutes
+- ❌ **Filtered out**: Emergency contact add/remove, uploaded membership forms, handover item completions, support ticket responses, event creation, RSVP actions, any entry containing "test"
+
+**UI Improvements**:
+- Renamed screen: "Audit log" → **"Governance Audit Log"**
+- Category pills now show **entry count badges** (e.g., `Financial 3`, `Membership 12`)
+- Colored category icons: 🟢 Financial, 🟣 Election, 🔵 Membership, ⚫ Other
+- Added an info banner explaining that the full operational log is in the Activity Log page
+- The full unfiltered log remains accessible via the **Activity Log** screen
+
+---
+
 ## [v1.4.0] — 2026-08-23
+
 ### 🌐 Bengali (বাংলা) Localization Review & Quality Improvement
 
 - **ব্লাড ব্যাংক** (`bloodBank`): Corrected from "রক্তব্যাংক" → **"ব্লাড ব্যাংক"** throughout all navigation, screen titles, and toast messages, as per community preference.
