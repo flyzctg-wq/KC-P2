@@ -44,14 +44,14 @@ const ADMIN_NAV = [
   { key: "hotlines", label: "hotlines", icon: PhoneCall },
   { key: "badges", label: "badges", icon: Award },
   { key: "budget", label: "budget", icon: PieChart },
-  { key: "audit", label: "audit", icon: FileSearch },
+  { key: "audit", label: "log", icon: FileSearch },
   { key: "bloodBank", label: "bloodBank", icon: Droplet },
   { key: "officers", label: "officers", icon: BadgeCheck },
   { key: "events", label: "events", icon: CalendarRange },
   { key: "constitution", label: "constitution", icon: BookOpen },
   { key: "a-handover", label: "handover", icon: ArrowLeftRight },
   { key: "a-tickets", label: "tickets", icon: LifeBuoy },
-  { key: "a-activity", label: "activity", icon: ClipboardList },
+
   { key: "r-profile", label: "profile", icon: User },
 ];
 
