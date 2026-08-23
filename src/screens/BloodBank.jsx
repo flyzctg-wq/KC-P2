@@ -31,12 +31,12 @@ export default function BloodBank({ session, db, persist, toast, lang = "en", t 
 
   const saveMine = () => {
     persist(d => ({ ...d, users: (d.users || []).map(u => u.id === session.id ? { ...u, bloodGroup: myGroup || null, donor: myDonor } : u) }));
-    toast(isBn ? "রক্তব্যাংক তথ্য সফলভাবে সংরক্ষিত হয়েছে।" : "Blood bank profile updated.");
+    toast(isBn ? "ব্লাড ব্যাংক তথ্য সফলভাবে সংরক্ষিত হয়েছে।" : "Blood bank profile updated.");
   };
 
   return (
     <div className="space-y-5">
-      <SectionTitle>{isBn ? "জরুরি রক্তব্যাংক ও দাতা ডিরেক্টরি" : "Blood Bank & Donor Directory"}</SectionTitle>
+      <SectionTitle>{isBn ? "ব্লাড ব্যাংক ও রক্তদাতা ডিরেক্টরি" : "Blood Bank & Donor Directory"}</SectionTitle>
 
       {/* User's own blood group configuration banner */}
       <Card className="p-4.5 border" style={{ borderColor: C.outlineVariant }}>

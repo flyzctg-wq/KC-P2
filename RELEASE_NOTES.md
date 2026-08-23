@@ -1,6 +1,31 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v1.4.0] — 2026-08-23
+### 🌐 Bengali (বাংলা) Localization Review & Quality Improvement
+
+- **ব্লাড ব্যাংক** (`bloodBank`): Corrected from "রক্তব্যাংক" → **"ব্লাড ব্যাংক"** throughout all navigation, screen titles, and toast messages, as per community preference.
+- **গঠনতন্ত্র** (`constitution`): Corrected from "সংবিধান" → **"গঠনতন্ত্র"** in all navigation labels and section headers to better reflect the club's official terminology.
+- **Navigation Labels Improved**:
+  - `directory` → সদস্য তালিকা (was: ডিরেক্টরি)
+  - `paymentHistory` → চাঁদা আদায়ের ইতিহাস (was: বিল রিসিভ হিস্টোরি)
+  - `tickets` → অভিযোগ ও সহায়তা (was: সহায়তা)
+  - `activity` → কার্যক্রমের রেকর্ড (was: কার্যক্রম লগ)
+  - `agm` → বার্ষিক সাধারণ সভা (was: এজিএম — now full Bengali)
+  - `hotlines` → জরুরি হটলাইন (was: হটলাইন)
+  - `badges` → সম্মাননা ব্যাজ (was: ব্যাজ)
+  - `budget` → আয়-ব্যয় বাজেট (was: বাজেট)
+  - `audit` → আর্থিক নিরীক্ষা (was: অডিট)
+  - `handover` → দায়িত্ব হস্তান্তর (was: হস্তান্তর)
+  - `events` → অনুষ্ঠানসমূহ (was: ইভেন্ট)
+  - `officers` → কর্মকর্তাগণ (was: কর্মকর্তা)
+  - `tagline` → একতাবদ্ধ আবাসিক সম্প্রদায় (was: একসাথে পরিচালিত সম্প্রদায়)
+- **BloodBank Screen**: Updated screen title and save toast to use "ব্লাড ব্যাংক".
+- All translations now use natural, idiomatic Bengali instead of transliterated English words.
+
+---
+
 ## [v1.3.0] — 2026-08-23
+
 ### 🗺️ Interactive Community Google Maps Integration (কুঞ্জছায়া আবাসিক এলাকা মানচিত্র)
 - **Live Google Maps Embed (`CommunityMap.jsx`)**:
   - Embedded exact coordinates (`22.3810056° N, 91.8165975° E`, Bayezid Bostami Road, 2 No. Jalalabad Ward, Chattogram).
