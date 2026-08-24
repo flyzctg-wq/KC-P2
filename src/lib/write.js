@@ -113,10 +113,22 @@ export async function syncChanges(prevDb, nextDb) {
     };
   });
 
-  await syncTable("notices", prevDb.notices, nextDb.notices, n => ({
-    id: n.id, title: n.title, body: n.body, category: n.category,
-    author_id: n.authorId, author_name: n.authorName, likes: n.reactions?.like || [],
-  }));
+  await syncTable("notices", prevDb.notices, nextDb.notices, n => {
+    let bodyWithMeta = n.body || "";
+    if (n.isBulletin || n.bulletinExpiresAt || n.bulletinDurationHours) {
+      const meta = {
+        isBulletin: !!n.isBulletin,
+        bulletinType: n.bulletinType || "quick",
+        bulletinExpiresAt: n.bulletinExpiresAt || null,
+        bulletinDurationHours: n.bulletinDurationHours || null,
+      };
+      bodyWithMeta = `${n.body || ""}\n<!--KC_BULLETIN:${JSON.stringify(meta)}-->`;
+    }
+    return {
+      id: n.id, title: n.title, body: bodyWithMeta, category: n.category,
+      author_id: n.authorId, author_name: n.authorName, likes: n.reactions?.like || [],
+    };
+  });
   // comments are a child table — resync per-notice when that notice's comment list changed
   for (const n of nextDb.notices || []) {
     const before = (prevDb.notices || []).find(x => x.id === n.id);

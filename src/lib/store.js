@@ -115,12 +115,38 @@ async function fetchAll() {
         formScanUrl: p.permissions?.formScanUrl || "",
       };
     }),
-    notices: (notices || []).map(n => ({
-      id: n.id, title: n.title, body: n.body, category: n.category,
-      authorId: n.author_id, authorName: n.author_name, date: n.created_at,
-      reactions: { like: n.likes || [] },
-      comments: (commentsByNotice[n.id] || []).map(c => ({ id: c.id, userId: c.user_id, userName: c.user_name, text: c.text, date: c.created_at })),
-    })),
+    notices: (notices || []).map(n => {
+      let body = n.body || "";
+      let isBulletin = false;
+      let bulletinType = "quick";
+      let bulletinExpiresAt = null;
+      let bulletinDurationHours = null;
+
+      if (typeof body === "string" && body.includes("<!--KC_BULLETIN:")) {
+        const match = body.match(/<!--KC_BULLETIN:([\s\S]*?)-->/);
+        if (match) {
+          try {
+            const meta = JSON.parse(match[1]);
+            isBulletin = !!meta.isBulletin;
+            bulletinType = meta.bulletinType || meta.type || "quick";
+            bulletinExpiresAt = meta.bulletinExpiresAt || meta.expiresAt || null;
+            bulletinDurationHours = meta.bulletinDurationHours || meta.durationHours || null;
+          } catch (_) {}
+          body = body.replace(/<!--KC_BULLETIN:[\s\S]*?-->/, "").trim();
+        }
+      }
+
+      return {
+        id: n.id, title: n.title, body, category: n.category,
+        authorId: n.author_id, authorName: n.author_name, date: n.created_at,
+        reactions: { like: n.likes || [] },
+        comments: (commentsByNotice[n.id] || []).map(c => ({ id: c.id, userId: c.user_id, userName: c.user_name, text: c.text, date: c.created_at })),
+        isBulletin,
+        bulletinType,
+        bulletinExpiresAt,
+        bulletinDurationHours,
+      };
+    }),
     dues: (dues || []).map(d => ({ id: d.id, residentId: d.resident_id, month: d.month, amount: Number(d.amount), status: d.status, paidDate: d.paid_date, ref: d.ref })),
     elections: (elections || []).map(e => ({
       id: e.id, title: e.title, status: e.status, positions: e.positions,

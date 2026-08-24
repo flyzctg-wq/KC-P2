@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
+import TvBulletin from "./TvBulletin";
 
 /* ============================== SHELL / NAV ============================== */
 const RESIDENT_NAV = [
@@ -73,7 +74,7 @@ const ADMIN_BOTTOM_NAV = [
 ];
 
 export default function Shell({
-  session, view, setView, logout, lang, setLang, t, children,
+  session, db, persist, view, setView, logout, lang, setLang, t, children,
   navOpen, setNavOpen, theme = "system", setTheme = () => {}
 }) {
   const isAdmin = session.role === "admin";
@@ -327,6 +328,9 @@ export default function Shell({
             </div>
           </div>
         )}
+
+        {/* TV Bulletin / News Ticker Bar (Mobile & Web) */}
+        <TvBulletin notices={db?.notices || []} lang={lang} setView={setView} session={session} />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 max-w-6xl w-full mx-auto">{children}</main>
 

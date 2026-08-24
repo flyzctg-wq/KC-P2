@@ -42,7 +42,17 @@ export default function Notices({ session, db, persist, toast, logActivity, lang
                 <Badge tone={n.category === "Urgent" ? "danger" : n.category === "Financial" ? "warning" : "info"}>
                   {categoryMap[n.category] || n.category}
                 </Badge>
-                <span className="text-[11px]" style={{ color: C.outline }}>{fmtDateTime(n.date)}</span>
+                {n.isBulletin && (
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                    n.bulletinType === "breaking"
+                      ? "bg-red-100 text-red-700 dark:bg-red-950/80 dark:text-red-300"
+                      : "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse-live" />
+                    {n.bulletinType === "breaking" ? (isBn ? "ব্রেকিং বুলেটিন" : "BREAKING") : (isBn ? "কুইক নোটিশ" : "QUICK BULLETIN")}
+                  </span>
+                )}
+                <span className="text-[11px] ml-auto" style={{ color: C.outline }}>{fmtDateTime(n.date)}</span>
               </div>
               <h3 className="font-bold text-sm mb-1">{n.title}</h3>
               <p className="text-sm mb-3" style={{ color: C.onSurfaceVariant }}>{n.body}</p>

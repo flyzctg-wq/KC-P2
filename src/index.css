@@ -289,3 +289,42 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--c-outline);
 }
+
+/* ==========================================================================
+   TV Bulletin / Marquee Ticker Animations
+   ========================================================================== */
+@keyframes ticker-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-ticker:hover,
+.animate-ticker-paused {
+  animation-play-state: paused;
+}
+
+@keyframes pulse-live {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.25);
+  }
+}
+
+.animate-pulse-live {
+  animation: pulse-live 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

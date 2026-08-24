@@ -577,7 +577,7 @@ export default function App() {
         {!session ? (
           <AuthScreen db={db} lang={lang} setLang={setLang} t={t} authMode={authMode} setAuthMode={setAuthMode} login={login} register={register} theme={theme} setTheme={setTheme} />
         ) : (
-          <Shell session={session} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
+          <Shell session={session} db={db} persist={persist} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
             navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}>
             <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings} />
           </Shell>
