@@ -1,5 +1,33 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v1.9.0] — 2026-08-24
+### 📺 Live TV Bulletin & News Ticker Engine (`TvBulletin.jsx`, `Shell.jsx`, `AdminNotices.jsx`)
+
+**New Features & Architecture**:
+1. **Designated Zone Placement (Mobile & Web)**:
+   - **Android App**: Embedded directly below the top header and above page content.
+   - **Web Desktop**: Positioned at the top of the workspace content pane.
+2. **Broadcast-Style Visual Aesthetics**:
+   - Live animated pulsing beacon with dynamic importance badges:
+     - 🔴 **Breaking Bulletin (ব্রেকিং বুলেটিন)**: High-urgency red tone with siren icon.
+     - 🟡 **Quick Notice (কুইক নোটিশ)**: Amber tone with lightning zap icon.
+     - 🟢 **Important Announcement (জরুরি ঘোষণা)**: Emerald tone with alert triangle icon.
+3. **Interactive Controls & Auto-Rotation**:
+   - Cycles through multiple active notices every 9 seconds, with manual `<` and `>` pager and count indicator (e.g. `1/3`).
+   - Touch/hover-to-pause marquee ticker.
+   - Full notice detail modal with live remaining time countdown and direct button to the Notice Board.
+   - Collapsible banner option.
+4. **Notice Management & Duration Controls (`AdminNotices.jsx`)**:
+   - Single checkbox toggle to broadcast any notice to the TV Bulletin.
+   - 8-tier appearance duration presets: `1 Hour`, `6 Hours`, `12 Hours`, `24 Hours (1 Day)`, `3 Days`, `7 Days`, `Always (Until stopped)`, and `Custom Date & Time picker`.
+   - Real-time auto-expiration filtering: automatically hides bulletins once their appearance time is up.
+   - Quick one-click `TV ON` / `TV OFF` button on every notice card.
+   - Notice Edit Modal with smart fallback title generator.
+5. **Zero-Migration Supabase Serialization (`store.js` & `write.js`)**:
+   - Safe embedded metadata storage (`<!--KC_BULLETIN:{...}-->`) with foreign-key-safe UUID validation.
+
+---
+
 ## [v1.8.0] — 2026-08-23
 ### ⚙️ Dedicated Android App Settings & Accessibility Engine (`Settings.jsx`)
 
