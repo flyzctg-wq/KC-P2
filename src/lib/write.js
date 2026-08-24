@@ -80,6 +80,7 @@ async function replaceChildren(table, fkColumn, parentId, rows) {
 export async function syncChanges(prevDb, nextDb) {
   await syncTable("profiles", prevDb.users, nextDb.users, u => {
     const formDetails = {
+      memberCode: u.memberCode || "",
       nameBn: u.nameBn || "",
       dob: u.dob || "",
       gender: u.gender || "male",
@@ -107,7 +108,7 @@ export async function syncChanges(prevDb, nextDb) {
     return {
       id: u.id, name: u.name, email: u.email, phone: u.phone, block: u.block, unit: u.unit,
       member_class: u.memberClass, role: u.role, post: u.post, status: u.status,
-      permissions: { ...(u.permissions || {}), formScanUrl: u.formScanUrl || u.permissions?.formScanUrl || "", formDetails },
+      permissions: { ...(u.permissions || {}), memberCode: u.memberCode || u.permissions?.memberCode || "", formScanUrl: u.formScanUrl || u.permissions?.formScanUrl || "", formDetails },
       standing_council: !!u.standingCouncil,
       blood_group: u.bloodGroup, donor: !!u.donor, earned_badges: u.earnedBadges || [],
     };

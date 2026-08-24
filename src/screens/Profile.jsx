@@ -178,11 +178,13 @@ export default function Profile({
       photoUrl: photoToSave || "",
       bio: form.bio || "",
       pledgeAccepted: form.pledgeAccepted ?? true,
+      memberCode: session.memberCode || session.permissions?.memberCode || "",
     };
 
     const updatedUser = {
       ...session,
       ...form,
+      memberCode: session.memberCode || session.permissions?.memberCode || "",
       name: form.name.trim(),
       phone: form.phone.trim(),
       block: form.block,
@@ -500,6 +502,11 @@ export default function Profile({
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
+              {session.memberCode && (
+                <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300">
+                  #{session.memberCode}
+                </span>
+              )}
               <Badge tone="primary">
                 {session.role === "admin" ? (session.post || (isBn ? "কার্যনির্বাহী পরিষদ" : "Admin")) : (isBn ? "সাধারণ সদস্য" : "Resident Member")}
               </Badge>

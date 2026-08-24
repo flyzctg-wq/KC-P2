@@ -397,7 +397,8 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
     toast(isBn ? "স্ক্যান মুছে ফেলা হয়েছে।" : "Scanned form removed.");
   };
 
-  // Role Editor state
+  // Role & Member Code Editor state
+  const [memberCode, setMemberCode] = useState(user.memberCode || "");
   const [memberClass, setMemberClass] = useState(user.memberClass || "General");
   const [post, setPost] = useState(user.post || "");
   const [role, setRole] = useState(user.role || "resident");
@@ -429,18 +430,23 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
   };
 
   const saveRoles = () => {
+    const cleanCode = memberCode.trim();
     persist(d => logActivity({
       ...d,
       users: (d.users || []).map(u => u.id === user.id ? {
         ...u,
+        memberCode: cleanCode,
         memberClass,
         post: post || null,
         role,
-        permissions: role === "admin" ? perms : {},
+        permissions: {
+          ...(role === "admin" ? perms : {}),
+          memberCode: cleanCode,
+        },
         standingCouncil: (post === "President" || post === "General Secretary" || memberClass === "Founding") ? true : standingCouncil,
       } : u)
-    }, session?.name, `Updated role for ${user.name}`));
-    toast(isBn ? `${user.name}-এর ভূমিকা ও পদবী সংরক্ষিত হয়েছে।` : `Updated role and permissions for ${user.name}.`);
+    }, session?.name, `Updated role & member code ${cleanCode ? `#${cleanCode}` : ""} for ${user.name}`));
+    toast(isBn ? `${user.name}-এর মেম্বার কোড ও পদবী সংরক্ষিত হয়েছে।` : `Updated Member Code and role for ${user.name}.`);
     onClose();
   };
 
@@ -683,6 +689,22 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
       {/* TAB 3: ROLES, POSTS & PERMISSIONS (Top-Tier & Authorized Only) */}
       {canManage && tab === "roles" && (
         <div className="space-y-4 pt-1">
+          <Field label={isBn ? "অফিসিয়াল মেম্বার কোড (Member Code / সদস্য নম্বর)" : "Official Member Code (e.g. 001, 015, KC-001)"}>
+            <input
+              type="text"
+              style={inputStyle()}
+              className={inputCls}
+              placeholder={isBn ? "যেমন: 001, 015, KC-001" : "e.g. 001, 015, KC-001"}
+              value={memberCode}
+              onChange={e => setMemberCode(e.target.value)}
+            />
+            <p className="text-[10px] mt-1 opacity-70" style={{ color: C.outline }}>
+              {isBn
+                ? "এই মেম্বার কোড মানি রিসিট, আইডি ব্যাজ, ডিরেক্টরি এবং হিসাব নথিতে প্রদর্শিত হবে।"
+                : "This Member Code appears on money receipts, ID badges, member directory, and invoice vouchers."}
+            </p>
+          </Field>
+
           <Field label={isBn ? "সদস্য শ্রেণিবিভাগ (ধারা-৬)" : "Member Class (Article 6)"}>
             <select style={inputStyle()} className={inputCls} value={memberClass} onChange={e => setMemberClass(e.target.value)}>
               {MEMBER_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
