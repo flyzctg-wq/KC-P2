@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2, Loader2, Eye, Printer, FileText, MapPin, Droplet, Award, Calendar, Briefcase, GraduationCap, Home, Camera, Building, ExternalLink, Heart, Upload, ScanLine, ZoomIn, Trash } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
-import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
+import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS, EC_CONSTITUTIONAL_STRUCTURE } from "../../theme";
 import { uid, nowISO, getAppBaseUrl, cleanPhone, fmtDate, sortByMemberCode } from "../../utils";
 import { supabase } from "../../lib/supabase";
 
@@ -262,6 +262,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
           <MemberProfileInspector
             user={selectedUser}
             session={session}
+            db={db}
             canManage={canManage}
             isTopTier={isTopTier}
             persist={persist}
@@ -320,6 +321,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
           persist={persist}
           logActivity={logActivity}
           session={session}
+          db={db}
           toast={toast}
           lang={lang}
           isBn={isBn}
@@ -334,7 +336,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
  * - Basic Profile View: Available to all club members
  * - Full Official View (Form-2 Details & Admin Management): Available to Top-Tier & Authorized Admins
  */
-function MemberProfileInspector({ user, session, canManage, isTopTier, persist, logActivity, toast, isBn, onClose, onKickOut, canKickOut }) {
+function MemberProfileInspector({ user, session, db, canManage, isTopTier, persist, logActivity, toast, isBn, onClose, onKickOut, canKickOut }) {
   const [tab, setTab] = useState("basic"); // "basic" | "full" | "roles" | "scan"
 
   // Scanned Form Upload state
@@ -429,8 +431,50 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
     canDeleteItems: { en: "Delete records & entries (Top-tier only)", bn: "রেকর্ড ও এন্ট্রি মুছে ফেলা (শীর্ষ নেতৃত্ব)" },
   };
 
+  const allUsers = db?.users || [];
+
+  // ── Live EC seat status for post dropdown ──────────────────────────────────
+  const getPostSeatStatus = (postKey) => {
+    if (!postKey) return null;
+    const def = EC_CONSTITUTIONAL_STRUCTURE.find(e => e.key === postKey);
+    if (!def) return null;
+    const holders = allUsers.filter(u => u.post === postKey && u.id !== user.id);
+    return { seats: def.seats, taken: holders.length, holders };
+  };
+  const postSeatStatus = getPostSeatStatus(post);
+
   const saveRoles = () => {
     const cleanCode = memberCode.trim();
+
+    // ① Member Code uniqueness
+    if (cleanCode) {
+      const duplicate = allUsers.find(u => u.id !== user.id && (u.memberCode || "").trim().toLowerCase() === cleanCode.toLowerCase());
+      if (duplicate) {
+        toast(
+          isBn
+            ? `মেম্বার কোড #${cleanCode} ইতোমধ্যে ${duplicate.name}-এর জন্য নির্ধারিত আছে। ভিন্ন কোড ব্যবহার করুন।`
+            : `Member Code #${cleanCode} is already assigned to ${duplicate.name}. Please choose a unique code.`,
+          "error"
+        );
+        return;
+      }
+    }
+
+    // ② EC Post seat limit (Constitution bylaws)
+    if (post && post !== user.post) {
+      const seatStatus = getPostSeatStatus(post);
+      if (seatStatus && seatStatus.taken >= seatStatus.seats) {
+        const holderNames = seatStatus.holders.map(h => h.name).join(", ");
+        toast(
+          isBn
+            ? `ধারা-১৪ অনুসারে "${post}" পদে সর্বোচ্চ ${seatStatus.seats}টি আসন। বর্তমান দায়িত্বপ্রাপ্ত: ${holderNames}`
+            : `Article 14: "${post}" allows only ${seatStatus.seats} seat(s). Currently held by: ${holderNames}`,
+          "error"
+        );
+        return;
+      }
+    }
+
     persist(d => logActivity({
       ...d,
       users: (d.users || []).map(u => u.id === user.id ? {
@@ -730,10 +774,41 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
                     </span>
                   </div>
                 ) : (
-                  <select style={inputStyle()} className={inputCls} value={post} onChange={e => handlePostChange(e.target.value)}>
-                    <option value="">{isBn ? "-- কোনো নির্বাহী পদ নেই --" : "-- No Executive Post --"}</option>
-                    {COMMITTEE_POSTS.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  <>
+                    <select style={inputStyle()} className={inputCls} value={post} onChange={e => handlePostChange(e.target.value)}>
+                      <option value="">{isBn ? "-- কোনো নির্বাহী পদ নেই --" : "-- No Executive Post --"}</option>
+                      {COMMITTEE_POSTS.map(p => {
+                        const s = getPostSeatStatus(p);
+                        const isFull = s && p !== user.post && s.taken >= s.seats;
+                        return (
+                          <option key={p} value={p} disabled={isFull}>
+                            {p}{s ? ` (${s.taken}/${s.seats})` : ""}{isFull ? " — Full" : ""}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    {postSeatStatus && (
+                      <p className={`text-[10px] mt-1 font-semibold flex items-center gap-1 ${
+                        postSeatStatus.taken >= postSeatStatus.seats && post !== user.post ? "text-rose-600" : "text-emerald-700"
+                      }`}>
+                        {postSeatStatus.taken >= postSeatStatus.seats && post !== user.post ? (
+                          <>
+                            <span>⛔</span>
+                            {isBn
+                              ? `ধারা-১৪: "${post}" পদে ${postSeatStatus.seats}টি আসনের সব পূর্ণ। দায়িত্বপ্রাপ্ত: ${postSeatStatus.holders.map(h => h.name).join(", ")}`
+                              : `Article 14: "${post}" is full (${postSeatStatus.seats}/${postSeatStatus.seats}). Held by: ${postSeatStatus.holders.map(h => h.name).join(", ")}`}
+                          </>
+                        ) : (
+                          <>
+                            <span>✅</span>
+                            {isBn
+                              ? `${postSeatStatus.seats - postSeatStatus.taken}টি আসন খালি (${postSeatStatus.taken}/${postSeatStatus.seats} পূর্ণ)`
+                              : `${postSeatStatus.seats - postSeatStatus.taken} seat(s) available (${postSeatStatus.taken}/${postSeatStatus.seats} filled)`}
+                          </>
+                        )}
+                      </p>
+                    )}
+                  </>
                 )}
               </Field>
 
@@ -946,7 +1021,7 @@ function MemberProfileInspector({ user, session, canManage, isTopTier, persist, 
   );
 }
 
-export function InviteMemberModal({ onClose, persist, logActivity, session, toast, isBn = false }) {
+export function InviteMemberModal({ onClose, persist, logActivity, session, db, toast, isBn = false }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -978,6 +1053,31 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, toas
   const handleSend = async () => {
     if (!name.trim() || !email.trim() || !phone.trim()) {
       toast(isBn ? "অনুগ্রহ করে নাম, ইমেইল এবং মোবাইল নম্বর পূরণ করুন।" : "Please provide name, email, and mobile phone.", "error");
+      return;
+    }
+
+    // ③ Duplicate account prevention — check phone AND email
+    const allExisting = db?.users || [];
+    const normPhone = phone.trim().replace(/\D/g, "");
+    const normEmail = email.trim().toLowerCase();
+    const phoneDup = allExisting.find(u => u.phone && u.phone.replace(/\D/g, "") === normPhone);
+    const emailDup = allExisting.find(u => (u.email || "").toLowerCase() === normEmail);
+    if (phoneDup) {
+      toast(
+        isBn
+          ? `এই মোবাইল নম্বর দিয়ে ইতোমধ্যে ${phoneDup.name}-এর একটি অ্যাকাউন্ট আছে। একজন সদস্য দুটি অ্যাকাউন্ট রাখতে পারবেন না।`
+          : `A member account already exists for this phone number (${phoneDup.name}). Duplicate accounts are not allowed.`,
+        "error"
+      );
+      return;
+    }
+    if (emailDup) {
+      toast(
+        isBn
+          ? `এই ইমেইল দিয়ে ইতোমধ্যে ${emailDup.name}-এর একটি অ্যাকাউন্ট আছে। একজন সদস্য দুটি অ্যাকাউন্ট রাখতে পারবেন না।`
+          : `A member account already exists for this email (${emailDup.name}). Duplicate accounts are not allowed.`,
+        "error"
+      );
       return;
     }
 
