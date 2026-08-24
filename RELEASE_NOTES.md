@@ -1,5 +1,47 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v2.0.0] — 2026-08-24
+### 🛡️ Member Code System, Duplicate Prevention & EC Constitutional Enforcement
+
+**New Features & Architecture**:
+
+1. **Official Member Code (সদস্য নম্বর) — Assign & Edit**:
+   - Admins can set an Official Member Code (e.g. `001`, `015`, `KC-001`) per member in **Admin → Members → Roles & Authority → Official Member Code** input field.
+   - Code is stored in `memberCode` and `permissions.memberCode` in Supabase profiles.
+   - Member Code badge (`#001`) appears on the member's own **Profile page header** for easy identification.
+   - Member Code appears on money receipts, ID badges, member directory, and invoice vouchers.
+
+2. **Member Code Uniqueness Enforcement**:
+   - `saveRoles()` checks all other members before saving.
+   - If the entered code is already taken → **blocked** with toast: `"Member Code #001 is already assigned to [Name]. Please choose a unique code."`
+   - Case-insensitive and whitespace-normalised comparison.
+
+3. **Duplicate Account Prevention (Invite Member Modal)**:
+   - When issuing an invitation, the system now checks ALL existing accounts (active + pending) by **phone number** and **email**.
+   - **Phone match** → blocked: `"A member account already exists for this phone number ([Name]). Duplicate accounts are not allowed."`
+   - **Email match** → blocked: `"A member account already exists for this email ([Name]). Duplicate accounts are not allowed."`
+   - Phone comparison strips all non-digit characters for robust matching (e.g. `017XXXXXXXX` == `+88017XXXXXXXX`).
+
+4. **EC Post Seat Enforcement — Constitution Article 14**:
+   - The post dropdown shows live seat occupancy for every post: `President (0/1)`, `Vice-President (1/2)`, `Executive Member (2/3)`, etc.
+   - **Full posts are greyed out and disabled** in the dropdown.
+   - A live indicator below the dropdown shows:
+     - `✅ 1 seat(s) available (0/1 filled)` — when seats are free.
+     - `⛔ Article 14: "President" is full (1/1). Held by: [Name]` — when full.
+   - Attempting to save a full post is **blocked** with a constitution-referenced error toast.
+   - Seat limits sourced from `EC_CONSTITUTIONAL_STRUCTURE` in `theme.js`.
+
+5. **Member List Sorted by Member Code (Global)**:
+   - Added `sortByMemberCode()` utility in `utils.js` using `localeCompare` with `{ numeric: true }` for natural sort (`001 < 002 < 010 < 100`).
+   - Applied everywhere members are listed:
+     - **Admin Members** (`Members.jsx`)
+     - **Member Directory** (`Directory.jsx`)
+     - **Admin Dues** (`Dues.jsx`)
+     - **Payment History** (`PaymentHistory.jsx`)
+   - Fallback sort: members without a code appear last; President/General Secretary first among unassigned; then alphabetical.
+
+---
+
 ## [v1.9.0] — 2026-08-24
 ### 📺 Live TV Bulletin & News Ticker Engine (`TvBulletin.jsx`, `Shell.jsx`, `AdminNotices.jsx`)
 
