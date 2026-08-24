@@ -9,7 +9,7 @@ import {
 import { Card, Badge, inputCls, inputStyle, Empty, SectionTitle } from "../../components/primitives";
 import InvoiceReceiptModal from "../../components/InvoiceReceiptModal";
 import { C, BLOCKS } from "../../theme";
-import { currency, monthLabel, fmtDate } from "../../utils";
+import { currency, monthLabel, fmtDate, sortByMemberCode } from "../../utils";
 
 const PAYMENT_METHODS = ["All", "Cash", "bKash", "Nagad", "Bank Transfer", "Cheque"];
 const CHARGE_TYPES = ["all", "monthly", "gm_levy", "special"];
@@ -89,7 +89,7 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
   const allDues = useMemo(() => db.dues || [], [db.dues]);
-  const allUsers = useMemo(() => db.users || [], [db.users]);
+  const allUsers = useMemo(() => (db.users || []).slice().sort(sortByMemberCode), [db.users]);
 
   const treasurerUser = useMemo(() => allUsers.find(u => u.post === "Treasurer") || { name: "Golam Sarwar Jony", nameBn: "গোলাম সরোয়ার জনি", post: "Treasurer" }, [allUsers]);
   const gsUser = useMemo(() => allUsers.find(u => u.post === "General Secretary") || { name: "Khalid Hasan", nameBn: "খালিদ হাসান", post: "General Secretary" }, [allUsers]);

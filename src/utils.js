@@ -94,3 +94,26 @@ export const playTapSound = (type = "send") => {
   }
 };
 
+/** Sorts members by their assigned Member Code (#001, #002, etc.) naturally */
+export const sortByMemberCode = (a, b) => {
+  const codeA = (a?.memberCode || "").trim();
+  const codeB = (b?.memberCode || "").trim();
+
+  // If both have memberCode, sort naturally (001, 002, 010, 100, KC-01, etc.)
+  if (codeA && codeB) {
+    return codeA.localeCompare(codeB, undefined, { numeric: true, sensitivity: "base" });
+  }
+  // Users with a memberCode come before those without
+  if (codeA && !codeB) return -1;
+  if (!codeA && codeB) return 1;
+
+  // Fallback: Leadership (President, General Secretary) first
+  if (a?.post === "President") return -1;
+  if (b?.post === "President") return 1;
+  if (a?.post === "General Secretary") return -1;
+  if (b?.post === "General Secretary") return 1;
+
+  // Fallback: Alphabetical by name
+  return (a?.name || "").localeCompare(b?.name || "");
+};
+

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Search, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User, FileText, Home, Building, Printer, Shield } from "lucide-react";
 import { Card, Badge, Btn, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C, BLOCKS, BADGE_CATALOG, BADGE_ICONS } from "../theme";
-import { cleanPhone, fmtDate } from "../utils";
+import { cleanPhone, fmtDate, sortByMemberCode } from "../utils";
 
 export default function Directory({ session = {}, db = {}, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -28,7 +28,7 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
       (u.post || "").toLowerCase().includes(query) ||
       (u.memberClass || "").toLowerCase().includes(query);
     return matchesBlock && matchesSearch;
-  });
+  }).sort(sortByMemberCode);
 
   return (
     <div>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2, Loader2, Eye, Printer, FileText, MapPin, Droplet, Award, Calendar, Briefcase, GraduationCap, Home, Camera, Building, ExternalLink, Heart, Upload, ScanLine, ZoomIn, Trash } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS } from "../../theme";
-import { uid, nowISO, getAppBaseUrl, cleanPhone, fmtDate } from "../../utils";
+import { uid, nowISO, getAppBaseUrl, cleanPhone, fmtDate, sortByMemberCode } from "../../utils";
 import { supabase } from "../../lib/supabase";
 
 export default function AdminMembers({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
@@ -15,7 +15,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
   const isTopTier = session?.role === "admin" && (session?.post === "President" || session?.post === "General Secretary");
   const canManage = session?.role === "admin" && (session?.permissions?.canManageMembers || isTopTier);
   const pending = (db?.users || []).filter(u => u.status === "pending");
-  const activeUsers = (db?.users || []).filter(u => u.status === "active");
+  const activeUsers = (db?.users || []).filter(u => u.status === "active").sort(sortByMemberCode);
 
   const isTopTierPost = (u) => u?.post === "President" || u?.post === "General Secretary";
 
