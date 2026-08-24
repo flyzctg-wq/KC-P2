@@ -30,7 +30,17 @@ export default function AdminNotices({ session, db, persist, toast, logActivity,
 
   const publishOrUpdate = (data) => {
     const { title, body, category, isBulletin, bulletinType, durationOption, customExpiryDate } = data;
-    if (!title.trim() || !body.trim()) return;
+    const cleanBody = (body || "").trim();
+    if (!cleanBody) {
+      toast(isBn ? "দয়া করে নোটিশের বিস্তারিত বিবরণ লিখুন।" : "Please enter the notice message.", "error");
+      return;
+    }
+
+    const cleanTitle = (title || "").trim() || (
+      isBulletin
+        ? (bulletinType === "breaking" ? (isBn ? "জরুরি ব্রেকিং নোটিশ" : "Urgent Breaking Notice") : (isBn ? "কুইক নোটিশ" : "Quick Notice"))
+        : (cleanBody.length > 50 ? cleanBody.slice(0, 50) + "..." : cleanBody)
+    );
 
     const expiresAt = isBulletin ? computeExpiry(durationOption, customExpiryDate) : null;
     const durationHours = durationOption === "always" ? null : (durationOption === "custom" ? null : parseInt(durationOption, 10));
@@ -41,26 +51,26 @@ export default function AdminNotices({ session, db, persist, toast, logActivity,
         ...d,
         notices: d.notices.map(n => n.id === editingNotice.id ? {
           ...n,
-          title,
-          body,
-          category,
+          title: cleanTitle,
+          body: cleanBody,
+          category: category || "General",
           isBulletin: !!isBulletin,
           bulletinType: isBulletin ? (bulletinType || "quick") : "quick",
           bulletinExpiresAt: expiresAt,
           bulletinDurationHours: durationHours,
         } : n)
-      }, session.name, `Updated notice: ${title}`));
+      }, session?.name || "Admin", `Updated notice: ${cleanTitle}`));
       toast(isBn ? "নোটিশ সফলভাবে আপডেট করা হয়েছে।" : "Notice updated successfully.");
       setEditingNotice(null);
     } else {
       // Create new notice
       const newNotice = {
-        id: uid("nt"),
-        title,
-        body,
-        category,
-        authorId: session.id,
-        authorName: session.name,
+        id: uid(),
+        title: cleanTitle,
+        body: cleanBody,
+        category: category || "General",
+        authorId: session?.id || null,
+        authorName: session?.name || "Kunjachaya Admin",
         date: nowISO(),
         reactions: { like: [] },
         comments: [],
@@ -72,8 +82,8 @@ export default function AdminNotices({ session, db, persist, toast, logActivity,
 
       persist(d => logActivity({
         ...d,
-        notices: [newNotice, ...d.notices]
-      }, session.name, `Published notice: ${title}`));
+        notices: [newNotice, ...(d.notices || [])]
+      }, session?.name || "Admin", `Published notice: ${cleanTitle}`));
       toast(isBn ? "নতুন নোটিশ প্রকাশিত হয়েছে।" : "Notice published successfully.");
       setFormOpen(false);
     }

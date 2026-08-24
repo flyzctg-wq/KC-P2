@@ -124,9 +124,15 @@ export async function syncChanges(prevDb, nextDb) {
       };
       bodyWithMeta = `${n.body || ""}\n<!--KC_BULLETIN:${JSON.stringify(meta)}-->`;
     }
+    const isUUID = (str) => typeof str === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
     return {
-      id: n.id, title: n.title, body: bodyWithMeta, category: n.category,
-      author_id: n.authorId, author_name: n.authorName, likes: n.reactions?.like || [],
+      id: n.id,
+      title: n.title || "Notice",
+      body: bodyWithMeta,
+      category: n.category || "General",
+      author_id: isUUID(n.authorId) ? n.authorId : null,
+      author_name: n.authorName || "Kunjachaya Admin",
+      likes: n.reactions?.like || [],
     };
   });
   // comments are a child table — resync per-notice when that notice's comment list changed
