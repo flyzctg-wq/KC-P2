@@ -1,9 +1,9 @@
 # 📌 Kunjachaya Club — Project State & Checkpoint Record
 
-**Last Updated**: 2026-08-24 15:34 (BST)  
+**Last Updated**: 2026-08-25 15:46 (BST)  
 **Git Branch**: `main` (Synced with `origin/main`)  
-**Latest Version**: `v2.0.0`  
-**Latest Commit**: `44d1dd3` (`feat: enforce member code uniqueness, duplicate account prevention, and EC post seat limits per constitution`)
+**Latest Version**: `v2.0.1`  
+**Latest Commit**: `(pending push)` (`fix: upgrade TV bulletin ticker to continuous right-to-left marquee with all bulletins in one scrolling strip and auto-expiry`)
 
 ---
 
@@ -28,7 +28,7 @@
   - Applied globally: **Admin Members**, **Directory**, **Admin Dues**, **Payment History**.
   - Fallback: members without a code appear after coded members; then President/General Secretary first, then alphabetical.
 
-### 2. 📺 Live TV Bulletin & News Ticker Engine (`TvBulletin.jsx` & `Shell.jsx` — v1.9.0)
+### 2. 📺 Live TV Bulletin & News Ticker Engine (`TvBulletin.jsx` & `Shell.jsx` — v2.0.1)
 - **Designated Zone Placement**:
   - **Android App (Mobile)**: Positioned directly underneath the top navigation bar, above the main dashboard.
   - **Web Platform (Desktop)**: Positioned at the top of the main content workspace pane.
@@ -36,11 +36,15 @@
   - 🔴 **Breaking Bulletin (ব্রেকিং বুলেটিন)**: Urgent red glow with siren icon.
   - 🟡 **Quick Notice (কুইক নোটিশ)**: Amber highlight with lightning icon.
   - 🟢 **Important Announcement (জরুরি ঘোষণা)**: Emerald tone with alert icon.
-- **Interactive Features**:
-  - Multi-bulletin auto-rotation (every 9s) with manual `<` and `>` arrow pager.
-  - Hover/touch to pause marquee scrolling.
-  - Interactive click-to-read modal with issuance date, full message text, live countdown timer, and direct link to Notice board.
-  - Collapsible banner option.
+- **Continuous Marquee Ticker (v2.0.1 — updated)**:
+  - All active bulletins scroll as a **single continuous right-to-left marquee** strip — no more paging.
+  - Format: `Title—Message  ◈  Title—Message  ◈  …` (all bulletins joined with a diamond separator `◈`).
+  - Animation speed auto-scales with total text length (min 15s, ~90px/s) for comfortable reading.
+  - Seamless infinite loop via CSS `translate3d(0 → -50%)` with a duplicated invisible copy.
+  - **Hover / touch to pause** the scroll in place.
+  - When a bulletin's `bulletinExpiresAt` time passes (checked every 30s), it drops from the strip automatically — no reload needed.
+  - Click anywhere on the strip to open the full notice detail modal.
+  - Collapsible banner option retained.
 - **Notice Management & Duration Controls (`AdminNotices.jsx`)**:
   - Single-toggle TV Bulletin broadcast switch.
   - 8-level appearance duration presets (`1h`, `6h`, `12h`, `24h`, `3d`, `7d`, `Always`, `Custom DateTime`) with auto-expiration filter.
@@ -103,7 +107,7 @@
 
 | Module | File Path | Description |
 |---|---|---|
-| **TV Bulletin Ticker** | `src/components/TvBulletin.jsx` | Broadcast news ticker bar, animations, multi-bulletin carousel, and modal preview |
+| **TV Bulletin Ticker** | `src/components/TvBulletin.jsx` | Continuous right-to-left marquee ticker — all bulletins in one rolling strip with auto-expiry and click-to-read modal |
 | **App Entry & State** | `src/App.jsx` | Global auth, theme, fontSize, appSettings, and modal orchestration |
 | **Routing Engine** | `src/Router.jsx` | Dynamic lazy chunk loading for all 28 resident & admin screens |
 | **Shell & Navigation** | `src/components/Shell.jsx` | Responsive desktop sidebar, mobile topbar, bottom nav, TV bulletin slot & drawer |
@@ -139,7 +143,7 @@
 
 ## 🚀 Overview of Completed Work & Milestones
 
-### 1. 📺 Live TV Bulletin & News Ticker Engine (`TvBulletin.jsx` & `Shell.jsx` — v1.9.0)
+### 1. 📺 Live TV Bulletin & News Ticker Engine (`TvBulletin.jsx` & `Shell.jsx` — v2.0.1)
 - **Designated Zone Placement**:
   - **Android App (Mobile)**: Positioned directly underneath the top navigation bar (`Admin · Kunjachaya [Theme] [Settings] [Globe] [Menu]`), above the main dashboard.
   - **Web Platform (Desktop)**: Positioned at the top of the main content workspace pane.
@@ -147,11 +151,15 @@
   - 🔴 **Breaking Bulletin (ব্রেকিং বুলেটিন)**: Urgent red glow with siren icon.
   - 🟡 **Quick Notice (কুইক নোটিশ)**: Amber highlight with lightning icon.
   - 🟢 **Important Announcement (জরুরি ঘোষণা)**: Emerald tone with alert icon.
-- **Interactive Features**:
-  - Multi-bulletin auto-rotation (every 9s) with manual `<` and `>` arrow pager.
-  - Hover/touch to pause marquee scrolling.
-  - Interactive click-to-read modal with issuance date, full message text, live countdown timer, and direct link to Notice board.
-  - Collapsible banner option.
+- **Continuous Marquee Ticker (v2.0.1 — updated)**:
+  - All active bulletins scroll as a **single continuous right-to-left marquee** strip — no more paging.
+  - Format: `Title—Message  ◈  Title—Message  ◈  …` (all bulletins joined with a diamond separator `◈`).
+  - Animation speed auto-scales with total text length (min 15s, ~90px/s) for comfortable reading.
+  - Seamless infinite loop via CSS `translate3d(0 → -50%)` with a duplicated invisible copy.
+  - **Hover / touch to pause** the scroll in place.
+  - When a bulletin's `bulletinExpiresAt` time passes (checked every 30s), it drops from the strip automatically — no reload needed.
+  - Click anywhere on the strip to open the full notice detail modal.
+  - Collapsible banner option retained.
 - **Notice Management & Duration Controls (`AdminNotices.jsx`)**:
   - Single-toggle TV Bulletin broadcast switch.
   - 8-level appearance duration presets (`1h`, `6h`, `12h`, `24h`, `3d`, `7d`, `Always`, `Custom DateTime`) with auto-expiration filter.
@@ -214,7 +222,7 @@
 
 | Module | File Path | Description |
 |---|---|---|
-| **TV Bulletin Ticker** | `src/components/TvBulletin.jsx` | Broadcast news ticker bar, animations, multi-bulletin carousel, and modal preview |
+| **TV Bulletin Ticker** | `src/components/TvBulletin.jsx` | Continuous right-to-left marquee ticker — all bulletins in one rolling strip with auto-expiry and click-to-read modal |
 | **App Entry & State** | `src/App.jsx` | Global auth, theme, fontSize, appSettings, and modal orchestration |
 | **Routing Engine** | `src/Router.jsx` | Dynamic lazy chunk loading for all 28 resident & admin screens |
 | **Shell & Navigation** | `src/components/Shell.jsx` | Responsive desktop sidebar, mobile topbar, bottom nav, TV bulletin slot & drawer |

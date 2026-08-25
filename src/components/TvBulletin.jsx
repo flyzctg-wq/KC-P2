@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
-  Siren, Zap, AlertTriangle, ChevronRight, ChevronLeft,
-  Eye, X, Clock, BellRing, Sparkles, Pause, Play, ExternalLink
+  Siren, Zap, AlertTriangle,
+  Eye, X, Clock, ExternalLink
 } from "lucide-react";
 import { Modal, Btn, Badge } from "./primitives";
 import { C } from "../theme";
@@ -19,6 +19,7 @@ export default function TvBulletin({
   const [isPaused, setIsPaused] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const tickerRef = useRef(null);
 
   // Update clock every minute to recalculate expiry and remaining times
   useEffect(() => {
@@ -57,23 +58,29 @@ export default function TvBulletin({
     });
   }, [notices, now]);
 
-  // Handle multi-bulletin auto-rotation when paused or in standard pager mode
-  useEffect(() => {
-    if (activeBulletins.length <= 1 || isPaused) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % activeBulletins.length);
-    }, 9000); // Rotate every 9s
-
-    return () => clearInterval(interval);
-  }, [activeBulletins.length, isPaused]);
-
-  // Adjust index if out of bounds
+  // Adjust index if out of bounds (kept for modal navigation)
   useEffect(() => {
     if (currentIndex >= activeBulletins.length && activeBulletins.length > 0) {
       setCurrentIndex(0);
     }
   }, [activeBulletins.length, currentIndex]);
+
+  // Build the combined ticker text from ALL active bulletins
+  // Format: "Title — Body  ◈  Title — Body  ◈ …"
+  const SEPARATOR = "\u00a0\u00a0\u25c8\u00a0\u00a0"; // non-breaking spaces around ◈
+  const tickerText = useMemo(() => {
+    if (activeBulletins.length === 0) return "";
+    return activeBulletins
+      .map(n => `${n.title}\u2014${n.body || ""}`) // em-dash
+      .join(SEPARATOR);
+  }, [activeBulletins]);
+
+  // Compute animation duration proportional to text length (≈ 60px per char, 100px/s)
+  const tickerDuration = useMemo(() => {
+    const charCount = tickerText.length || 80;
+    const px = charCount * 10; // rough pixel width
+    return Math.max(15, Math.round(px / 90)); // seconds, min 15s
+  }, [tickerText]);
 
   if (activeBulletins.length === 0) {
     return null; // No active TV bulletin
@@ -211,49 +218,39 @@ export default function TvBulletin({
             )}
           </div>
 
-          {/* Scrolling / Rotating Content Ticker */}
+          {/* Scrolling Marquee Ticker — right to left, all bulletins */}
           <div
-            onClick={() => handleOpenNotice(current)}
-            className="flex-1 min-w-0 overflow-hidden cursor-pointer flex items-center py-0.5 group"
+            className="flex-1 min-w-0 overflow-hidden cursor-pointer relative"
+            style={{ maskImage: "linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%)" }}
             title={isBn ? "বিস্তারিত পড়তে ক্লিক করুন" : "Click to read full bulletin"}
+            onClick={() => handleOpenNotice(current)}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
           >
-            <div className="flex items-center gap-3 w-full animate-in fade-in duration-300">
-              <p className={`text-xs sm:text-sm font-semibold truncate ${style.textColor} group-hover:underline flex items-center gap-2`}>
-                <span className="font-extrabold">{current.title}</span>
-                <span className="opacity-80 font-normal hidden sm:inline">— {current.body}</span>
-              </p>
-              <span className="text-[10px] text-white/75 shrink-0 hidden md:flex items-center gap-1 bg-black/20 px-1.5 py-0.5 rounded">
-                <Clock size={11} /> {getRemainingTimeStr(current.bulletinExpiresAt)}
+            {/* Duplicate the text so the loop is seamless */}
+            <div
+              ref={tickerRef}
+              className={`animate-ticker ${isPaused ? "animate-ticker-paused" : ""} ${style.textColor}`}
+              style={{ animationDuration: `${tickerDuration * 2}s` }}
+            >
+              {/* First copy */}
+              <span className="text-xs sm:text-sm font-semibold pr-16">
+                {tickerText}
+              </span>
+              {/* Seamless duplicate */}
+              <span className="text-xs sm:text-sm font-semibold pr-16" aria-hidden="true">
+                {tickerText}
               </span>
             </div>
           </div>
 
-          {/* Right Action & Navigation Controls */}
+          {/* Right Action Controls */}
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 text-white">
-            {activeBulletins.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setCurrentIndex(prev => (prev - 1 + activeBulletins.length) % activeBulletins.length)}
-                  className="p-1 rounded hover:bg-white/20 active:scale-95 transition-transform"
-                  title={isBn ? "পূর্ববর্তী নোটিশ" : "Previous"}
-                >
-                  <ChevronLeft size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrentIndex(prev => (prev + 1) % activeBulletins.length)}
-                  className="p-1 rounded hover:bg-white/20 active:scale-95 transition-transform"
-                  title={isBn ? "পরবর্তী নোটিশ" : "Next"}
-                >
-                  <ChevronRight size={15} />
-                </button>
-              </>
-            )}
-
             <button
               type="button"
-              onClick={() => handleOpenNotice(current)}
+              onClick={() => handleOpenNotice(activeBulletins[0])}
               className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-white/20 hover:bg-white/30 hidden sm:flex items-center gap-1 transition-colors"
             >
               <Eye size={12} /> {isBn ? "বিস্তারিত" : "Read"}
