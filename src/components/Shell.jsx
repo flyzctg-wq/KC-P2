@@ -10,52 +10,101 @@ import { C, LOGO_MARK } from "../theme";
 import TvBulletin from "./TvBulletin";
 
 /* ============================== SHELL / NAV ============================== */
-const RESIDENT_NAV = [
-  { key: "r-home", label: "home", icon: Home },
-  { key: "r-directory", label: "directory", icon: Users },
-  { key: "r-dues", label: "financials", icon: Wallet },
-  { key: "chat", label: "chat", icon: MessageCircle },
-  { key: "r-notices", label: "notices", icon: Bell },
-  { key: "r-elections", label: "elections", icon: Vote },
-  { key: "agm", label: "agm", icon: CalendarCheck },
-  { key: "amendments", label: "amendments", icon: Scale },
-  { key: "hotlines", label: "hotlines", icon: PhoneCall },
-  { key: "badges", label: "badges", icon: Award },
-  { key: "budget", label: "budget", icon: PieChart },
-  { key: "audit", label: "audit", icon: FileSearch },
-  { key: "bloodBank", label: "bloodBank", icon: Droplet },
-  { key: "officers", label: "officers", icon: BadgeCheck },
-  { key: "events", label: "events", icon: CalendarRange },
-  { key: "constitution", label: "constitution", icon: BookOpen },
-  { key: "r-tickets", label: "tickets", icon: LifeBuoy },
-  { key: "settings", label: "settings", icon: Settings },
-  { key: "r-profile", label: "profile", icon: User },
+/* ---- Grouped nav: each group has a heading label + items array ---- */
+const RESIDENT_NAV_GROUPS = [
+  {
+    groupLabel: { en: "Main", bn: "মূল" },
+    items: [
+      { key: "r-home", label: "home", icon: Home },
+      { key: "r-directory", label: "directory", icon: Users },
+      { key: "r-dues", label: "financials", icon: Wallet },
+      { key: "chat", label: "chat", icon: MessageCircle },
+      { key: "r-notices", label: "notices", icon: Bell },
+    ],
+  },
+  {
+    groupLabel: { en: "Governance", bn: "পরিচালনা" },
+    items: [
+      { key: "r-elections", label: "elections", icon: Vote },
+      { key: "agm", label: "agm", icon: CalendarCheck },
+      { key: "amendments", label: "amendments", icon: Scale },
+      { key: "officers", label: "officers", icon: BadgeCheck },
+      { key: "constitution", label: "constitution", icon: BookOpen },
+    ],
+  },
+  {
+    groupLabel: { en: "Community", bn: "সম্প্রদায়" },
+    items: [
+      { key: "hotlines", label: "hotlines", icon: PhoneCall },
+      { key: "bloodBank", label: "bloodBank", icon: Droplet },
+      { key: "events", label: "events", icon: CalendarRange },
+      { key: "badges", label: "badges", icon: Award },
+      { key: "budget", label: "budget", icon: PieChart },
+      { key: "audit", label: "audit", icon: FileSearch },
+    ],
+  },
+  {
+    groupLabel: { en: "Account", bn: "অ্যাকাউন্ট" },
+    items: [
+      { key: "r-tickets", label: "tickets", icon: LifeBuoy },
+      { key: "settings", label: "settings", icon: Settings },
+      { key: "r-profile", label: "profile", icon: User },
+    ],
+  },
 ];
+// Flat list derived from groups (used for active-state lookup)
+const RESIDENT_NAV = RESIDENT_NAV_GROUPS.flatMap(g => g.items);
 
-const ADMIN_NAV = [
-  { key: "a-dashboard", label: "dashboard", icon: BarChart3 },
-  { key: "a-members", label: "members", icon: Users },
-  { key: "a-dues", label: "financials", icon: Wallet },
-  { key: "a-payment-history", label: "paymentHistory", icon: Receipt },
-  { key: "chat", label: "chat", icon: MessageCircle },
-  { key: "a-notices", label: "notices", icon: Bell },
-  { key: "a-letters", label: "letters", icon: FileText },
-  { key: "a-elections", label: "elections", icon: Vote },
-  { key: "agm", label: "agm", icon: CalendarCheck },
-  { key: "amendments", label: "amendments", icon: Scale },
-  { key: "hotlines", label: "hotlines", icon: PhoneCall },
-  { key: "badges", label: "badges", icon: Award },
-  { key: "budget", label: "budget", icon: PieChart },
-  { key: "audit", label: "log", icon: FileSearch },
-  { key: "bloodBank", label: "bloodBank", icon: Droplet },
-  { key: "officers", label: "officers", icon: BadgeCheck },
-  { key: "events", label: "events", icon: CalendarRange },
-  { key: "constitution", label: "constitution", icon: BookOpen },
-  { key: "a-handover", label: "handover", icon: ArrowLeftRight },
-  { key: "a-tickets", label: "tickets", icon: LifeBuoy },
-  { key: "settings", label: "settings", icon: Settings },
-  { key: "r-profile", label: "profile", icon: User },
+const ADMIN_NAV_GROUPS = [
+  {
+    groupLabel: { en: "Management", bn: "ব্যবস্থাপনা" },
+    items: [
+      { key: "a-dashboard", label: "dashboard", icon: BarChart3 },
+      { key: "a-members", label: "members", icon: Users },
+      { key: "a-dues", label: "financials", icon: Wallet },
+      { key: "a-payment-history", label: "paymentHistory", icon: Receipt },
+    ],
+  },
+  {
+    groupLabel: { en: "Communication", bn: "যোগাযোগ" },
+    items: [
+      { key: "chat", label: "chat", icon: MessageCircle },
+      { key: "a-notices", label: "notices", icon: Bell },
+      { key: "a-letters", label: "letters", icon: FileText },
+      { key: "hotlines", label: "hotlines", icon: PhoneCall },
+    ],
+  },
+  {
+    groupLabel: { en: "Governance", bn: "পরিচালনা" },
+    items: [
+      { key: "a-elections", label: "elections", icon: Vote },
+      { key: "agm", label: "agm", icon: CalendarCheck },
+      { key: "amendments", label: "amendments", icon: Scale },
+      { key: "officers", label: "officers", icon: BadgeCheck },
+      { key: "constitution", label: "constitution", icon: BookOpen },
+      { key: "a-handover", label: "handover", icon: ArrowLeftRight },
+    ],
+  },
+  {
+    groupLabel: { en: "Community", bn: "সম্প্রদায়" },
+    items: [
+      { key: "bloodBank", label: "bloodBank", icon: Droplet },
+      { key: "events", label: "events", icon: CalendarRange },
+      { key: "badges", label: "badges", icon: Award },
+      { key: "budget", label: "budget", icon: PieChart },
+      { key: "audit", label: "log", icon: FileSearch },
+    ],
+  },
+  {
+    groupLabel: { en: "Account", bn: "অ্যাকাউন্ট" },
+    items: [
+      { key: "a-tickets", label: "tickets", icon: LifeBuoy },
+      { key: "settings", label: "settings", icon: Settings },
+      { key: "r-profile", label: "profile", icon: User },
+    ],
+  },
 ];
+const ADMIN_NAV = ADMIN_NAV_GROUPS.flatMap(g => g.items);
 
 const RESIDENT_BOTTOM_NAV = [
   { key: "r-home", label: "home", icon: Home },
@@ -99,27 +148,35 @@ export default function Shell({
           </div>
           <div>
             <p className="font-extrabold text-sm heading leading-none">Kunjachaya</p>
-            <p className="text-[10px] font-semibold tracking-wide" style={{ color: C.outline }}>
-              {isAdmin ? "ADMIN PORTAL · WEB" : "RESIDENT · WEB"}
+            <p className="text-[10px] font-semibold tracking-[0.04em] capitalize" style={{ color: C.outline, fontVariantCaps: "small-caps" }}>
+              {isAdmin ? "Admin Portal · Web" : "Resident · Web"}
             </p>
           </div>
         </div>
 
-        <nav className="flex-1 flex flex-col gap-1 overflow-y-auto pr-1">
-          {nav.map(item => {
-            const Icon = item.icon; const active = view === item.key;
-            const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
-            return (
-              <button key={item.key} onClick={() => setView(item.key)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left"
-                style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}>
-                <Icon size={17} strokeWidth={2.3} /> {labelText}
-              </button>
-            );
-          })}
+        <nav className="flex-1 flex flex-col overflow-y-auto pr-1" aria-label="Main navigation">
+          {(isAdmin ? ADMIN_NAV_GROUPS : RESIDENT_NAV_GROUPS).map((group, gi) => (
+            <div key={gi} className="mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1" style={{ color: C.outline }} aria-hidden="true">
+                {lang === "bn" ? group.groupLabel.bn : group.groupLabel.en}
+              </p>
+              {group.items.map(item => {
+                const Icon = item.icon; const active = view === item.key;
+                const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
+                return (
+                  <button key={item.key} onClick={() => setView(item.key)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left w-full"
+                    style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}>
+                    <Icon size={17} strokeWidth={2.3} /> {labelText}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        <div className="border-t pt-4 mt-4 space-y-1.5" style={{ borderColor: C.outlineVariant }}>
+        {/* Issue #7 fix: stronger visual separator between nav and footer profile */}
+        <div className="border-t-2 pt-5 mt-5 space-y-1.5" style={{ borderColor: C.outlineVariant }}>
           <div
             onClick={() => setView("r-profile")}
             className="flex items-center gap-2.5 px-2 py-2 mb-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
@@ -236,8 +293,8 @@ export default function Shell({
                   </div>
                   <div>
                     <span className="font-extrabold text-sm heading block leading-none">Kunjachaya</span>
-                    <span className="text-[10px] font-semibold tracking-wider opacity-60">
-                      {isAdmin ? "EXECUTIVE ADMIN" : "RESIDENT PORTAL"}
+                    <span className="text-[10px] font-semibold tracking-[0.04em] opacity-60">
+                      {isAdmin ? "Executive Admin" : "Resident Portal"}
                     </span>
                   </div>
                 </div>
@@ -263,25 +320,29 @@ export default function Shell({
               </div>
 
               {/* Scrollable Navigation List */}
-              <div className="text-[11px] font-bold px-2 py-1 uppercase tracking-wider opacity-50">
-                {lang === "bn" ? "সকল মেনু ও সেবা" : "All Modules & Services"}
-              </div>
-              <nav className="flex flex-col gap-1 flex-1 overflow-y-auto pr-1 my-1">
-                {nav.map(item => {
-                  const Icon = item.icon;
-                  const active = view === item.key;
-                  return (
-                    <button
-                      key={item.key}
-                      onClick={() => { setView(item.key); setNavOpen(false); }}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-left transition-colors"
-                      style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
-                    >
-                      <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                      <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
-                    </button>
-                  );
-                })}
+              <nav className="flex flex-col flex-1 overflow-y-auto pr-1 my-1" aria-label="Main navigation">
+                {(isAdmin ? ADMIN_NAV_GROUPS : RESIDENT_NAV_GROUPS).map((group, gi) => (
+                  <div key={gi} className="mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1" style={{ color: C.outline }} aria-hidden="true">
+                      {lang === "bn" ? group.groupLabel.bn : group.groupLabel.en}
+                    </p>
+                    {group.items.map(item => {
+                      const Icon = item.icon;
+                      const active = view === item.key;
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => { setView(item.key); setNavOpen(false); }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-left transition-colors w-full"
+                          style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
+                        >
+                          <Icon size={16} strokeWidth={active ? 2.5 : 2} />
+                          <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </nav>
 
               {/* Drawer Footer Theme and Language Controls */}
@@ -332,7 +393,11 @@ export default function Shell({
         {/* TV Bulletin / News Ticker Bar (Mobile & Web) */}
         <TvBulletin notices={db?.notices || []} lang={lang} setView={setView} session={session} />
 
-        <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 max-w-6xl w-full mx-auto">{children}</main>
+        <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 max-w-6xl w-full mx-auto">
+          {/* #6: Every page must have an H1 for accessibility & SEO. Visually hidden but present in the DOM. */}
+          <h1 className="sr-only">Kunjachaya Club — {isAdmin ? "Admin Portal" : "Resident Portal"}</h1>
+          {children}
+        </main>
 
         {/* Bottom Nav = Clean, responsive mobile bar with 5 primary destinations */}
         <nav

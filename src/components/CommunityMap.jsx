@@ -109,8 +109,8 @@ export default function CommunityMap({ lang = "en", toast = () => {}, className 
 
         {/* Floating Quick Action Badge */}
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
-          <span className="text-[10px] sm:text-xs font-bold text-slate-900 bg-white/90 dark:bg-slate-900/90 dark:text-slate-100 px-3 py-1 rounded-full shadow-md backdrop-blur-xs pointer-events-auto border border-black/5 dark:border-white/10">
-            📍 22.3810° N, 91.8166° E
+          <span className="text-xs font-bold text-slate-900 bg-white/90 dark:bg-slate-900/90 dark:text-slate-100 px-3 py-1 rounded-full shadow-md backdrop-blur-xs pointer-events-auto border border-black/5 dark:border-white/10">
+            📍 22.3810°&thinsp;N, 91.8166°&thinsp;E
           </span>
 
           <a
@@ -129,7 +129,7 @@ export default function CommunityMap({ lang = "en", toast = () => {}, className 
       {!compact && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 text-xs">
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
               {isBn ? "ব্লক বিন্যাস" : "Blocks"}
             </span>
             <p className="font-black text-gray-900 dark:text-gray-100">
@@ -138,7 +138,7 @@ export default function CommunityMap({ lang = "en", toast = () => {}, className 
           </div>
 
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
               {isBn ? "সিটি কর্পোরেশন" : "City Corp"}
             </span>
             <p className="font-black text-gray-900 dark:text-gray-100">
@@ -147,7 +147,7 @@ export default function CommunityMap({ lang = "en", toast = () => {}, className 
           </div>
 
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
               {isBn ? "থানা ও জেলা" : "Thana & District"}
             </span>
             <p className="font-black text-gray-900 dark:text-gray-100">
@@ -156,7 +156,7 @@ export default function CommunityMap({ lang = "en", toast = () => {}, className 
           </div>
 
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
               {isBn ? "প্রধান সংযোগ" : "Main Route"}
             </span>
             <p className="font-black text-gray-900 dark:text-gray-100 truncate">
@@ -168,12 +168,12 @@ export default function CommunityMap({ lang = "en", toast = () => {}, className 
 
       {/* Footer Share & Copy Actions */}
       <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex-wrap text-xs">
-        <p className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
           <Info size={13} className="text-emerald-600 shrink-0" />
           <span>
             {isBn
               ? "ক্লাব সংবিধানের ৩নং ধারা অনুসারে এই ভৌগোলিক এলাকার সকল বাসিন্দা সংগঠনের অন্তর্ভুক্ত।"
-              : "As per Article 3 of the constitution, all residents within this boundary are eligible."}
+              : "As per Article 3 of the constitution, all residents within this boundary are eligible."}
           </span>
         </p>
 

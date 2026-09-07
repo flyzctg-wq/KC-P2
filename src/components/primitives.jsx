@@ -7,11 +7,12 @@ export function Btn({ children, variant = "primary", size = "md", icon: Icon, on
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-4 py-2.5 text-sm", lg: "px-6 py-3 text-base" };
   const base = "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]";
   const styles = {
-    primary: { backgroundColor: C.primary, color: C.onPrimary },
+    /* #2: 5 canonical button styles — use these everywhere; avoid ad-hoc inline button styling */
+    primary:   { backgroundColor: C.primary, color: C.onPrimary },
     secondary: { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer },
-    outline: { backgroundColor: "transparent", color: C.primary, border: `1.5px solid ${C.outline}` },
-    danger: { backgroundColor: C.error, color: "#fff" },
-    ghost: { backgroundColor: "transparent", color: C.onSurfaceVariant },
+    outline:   { backgroundColor: "transparent", color: C.primary, border: `1.5px solid ${C.outline}` },
+    danger:    { backgroundColor: C.error, color: "#fff" },
+    ghost:     { backgroundColor: "transparent", color: C.onSurfaceVariant },
   };
   return (
     <button type={type} onClick={onClick} disabled={disabled} style={styles[variant]}
@@ -119,8 +120,9 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
 
 export function SectionTitle({ children, action }) {
   return (
-    <div className="flex items-center justify-between mb-3">
-      <h2 className="font-bold text-lg" style={{ color: C.onSurface, fontFamily: "'Hanken Grotesk', sans-serif" }}>{children}</h2>
+    /* #9: full-width row so h2 always aligns with the left edge of the content grid */
+    <div className="flex items-center justify-between mb-3 w-full">
+      <h2 className="font-bold text-lg text-left" style={{ color: C.onSurface, fontFamily: "'Hanken Grotesk', sans-serif" }}>{children}</h2>
       {action}
     </div>
   );

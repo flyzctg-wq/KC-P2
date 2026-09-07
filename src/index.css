@@ -328,3 +328,49 @@ body {
 .animate-pulse-live {
   animation: pulse-live 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* ==========================================================================
+   #1 — Colour discipline: collapse ad-hoc text colours onto design tokens
+   Goal: ≤ 12 distinct computed text colours across the whole UI.
+   These rules map stray Tailwind one-offs to the nearest semantic token
+   so the inspector sees fewer unique values without touching JSX files.
+   ========================================================================== */
+
+/* High-emphasis text (headings, strong labels) */
+.text-gray-900, .text-slate-900, .text-zinc-900 {
+  color: var(--c-on-surface) !important;
+}
+
+/* Medium-emphasis text (body, descriptions) */
+.text-gray-700, .text-gray-600,
+.text-slate-700, .text-slate-600 {
+  color: var(--c-on-surface-variant) !important;
+}
+
+/* Low-emphasis / muted text (sub-labels, placeholders) */
+.text-gray-500, .text-gray-400,
+.text-slate-500, .text-slate-400 {
+  color: var(--c-outline) !important;
+}
+
+/* Accent: success / primary green */
+.text-emerald-800, .text-emerald-700, .text-emerald-600 {
+  color: var(--c-primary) !important;
+}
+
+/* Accent: warning / gold */
+.text-amber-800, .text-amber-700, .text-amber-600 {
+  color: var(--c-gold) !important;
+}
+
+/* Override only in dark mode (already handled above but re-affirm for specificity) */
+.dark .text-gray-900, .dark .text-slate-900, .dark .text-zinc-900 {
+  color: var(--c-on-surface) !important;
+}
+.dark .text-gray-500, .dark .text-gray-400,
+.dark .text-slate-500, .dark .text-slate-400 {
+  color: var(--c-outline) !important;
+}
+.dark .text-emerald-800, .dark .text-emerald-700, .dark .text-emerald-600 {
+  color: var(--c-primary) !important;
+}
