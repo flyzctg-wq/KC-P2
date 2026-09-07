@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
 import { loadDB, saveDB, subscribeDB } from "./lib/store";
 import { syncChanges } from "./lib/write";
 import { signUpResident, signInWithPassword, signOutUser, updateUserPassword } from "./lib/authBridge";
@@ -10,9 +10,10 @@ import { Toasts, Modal, Btn, Field, inputCls, inputStyle } from "./components/pr
 import ConsentBanner from "./components/ConsentBanner";
 import { hasStoredConsent, loadAnalytics, trackEvent } from "./lib/analytics";
 import AuthScreen from "./components/AuthScreen";
-import Shell from "./components/Shell";
-import Router from "./Router";
 import SplashIntro from "./components/SplashIntro";
+
+const Shell = lazy(() => import("./components/Shell"));
+const Router = lazy(() => import("./Router"));
 
 export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("kc_theme") || "system");
@@ -29,6 +30,7 @@ export default function App() {
   const [newPassword, setNewPassword] = useState("");
   const [showNewPw, setShowNewPw] = useState(false);
   const [savingNewPw, setSavingNewPw] = useState(false);
+  const unsubRef = useRef(null);
 
   // Global Font Size and App Preferences for Android & Web
   const [fontSize, setFontSize] = useState(() => {
@@ -103,11 +105,6 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    // inject fonts
-    const l1 = document.createElement("link"); l1.rel = "stylesheet";
-    l1.href = "https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap";
-    document.head.appendChild(l1);
-
     // If consent was already granted in a previous session, resume
     // analytics silently — don't show the banner again every visit.
     if (hasStoredConsent()) loadAnalytics();
@@ -217,15 +214,16 @@ export default function App() {
             }
             setSession(u);
             setView(prev => prev === "home" ? (u.role === "admin" ? "a-dashboard" : "r-home") : prev);
+
+            // Load full DB and subscribe ONLY when user is confirmed authenticated
+            const d = await loadDB();
+            setDb(d);
+            unsubRef.current = subscribeDB((fresh) => setDb(fresh));
           }
         }
       } catch (e) {
         console.warn("Session restore skipped:", e);
       }
-
-      const d = await loadDB();
-      setDb(d);
-      unsub = subscribeDB((fresh) => setDb(fresh));
     })();
 
     // Listen for auth events including password recovery redirect
@@ -236,7 +234,10 @@ export default function App() {
     });
 
     return () => {
-      if (unsub) unsub();
+      if (unsubRef.current) {
+        unsubRef.current();
+        unsubRef.current = null;
+      }
       if (authSub) authSub.unsubscribe();
     };
   }, []);
@@ -371,7 +372,12 @@ export default function App() {
         await supabase.from("profiles").update({ permissions: treasurerPerms }).eq("id", u.id);
       }
       // Load full DB in background after profile is confirmed
-      loadDB().then(d => setDb(d));
+      loadDB().then(d => {
+        setDb(d);
+        if (!unsubRef.current) {
+          unsubRef.current = subscribeDB((fresh) => setDb(fresh));
+        }
+      });
       setSession(u); setView(u.role === "admin" ? "a-dashboard" : "r-home");
       toast(lang === "bn" ? `স্বাগতম, ${u.name.split(" ")[0]}!` : `Welcome back, ${u.name.split(" ")[0]}!`);
       trackEvent("login", { role: u.role });
@@ -435,7 +441,22 @@ export default function App() {
     }
   };
 
-  const logout = () => { signOutUser(); setSession(null); setView("home"); toast("Logged out."); };
+  const logout = () => {
+    if (unsubRef.current) {
+      unsubRef.current();
+      unsubRef.current = null;
+    }
+    signOutUser();
+    setSession(null);
+    setView("home");
+    setDb({
+      users: [], notices: [], dues: [], elections: [], votes: [],
+      tickets: [], activity: [], emergencyContacts: [], agmEvents: [],
+      amendments: [], budgetItems: [], chatMessages: [], handoverChecklist: [],
+      events: [], inductions: [],
+    });
+    toast("Logged out.");
+  };
 
   if (loading || !db) {
     return (
@@ -577,10 +598,16 @@ export default function App() {
         {!session ? (
           <AuthScreen db={db} lang={lang} setLang={setLang} t={t} authMode={authMode} setAuthMode={setAuthMode} login={login} register={register} theme={theme} setTheme={setTheme} />
         ) : (
-          <Shell session={session} db={db} persist={persist} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
-            navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}>
-            <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings} />
-          </Shell>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen py-24" style={{ backgroundColor: C.background }}>
+              <Loader2 className="animate-spin" size={28} style={{ color: C.primary }} />
+            </div>
+          }>
+            <Shell session={session} db={db} persist={persist} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
+              navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}>
+              <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings} />
+            </Shell>
+          </Suspense>
         )}
       </div>
 
