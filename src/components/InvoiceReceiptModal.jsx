@@ -401,7 +401,8 @@ _কুঞ্জছায়া ক্লাব কার্যালয়, চ
 _Kunjachaya Club Office, Chattogram._`;
 
     const url = rawPhone ? `https://wa.me/${rawPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    // Security: Specify "noopener,noreferrer" to prevent reverse tabnabbing attacks on window.open
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
