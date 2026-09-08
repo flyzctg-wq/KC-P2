@@ -298,6 +298,7 @@ export default function Shell({
             {/* Mobile Fast Theme Toggle Button */}
             <button
               onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
+              aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
               className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
               style={{ color: C.onSurfaceVariant }}
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
@@ -308,6 +309,7 @@ export default function Shell({
             {/* Mobile Settings Direct Button */}
             <button
               onClick={() => setView("settings")}
+              aria-label="Settings"
               className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
               style={{ color: view === "settings" ? C.primary : C.onSurfaceVariant }}
               title="Settings"
@@ -316,12 +318,24 @@ export default function Shell({
             </button>
 
             {/* Language Selector */}
-            <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }} title="Change Language">
+            <button
+              onClick={() => setLang(l => l === "en" ? "bn" : "en")}
+              aria-label={lang === "en" ? "Switch language to Bengali" : "Switch language to English"}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+              style={{ color: C.onSurfaceVariant }}
+              title="Change Language"
+            >
               <Globe size={17} />
             </button>
 
             {/* Drawer Menu Button */}
-            <button onClick={() => setNavOpen(true)} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }} title="Open Menu">
+            <button
+              onClick={() => setNavOpen(true)}
+              aria-label="Open navigation menu"
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+              style={{ color: C.onSurfaceVariant }}
+              title="Open Menu"
+            >
               <Menu size={20} />
             </button>
           </div>
@@ -348,7 +362,7 @@ export default function Shell({
                     </span>
                   </div>
                 </div>
-                <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
+                <button onClick={() => setNavOpen(false)} aria-label="Close navigation menu" className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
                   <X size={20} />
                 </button>
               </div>
@@ -472,6 +486,7 @@ export default function Shell({
 
         {/* Bottom Nav = Clean, responsive mobile bar with 5 primary destinations */}
         <nav
+          aria-label="Bottom primary navigation"
           className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t px-1 py-1.5 shadow-lg backdrop-blur-md"
           style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}
         >
@@ -483,6 +498,8 @@ export default function Shell({
               <button
                 key={item.key}
                 onClick={() => setView(item.key)}
+                aria-label={labelText}
+                aria-current={active ? "page" : undefined}
                 className="flex flex-col items-center gap-0.5 px-1 py-1 rounded-xl min-w-[56px] transition-transform active:scale-95"
                 style={{ color: active ? C.primary : C.outline }}
               >
