@@ -320,18 +320,18 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   };
 
   return (
-    <div className="space-y-4">
-      {/* Top Header Bar */}
+    <div className="space-y-4 w-full">
+      {/* Top Header Bar — Single H2 heading & primary action buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: C.outlineVariant }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-black shadow-md">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-black shadow-md shrink-0">
             ৳
           </div>
           <div>
-            <h1 className="text-xl font-black heading text-gray-900 leading-tight">
+            <h2 className="text-xl font-black heading text-gray-900 dark:text-gray-100 leading-tight">
               {isBn ? "বিলিং তালিকা ও কোষাধ্যক্ষ পোর্টাল" : "Billing List & Treasury Suite"}
-            </h1>
-            <p className="text-xs text-gray-500">
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
               {isBn ? "সকল সদস্যের চাঁদা, জিএম লেভি, ক্যাশ কালেকশন ও ভাউচার রেজিস্টার" : "All member subscriptions, GM levies, digital & offline collections"}
             </p>
           </div>
@@ -339,144 +339,128 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
 
         {canManage && (
           <div className="flex items-center gap-2 flex-wrap">
-            <Btn size="sm" variant="outline" icon={FileSpreadsheet} onClick={handleExportCSV}>
-              {isBn ? "Generate Excel" : "Generate Excel"}
-            </Btn>
-            <Btn size="sm" variant="outline" icon={Printer} onClick={() => window.print()}>
-              {isBn ? "Generate PDF" : "Generate PDF"}
-            </Btn>
             <Btn size="sm" variant="outline" icon={Plus} onClick={() => setGmChargeModal(true)}>
-              {isBn ? "+ GM Levy" : "+ GM Levy"}
+              {isBn ? "+ জিএম লেভি" : "+ GM Levy"}
             </Btn>
             <Btn size="sm" icon={Send} onClick={() => setMonthlyModal(true)}>
-              {isBn ? "+ Issue Monthly Bill" : "+ Issue Monthly Bill"}
+              {isBn ? "+ মাসিক চাঁদা ইস্যু" : "+ Issue Monthly Bill"}
             </Btn>
           </div>
         )}
       </div>
 
-      {/* TOP SUMMARY METRIC CARDS (Matching ISP Billing Style) */}
+      {/* TOP SUMMARY METRIC CARDS — Cohesive, accessible semantic palette (No rainbow fatigue) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
         {/* 1. Paid Members */}
-        <div className="p-3.5 rounded-2xl bg-[#00897B] text-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between opacity-90 text-[11px] font-bold">
+        <div className="p-3.5 rounded-2xl border bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between" style={{ borderColor: C.outlineVariant }}>
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
             <span>Paid Client</span>
-            <CheckCircle2 size={16} />
+            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="mt-2">
-            <p className="text-2xl font-black heading leading-none">{paidCount}</p>
-            <p className="text-[10px] opacity-80 mt-1">Monthly paid client</p>
+            <p className="text-2xl font-black heading leading-none text-emerald-700 dark:text-emerald-400">{paidCount}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Monthly paid client</p>
           </div>
         </div>
 
         {/* 2. Unpaid Members */}
-        <div className="p-3.5 rounded-2xl bg-[#0097A7] text-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between opacity-90 text-[11px] font-bold">
+        <div className="p-3.5 rounded-2xl border bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between" style={{ borderColor: C.outlineVariant }}>
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
             <span>Unpaid Client</span>
-            <Clock size={16} />
+            <Clock size={16} className="text-amber-600 dark:text-amber-400" />
           </div>
           <div className="mt-2">
-            <p className="text-2xl font-black heading leading-none">{unpaidCount}</p>
-            <p className="text-[10px] opacity-80 mt-1">Monthly unpaid client</p>
+            <p className="text-2xl font-black heading leading-none text-amber-700 dark:text-amber-400">{unpaidCount}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Monthly unpaid client</p>
           </div>
         </div>
 
         {/* 3. Received Bill */}
-        <div className="p-3.5 rounded-2xl bg-[#5E35B1] text-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between opacity-90 text-[11px] font-bold">
+        <div className="p-3.5 rounded-2xl border bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between" style={{ borderColor: C.outlineVariant }}>
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
             <span>Received Bill</span>
-            <DollarSign size={16} />
+            <DollarSign size={16} className="text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="mt-2">
-            <p className="text-xl font-black heading leading-none">{currency(receivedBillAmount)}</p>
-            <p className="text-[10px] opacity-80 mt-1">Monthly received bill</p>
+            <p className="text-xl font-black heading leading-none text-gray-900 dark:text-gray-100">{currency(receivedBillAmount)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Monthly received bill</p>
           </div>
         </div>
 
         {/* 4. Due Amount */}
-        <div className="p-3.5 rounded-2xl bg-[#37474F] text-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between opacity-90 text-[11px] font-bold">
+        <div className="p-3.5 rounded-2xl border bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between" style={{ borderColor: C.outlineVariant }}>
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
             <span>Due Amount</span>
-            <AlertTriangle size={16} className="text-rose-400" />
+            <AlertTriangle size={16} className="text-rose-600 dark:text-rose-400" />
           </div>
           <div className="mt-2">
-            <p className="text-xl font-black heading leading-none text-rose-300">{currency(totalAllOverDue)}</p>
-            <p className="text-[10px] opacity-80 mt-1">All over due amount</p>
+            <p className="text-xl font-black heading leading-none text-rose-600 dark:text-rose-400">{currency(totalAllOverDue)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All over due amount</p>
           </div>
         </div>
 
         {/* 5. Generated Bill */}
-        <div className="p-3.5 rounded-2xl bg-[#0288D1] text-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between opacity-90 text-[11px] font-bold">
+        <div className="p-3.5 rounded-2xl border bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between" style={{ borderColor: C.outlineVariant }}>
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
             <span>Generated Bill</span>
-            <FileText size={16} />
+            <FileText size={16} className="text-gray-500" />
           </div>
           <div className="mt-2">
-            <p className="text-xl font-black heading leading-none">{currency(generatedBillMonth)}</p>
-            <p className="text-[10px] opacity-80 mt-1">Monthly generated bill</p>
+            <p className="text-xl font-black heading leading-none text-gray-900 dark:text-gray-100">{currency(generatedBillMonth)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Monthly generated bill</p>
           </div>
         </div>
 
         {/* 6. Advance Amount */}
-        <div className="p-3.5 rounded-2xl bg-[#26A69A] text-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between opacity-90 text-[11px] font-bold">
+        <div className="p-3.5 rounded-2xl border bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between" style={{ borderColor: C.outlineVariant }}>
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
             <span>Advance Amount</span>
-            <Wallet size={16} />
+            <Wallet size={16} className="text-teal-600 dark:text-teal-400" />
           </div>
           <div className="mt-2">
-            <p className="text-xl font-black heading leading-none">{currency(totalAdvanceAmount)}</p>
-            <p className="text-[10px] opacity-80 mt-1">Monthly advance amount</p>
+            <p className="text-xl font-black heading leading-none text-gray-900 dark:text-gray-100">{currency(totalAdvanceAmount)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Monthly advance amount</p>
           </div>
         </div>
 
         {/* 7. Monthly Total Target */}
-        <div className="p-3.5 rounded-2xl bg-[#673AB7] text-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between opacity-90 text-[11px] font-bold">
+        <div className="p-3.5 rounded-2xl border bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between" style={{ borderColor: C.outlineVariant }}>
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
             <span>Monthly Target</span>
-            <Building size={16} />
+            <Building size={16} className="text-indigo-600 dark:text-indigo-400" />
           </div>
           <div className="mt-2">
-            <p className="text-xl font-black heading leading-none">{currency(totalMonthlyTargetBill)}</p>
-            <p className="text-[10px] opacity-80 mt-1">Current month total target</p>
+            <p className="text-xl font-black heading leading-none text-gray-900 dark:text-gray-100">{currency(totalMonthlyTargetBill)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Current month total target</p>
           </div>
         </div>
       </div>
 
-      {/* Action Shortcut Pills */}
-      <div className="flex items-center gap-1.5 flex-wrap text-xs font-bold">
-        <button
-          onClick={handleExportCSV}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white bg-slate-800 hover:bg-slate-900 transition-colors shadow-sm"
-        >
-          <FileSpreadsheet size={13} /> Generate Excel
-        </button>
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white bg-sky-800 hover:bg-sky-900 transition-colors shadow-sm"
-        >
-          <Printer size={13} /> Generate PDF
-        </button>
-        <button
+      {/* Action Shortcut Buttons — Unified button system */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Btn size="sm" variant="secondary" icon={FileSpreadsheet} onClick={handleExportCSV}>
+          {isBn ? "এক্সেল সিএসভি" : "Generate Excel"}
+        </Btn>
+        <Btn size="sm" variant="secondary" icon={Printer} onClick={() => window.print()}>
+          {isBn ? "পিডিএফ / প্রিন্ট" : "Generate PDF"}
+        </Btn>
+        <Btn
+          size="sm"
+          variant="outline"
+          icon={MessageCircle}
           onClick={() => {
             const defaulters = filteredList.filter(d => d.status !== "paid");
-            toast(isBn ? `${defaulters.length} জন বকেয়াদার সদস্যের কাছে তাগাদা তালিকা তৈরি হয়েছে।` : `Identified ${defaulters.length} pending members for SMS notification.`);
+            toast(isBn ? `${defaulters.length} জন বকেয়াদার সদস্যের কাছে তাগাদা তালিকা তৈরি হয়েছে।` : `Identified ${defaulters.length} pending members for notification.`);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white bg-teal-800 hover:bg-teal-900 transition-colors shadow-sm"
         >
-          <MessageCircle size={13} /> WhatsApp / SMS Defaulters
-        </button>
-        <button
-          onClick={() => setExpenseModal(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white bg-amber-800 hover:bg-amber-900 transition-colors shadow-sm"
-        >
-          <ArrowDownRight size={13} /> Record Expense Voucher
-        </button>
-        <button
-          onClick={() => setActiveTab(prev => prev === "gateway" ? "billing" : "gateway")}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white bg-indigo-800 hover:bg-indigo-900 transition-colors shadow-sm"
-        >
-          <Zap size={13} /> Online Gateway Integration Hub
-        </button>
+          {isBn ? "বকেয়া তাগাদা" : "WhatsApp / SMS Defaulters"}
+        </Btn>
+        <Btn size="sm" variant="outline" icon={ArrowDownRight} onClick={() => setExpenseModal(true)}>
+          {isBn ? "ব্যয় ভাউচার" : "Record Expense Voucher"}
+        </Btn>
+        <Btn size="sm" variant="outline" icon={Zap} onClick={() => setActiveTab(prev => prev === "gateway" ? "billing" : "gateway")}>
+          {isBn ? "গেটওয়ে হাব" : "Gateway Integration Hub"}
+        </Btn>
       </div>
 
       {/* FILTER & SEARCH CONTROL TOOLBAR */}
@@ -554,24 +538,25 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t" style={{ borderColor: C.outlineVariant }}>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600 dark:text-gray-400 pt-3.5 pb-1 mt-1 border-t" style={{ borderColor: C.outlineVariant }}>
           <div className="flex items-center gap-2">
-            <span>Show</span>
+            <label htmlFor="rows-per-page-select" className="font-medium">Show</label>
             <select
+              id="rows-per-page-select"
               value={rowsPerPage}
               onChange={e => setRowsPerPage(Number(e.target.value))}
-              className="px-2 py-0.5 rounded border text-xs bg-white text-gray-800"
+              className="h-8 px-2.5 py-1 rounded-lg border text-xs bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
               <option value={50}>50</option>
               <option value={100}>100</option>
             </select>
-            <span>ENTRIES · Total {filteredList.length} records matching</span>
+            <span className="font-medium">entries · Total {filteredList.length} records matching</span>
           </div>
 
           {selectedRows.length > 0 && (
-            <span className="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span className="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
               {selectedRows.length} selected
             </span>
           )}

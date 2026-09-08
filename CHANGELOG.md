@@ -4,6 +4,17 @@ All notable changes to the Kunjachaya Club project will be documented in this fi
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.2.0] - 2026-09-08
+### Changed
+- Standardized treasury action buttons into canonical secondary and outline `<Btn>` variants.
+- Upgraded summary stats card sub-labels to 12px (`text-xs`) accessible typography.
+- Demoted duplicate billing heading from `h1` to `h2` to preserve single document outline.
+- Consolidated table export buttons above the ledger, removing redundant header buttons.
+- Enhanced table pagination row with comfortable vertical padding and touch-friendly select height.
+- Added accessible Pause/Resume ticker controls and prefers-reduced-motion media query.
+- Harmonized vertical alignment axis across billing header, cards, toolbar, and table.
+- Replaced 7 saturated metric card colors with a calm, cohesive semantic color palette.
+
 ## [2.1.0] - 2026-09-08
 ### Changed
 - Standardized border radius scale to 5 tiers and aligned modal corner radius.

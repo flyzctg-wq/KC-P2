@@ -1,5 +1,29 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v2.2.0] — 2026-09-08
+### 📊 Treasury Suite Usability & Motion Accessibility Overhaul (8 Issues Resolved)
+
+1. **Button Styles Consolidation (Issue #1)**:
+   - Replaced rainbow-colored one-off buttons in `Dues.jsx` with canonical `<Btn size="sm">` variants (`secondary` and `outline`), standardizing button styles across the treasury module.
+2. **Accessible Metric Typography (Issue #2)**:
+   - Upgraded all summary stats card sub-labels from `text-[10px] opacity-80` to readable `text-xs text-gray-500 dark:text-gray-400` (12px minimum accessible threshold).
+3. **Single Document H1 Outline (Issue #3)**:
+   - Demoted duplicate `<h1>` in `Dues.jsx` to `<h2>` to resolve heading outline ambiguity while preserving exact typography aesthetics.
+4. **Elimination of Conflicting Duplicate Export CTAs (Issue #4)**:
+   - Removed redundant "Generate Excel" and "Generate PDF" outline buttons from the top page header, consolidating table exports into a single toolbar directly above the data grid.
+5. **Pagination Controls Spacing & Touch Ergonomics (Issue #5)**:
+   - Added `pt-3.5 pb-1 mt-1` vertical breathing room to the table pagination bar and expanded the entries `<select>` height to `h-8` with accessible focus rings.
+6. **Accessible TV Bulletin Motion Controls (Issue #6)**:
+   - Added an accessible Pause/Resume toggle button (`Play` / `Pause`) to the live news ticker in `TvBulletin.jsx`.
+   - Added `@media (prefers-reduced-motion: reduce)` support in `index.css` to halt marquee animations for users with motion sensitivity (WCAG 2.2.2).
+7. **Consistent Vertical Alignment Axis (Issue #7)**:
+   - Aligned the Treasury header, metric cards, action controls, filter bar, and data table to a uniform flush-left container axis, eliminating stair-stepped layout offsets.
+8. **Semantic Color Palette for Metric Cards (Issue #8)**:
+   - Replaced 7 competing saturated background colors (`#00897B`, `#0097A7`, `#5E35B1`, `#37474F`, `#0288D1`, `#26A69A`, `#673AB7`) with a clean, calm neutral card design.
+   - Restricted high-contrast accent colors strictly to critical metrics (emerald for paid, rose for due amount, amber for unpaid).
+
+---
+
 ## [v2.1.0] — 2026-09-08
 ### 🎨 Usability Heuristics & Accessibility Compliance Overhaul (10 Issues Resolved)
 

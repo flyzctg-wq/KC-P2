@@ -328,6 +328,12 @@ body {
   animation-play-state: paused;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-ticker {
+    animation: none !important;
+  }
+}
+
 @keyframes pulse-live {
   0%, 100% {
     opacity: 1;

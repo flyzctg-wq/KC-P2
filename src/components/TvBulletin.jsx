@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Siren, Zap, AlertTriangle,
-  Eye, X, Clock, ExternalLink
+  Eye, X, Clock, ExternalLink, Play, Pause
 } from "lucide-react";
 import { Modal, Btn, Badge } from "./primitives";
 import { C } from "../theme";
@@ -248,6 +248,15 @@ export default function TvBulletin({
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsPaused(p => !p)}
+              className="h-8 w-8 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center transition-colors opacity-75 hover:opacity-100"
+              title={isPaused ? (isBn ? "চলমান করুন" : "Resume Ticker") : (isBn ? "থামান" : "Pause Ticker")}
+              aria-label={isPaused ? "Resume news ticker animation" : "Pause news ticker animation"}
+            >
+              {isPaused ? <Play size={13} /> : <Pause size={13} />}
+            </button>
             <button
               type="button"
               onClick={() => handleOpenNotice(activeBulletins[0])}
