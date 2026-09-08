@@ -33,6 +33,20 @@
   --c-info-container: #dbe6ff;
   --c-on-info-container: #1e3a8a;
   color-scheme: light;
+
+  /* #1 — Canonical border-radius scale (5 steps, aim ≤6 distinct values):
+     Use these via Tailwind utilities:
+       rounded-sm  → 6px   (chips, small badges)
+       rounded-lg  → 12px  (inputs, small cards)
+       rounded-xl  → 16px  (cards, modals)
+       rounded-2xl → 20px  (large cards, panels)
+       rounded-full→ 999px (pill buttons, avatars)
+     Avoid arbitrary values like rounded-[7px] or rounded-3xl in new code. */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
 }
 
 .dark {

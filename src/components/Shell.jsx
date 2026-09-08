@@ -3,7 +3,7 @@ import {
   Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
-  FileText, Sun, Moon, Laptop, Receipt, Settings
+  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
@@ -132,6 +132,28 @@ export default function Shell({
 
   const isDarkMode = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
+  const navGroups = isAdmin ? ADMIN_NAV_GROUPS : RESIDENT_NAV_GROUPS;
+  const [openGroups, setOpenGroups] = React.useState(() => {
+    const initial = {};
+    navGroups.forEach((group, idx) => {
+      const containsActive = group.items.some(item => item.key === view);
+      initial[idx] = containsActive || idx === 0;
+    });
+    return initial;
+  });
+
+  React.useEffect(() => {
+    navGroups.forEach((group, idx) => {
+      if (group.items.some(item => item.key === view)) {
+        setOpenGroups(prev => ({ ...prev, [idx]: true }));
+      }
+    });
+  }, [view, navGroups]);
+
+  const toggleGroup = (idx) => {
+    setOpenGroups(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
   const toggleThemeNext = () => {
     if (theme === "light") setTheme("dark");
     else if (theme === "dark") setTheme("system");
@@ -140,10 +162,10 @@ export default function Shell({
 
   return (
     <div className="flex min-h-screen w-full max-w-full overflow-x-hidden" style={{ backgroundColor: C.surface }}>
-      {/* Desktop sidebar = "Web Platform" */}
-      <aside className="hidden lg:flex lg:w-64 flex-col shrink-0 border-r px-4 py-6" style={{ borderColor: C.outlineVariant, backgroundColor: C.surface }}>
-        <div className="flex items-center gap-2 px-2 mb-8">
-          <div style={{ backgroundColor: C.primary }} className="w-9 h-9 rounded-xl flex items-center justify-center p-1.5 shadow-sm">
+      {/* Desktop sidebar = "Web Platform" with pinned footer (Issue #10) */}
+      <aside className="hidden lg:flex lg:w-64 flex-col shrink-0 h-screen sticky top-0 border-r px-3.5 py-4 overflow-hidden" style={{ borderColor: C.outlineVariant, backgroundColor: C.surface }}>
+        <div className="flex items-center gap-2 px-2 mb-4 shrink-0">
+          <div style={{ backgroundColor: C.primary }} className="w-8 h-8 rounded-xl flex items-center justify-center p-1.5 shadow-sm">
             <img src={LOGO_MARK} alt="Kunjachaya Club" className="w-full h-full object-contain" />
           </div>
           <div>
@@ -154,38 +176,66 @@ export default function Shell({
           </div>
         </div>
 
-        <nav className="flex-1 flex flex-col overflow-y-auto pr-1" aria-label="Main navigation">
-          {(isAdmin ? ADMIN_NAV_GROUPS : RESIDENT_NAV_GROUPS).map((group, gi) => (
-            <div key={gi} className="mb-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1" style={{ color: C.outline }} aria-hidden="true">
-                {lang === "bn" ? group.groupLabel.bn : group.groupLabel.en}
-              </p>
-              {group.items.map(item => {
-                const Icon = item.icon; const active = view === item.key;
-                const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
-                return (
-                  <button key={item.key} onClick={() => setView(item.key)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left w-full"
-                    style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}>
-                    <Icon size={17} strokeWidth={2.3} /> {labelText}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+        {/* Issue #5: Collapsible Categorized Navigation to avoid wall-of-choices */}
+        <nav className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-1" aria-label="Main navigation">
+          {navGroups.map((group, gi) => {
+            const isOpen = !!openGroups[gi];
+            const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
+            const hasActiveItem = group.items.some(item => item.key === view);
+
+            return (
+              <div key={gi} className="rounded-xl overflow-hidden mb-1">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(gi)}
+                  aria-expanded={isOpen}
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-left transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{ color: hasActiveItem ? C.primary : C.outline }}
+                >
+                  <span>{groupName}</span>
+                  <ChevronDown
+                    size={13}
+                    className={`transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
+                    {group.items.map(item => {
+                      const Icon = item.icon;
+                      const active = view === item.key;
+                      const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => setView(item.key)}
+                          aria-current={active ? "page" : undefined}
+                          className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full"
+                          style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
+                        >
+                          <Icon size={16} strokeWidth={active ? 2.4 : 2} />
+                          <span className="truncate">{labelText}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
-        {/* Issue #7 fix: stronger visual separator between nav and footer profile */}
-        <div className="border-t-2 pt-5 mt-5 space-y-1.5" style={{ borderColor: C.outlineVariant }}>
+        {/* Issue #10: Pinned Desktop Footer (Settings & Logout always above the fold) */}
+        <footer className="shrink-0 pt-3 mt-auto border-t space-y-1" style={{ borderColor: C.outlineVariant }}>
           <div
             onClick={() => setView("r-profile")}
-            className="flex items-center gap-2.5 px-2 py-2 mb-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
             title="Edit Profile"
           >
-            <Avatar name={session.name} photoUrl={session.photoUrl} />
+            <Avatar name={session.name} photoUrl={session.photoUrl} size={32} />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold truncate">{session.name}</p>
-              <p className="text-[11px] truncate" style={{ color: C.outline }}>{session.post || session.memberClass}</p>
+              <p className="text-xs font-bold truncate">{session.name}</p>
+              <p className="text-[10px] truncate" style={{ color: C.outline }}>{session.post || session.memberClass}</p>
             </div>
             <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ backgroundColor: C.primaryContainer, color: "#fff" }}>
               {lang === "bn" ? "প্রোফাইল" : "Edit"}
@@ -195,7 +245,7 @@ export default function Shell({
           {/* Desktop Theme Switcher */}
           <button
             onClick={toggleThemeNext}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
             style={{ color: C.onSurfaceVariant }}
             title="Toggle Theme"
           >
@@ -211,7 +261,7 @@ export default function Shell({
           {/* Desktop Settings Shortcut */}
           <button
             onClick={() => setView("settings")}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
             style={view === "settings" ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
             title="App Settings"
           >
@@ -224,14 +274,14 @@ export default function Shell({
             </span>
           </button>
 
-          <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
+          <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
             <Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}
           </button>
 
-          <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" style={{ color: C.error }}>
+          <button onClick={logout} className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" style={{ color: C.error }}>
             <LogOut size={14} /> {t.logout}
           </button>
-        </div>
+        </footer>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -319,30 +369,51 @@ export default function Shell({
                 </span>
               </div>
 
-              {/* Scrollable Navigation List */}
-              <nav className="flex flex-col flex-1 overflow-y-auto pr-1 my-1" aria-label="Main navigation">
-                {(isAdmin ? ADMIN_NAV_GROUPS : RESIDENT_NAV_GROUPS).map((group, gi) => (
-                  <div key={gi} className="mb-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1" style={{ color: C.outline }} aria-hidden="true">
-                      {lang === "bn" ? group.groupLabel.bn : group.groupLabel.en}
-                    </p>
-                    {group.items.map(item => {
-                      const Icon = item.icon;
-                      const active = view === item.key;
-                      return (
-                        <button
-                          key={item.key}
-                          onClick={() => { setView(item.key); setNavOpen(false); }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-left transition-colors w-full"
-                          style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
-                        >
-                          <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                          <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
+              {/* Scrollable Navigation List (Collapsible) */}
+              <nav className="flex flex-col flex-1 overflow-y-auto pr-1 my-1 space-y-1" aria-label="Main navigation">
+                {navGroups.map((group, gi) => {
+                  const isOpen = !!openGroups[gi];
+                  const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
+                  const hasActiveItem = group.items.some(item => item.key === view);
+
+                  return (
+                    <div key={gi} className="rounded-xl overflow-hidden mb-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleGroup(gi)}
+                        aria-expanded={isOpen}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-left transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                        style={{ color: hasActiveItem ? C.primary : C.outline }}
+                      >
+                        <span>{groupName}</span>
+                        <ChevronDown
+                          size={13}
+                          className={`transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}
+                        />
+                      </button>
+
+                      {isOpen && (
+                        <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
+                          {group.items.map(item => {
+                            const Icon = item.icon;
+                            const active = view === item.key;
+                            return (
+                              <button
+                                key={item.key}
+                                onClick={() => { setView(item.key); setNavOpen(false); }}
+                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full"
+                                style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
+                              >
+                                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
+                                <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </nav>
 
               {/* Drawer Footer Theme and Language Controls */}

@@ -1,5 +1,36 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v2.1.0] — 2026-09-08
+### 🎨 Usability Heuristics & Accessibility Compliance Overhaul (10 Issues Resolved)
+
+1. **Border-Radius Scale Standardization (Issue #1)**:
+   - Consolidated border radius scale into 5 strict semantic tiers (`sm: 6px`, `md/DEFAULT: 8px`, `lg: 12px`, `xl/2xl/3xl: 16px`, `full: 9999px`) in `tailwind.config.js`.
+   - Standardized `Modal` radius in `primitives.jsx` from `rounded-3xl` to `rounded-2xl` to ensure consistent interface rhythm.
+2. **Button Styles Consolidation (Issue #2)**:
+   - Consolidated action and banner buttons into 5 canonical design system variants (`primary`, `secondary`, `outline`, `ghost`, `danger`) + standard icon button layout.
+3. **Legible Member Metadata & Typography (Issue #3)**:
+   - Upgraded member card email address from `text-[11px] truncate opacity-70` to `text-xs truncate` (12px / 0.75rem) with accessible contrast token.
+   - Updated Bengali name subtitle to `text-xs`.
+4. **Accessible Badge Typography (Issue #4)**:
+   - Upgraded shared `Badge` primitive from `text-[11px]` to `text-xs font-semibold px-2.5 py-0.5` to satisfy minimum readable body/tag text standards.
+5. **Collapsible Sidebar Navigation (Issue #5)**:
+   - Converted 21 flat sidebar navigation items into collapsible accordion categories (`Management`, `Communication`, `Governance`, `Community`, `Account`) in `Shell.jsx`.
+   - Includes `aria-expanded` and animated chevrons. The category containing the currently active page auto-expands on view change.
+6. **Consistent 3-Slot Member Action Icons (Issue #6)**:
+   - Stabilized member card action column to a strict 3-icon rhythm (WhatsApp, Edit/View, Kick out).
+   - Added disabled ghost states with descriptive `aria-label` and tooltip titles for members lacking phone numbers or protected against deletion.
+7. **Refined Top Notification Banner (Issue #7)**:
+   - Replaced aggressive saturated dark green banner with a refined, accessible tinted alert container (`bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200`) and balanced badge to restore visual prominence to the page heading and primary CTA.
+8. **Proximity-Based CTA Alignment (Issue #8)**:
+   - Updated `SectionTitle` in `primitives.jsx` to group the page title and primary CTA (`Invite member`) together on desktop (`sm:justify-start sm:gap-4`) following Gestalt proximity principles.
+9. **Enlarged Touch Target for Bulletin 'Read' Button (Issue #9)**:
+   - Increased button height from 21px to 32px (`h-8 px-3 rounded-lg text-xs font-semibold`) in `TvBulletin.jsx` for full WCAG 2.5.5 touch target compliance with focus-visible outline and screen reader label.
+10. **Pinned Sidebar Footer (Issue #10)**:
+    - Redesigned desktop sidebar in `Shell.jsx` into a fixed-height layout (`h-screen sticky top-0 flex flex-col`) with a scrollable middle navigation list and pinned bottom footer (`shrink-0 mt-auto border-t`).
+    - Settings, Theme switcher, and Log out remain permanently visible above the fold on all standard screen heights without scrolling.
+
+---
+
 ## [v2.0.0] — 2026-08-24
 ### 🛡️ Member Code System, Duplicate Prevention & EC Constitutional Enforcement
 

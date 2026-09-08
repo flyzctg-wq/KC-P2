@@ -202,44 +202,72 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
                       )}
                     </div>
                     {u.nameBn && (
-                      <p className="text-[11px] font-medium text-emerald-800 truncate">{u.nameBn}</p>
+                      <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300 truncate">{u.nameBn}</p>
                     )}
                     <p className="text-xs truncate mt-0.5" style={{ color: C.onSurfaceVariant }}>
-                      {u.phone ? <span className="font-semibold text-gray-700">{u.phone} · </span> : ""}
+                      {u.phone ? <span className="font-semibold text-gray-700 dark:text-gray-300">{u.phone} · </span> : ""}
                       {isBn ? "ব্লক" : "Block"} <span className="font-semibold">{u.block}</span> ({u.unit})
                     </p>
-                    <p className="text-[11px] truncate opacity-70" style={{ color: C.outline }}>
+                    <p className="text-xs truncate" style={{ color: C.onSurfaceVariant }}>
                       {u.email}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  {rawPhone && (
+                {/* Consistent 3-action icon layout for stable rhythm and accessibility */}
+                <div className="flex items-center gap-1 shrink-0" role="group" aria-label={isBn ? "সদস্য অ্যাকশন" : "Member actions"}>
+                  {rawPhone ? (
                     <a
                       href={`https://wa.me/${rawPhone}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                       title={isBn ? "হোয়াটসঅ্যাপ বার্তা" : "WhatsApp"}
+                      aria-label={isBn ? `${u.name}-এর হোয়াটসঅ্যাপ` : `WhatsApp ${u.name}`}
                     >
                       <MessageCircle size={16} />
                     </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      className="p-2 rounded-lg text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                      title={isBn ? "ফোন নম্বর সংরক্ষিত নেই" : "No phone number available"}
+                      aria-label={isBn ? "হোয়াটসঅ্যাপ প্রযোজ্য নয়" : "WhatsApp unavailable"}
+                    >
+                      <MessageCircle size={16} />
+                    </button>
                   )}
                   <button
+                    type="button"
                     onClick={() => setSelectedUser(u)}
-                    className="p-2 rounded-lg hover:bg-black/5 text-xs font-semibold"
+                    className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-xs font-semibold"
                     style={{ color: C.primary }}
                     title={canManage ? (isBn ? "সম্পূর্ণ প্রোফাইল ও নিয়ন্ত্রণ" : "Full Profile & Roles") : (isBn ? "প্রোফাইল দেখুন" : "View Profile")}
+                    aria-label={canManage ? (isBn ? `${u.name}-এর প্রোফাইল সম্পাদনা` : `Edit profile for ${u.name}`) : (isBn ? `${u.name}-এর প্রোফাইল দেখুন` : `View profile of ${u.name}`)}
                   >
                     {canManage ? <Edit3 size={16} /> : <Eye size={16} />}
                   </button>
-                  {canKickOutUser(u) && (
+                  {canKickOutUser(u) ? (
                     <button
+                      type="button"
                       onClick={() => setKickOutTarget(u)}
-                      className="p-2 rounded-lg hover:bg-rose-50 text-xs font-semibold"
+                      className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-semibold"
                       style={{ color: C.error }}
                       title={isBn ? "সদস্যপদ বাতিল / বহিষ্কার" : "Kick out"}
+                      aria-label={isBn ? `${u.name}-কে বহিষ্কার করুন` : `Remove ${u.name}`}
+                    >
+                      <UserX size={16} />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      className="p-2 rounded-lg text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                      title={isBn ? "বহিষ্কারের অনুমতি নেই" : "Removal not permitted for this member"}
+                      aria-label={isBn ? "বহিষ্কার প্রযোজ্য নয়" : "Removal unavailable"}
                     >
                       <UserX size={16} />
                     </button>

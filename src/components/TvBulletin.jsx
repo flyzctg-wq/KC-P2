@@ -104,14 +104,14 @@ export default function TvBulletin({
         };
       case "important":
         return {
-          bg: "bg-emerald-800 dark:bg-emerald-950/80",
-          border: "border-emerald-600/30 dark:border-emerald-800/50",
-          badgeBg: "bg-emerald-900 text-emerald-100 shadow-md",
-          badgeLabel: isBn ? "জরুরি ঘোষণা" : "IMPORTANT",
+          bg: "bg-emerald-50 dark:bg-emerald-950/50",
+          border: "border-emerald-200 dark:border-emerald-800/40",
+          badgeBg: "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300/60 dark:border-emerald-700/50",
+          badgeLabel: isBn ? "জরুরি ঘোষণা" : "Important",
           icon: AlertTriangle,
-          iconColor: "text-amber-400",
-          textColor: "text-white dark:text-emerald-100",
-          accentColor: "#10b981",
+          iconColor: "text-emerald-700 dark:text-emerald-400",
+          textColor: "text-emerald-950 dark:text-emerald-100",
+          accentColor: "#059669",
         };
       case "quick":
       default:
@@ -200,19 +200,19 @@ export default function TvBulletin({
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
       >
-        <div className="flex items-center justify-between h-9 sm:h-10 px-2 sm:px-4 gap-2">
+        <div className="flex items-center justify-between min-h-[40px] py-1 px-2 sm:px-4 gap-2">
           {/* Left TV Bulletin Badge */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-black tracking-wider uppercase ${style.badgeBg}`}>
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide uppercase ${style.badgeBg}`}>
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-60"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
               </span>
               <IconComp size={13} className={style.iconColor} />
               <span className="whitespace-nowrap">{style.badgeLabel}</span>
             </div>
             {activeBulletins.length > 1 && (
-              <span className="text-[10px] font-extrabold text-white/80 hidden xs:inline px-1 py-0.5 rounded bg-black/20">
+              <span className="text-[10px] font-extrabold opacity-80 hidden xs:inline px-1 py-0.5 rounded bg-black/10 dark:bg-white/10">
                 {currentIndex + 1}/{activeBulletins.length}
               </span>
             )}
@@ -247,22 +247,25 @@ export default function TvBulletin({
           </div>
 
           {/* Right Action Controls */}
-          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 text-white">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <button
               type="button"
               onClick={() => handleOpenNotice(activeBulletins[0])}
-              className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-white/20 hover:bg-white/30 hidden sm:flex items-center gap-1 transition-colors"
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-emerald-900/90 text-emerald-900 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100/70 dark:hover:bg-emerald-800 transition-colors hidden sm:inline-flex items-center gap-1.5 shadow-xs focus-visible:ring-2 focus-visible:ring-emerald-500"
+              aria-label={isBn ? "বুলেটিনের সম্পূর্ণ বিবরণ দেখুন" : "Read full bulletin details"}
             >
-              <Eye size={12} /> {isBn ? "বিস্তারিত" : "Read"}
+              <Eye size={13} aria-hidden="true" />
+              <span>{isBn ? "বিস্তারিত" : "Read"}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsCollapsed(true)}
-              className="p-1 rounded hover:bg-white/20 opacity-70 hover:opacity-100 transition-opacity"
+              className="h-8 w-8 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
               title={isBn ? "মিনিমাইজ করুন" : "Collapse Banner"}
+              aria-label={isBn ? "ব্যানার বন্ধ করুন" : "Collapse banner"}
             >
-              <X size={14} />
+              <X size={15} />
             </button>
           </div>
         </div>

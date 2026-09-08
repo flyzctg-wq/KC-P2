@@ -47,7 +47,7 @@ export function Badge({ children, tone = "neutral", className = "" }) {
   return (
     <span
       style={{ backgroundColor: t.bg, color: t.fg }}
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-colors ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide transition-colors ${className}`}
     >
       {children}
     </span>
@@ -107,7 +107,7 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }} className={`w-full ${width} rounded-t-3xl sm:rounded-3xl max-h-[88vh] overflow-y-auto border shadow-2xl`}>
+      <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }} className={`w-full ${width} rounded-t-2xl sm:rounded-2xl max-h-[88vh] overflow-y-auto border shadow-2xl`}>
         <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b z-10 backdrop-blur-md" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
           <h3 className="font-bold text-base" style={{ color: C.onSurface }}>{title}</h3>
           <button onClick={onClose} className="p-1.5 rounded-full hover:opacity-70 transition-opacity" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
@@ -120,10 +120,10 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
 
 export function SectionTitle({ children, action }) {
   return (
-    /* #9: full-width row so h2 always aligns with the left edge of the content grid */
-    <div className="flex items-center justify-between mb-3 w-full">
+    /* Proximity layout: CTA sits adjacent to page title on desktop */
+    <div className="flex flex-wrap items-center justify-between sm:justify-start sm:gap-4 mb-3 w-full">
       <h2 className="font-bold text-lg text-left" style={{ color: C.onSurface, fontFamily: "'Hanken Grotesk', sans-serif" }}>{children}</h2>
-      {action}
+      {action && <div className="flex items-center">{action}</div>}
     </div>
   );
 }

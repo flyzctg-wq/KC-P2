@@ -4,6 +4,18 @@ All notable changes to the Kunjachaya Club project will be documented in this fi
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.0] - 2026-09-08
+### Changed
+- Standardized border radius scale to 5 tiers and aligned modal corner radius.
+- Consolidated button styles into 5 core variants and uniform icon button sizes.
+- Upgraded member card email and badge typography to 12px (`text-xs`) for accessibility compliance.
+- Redesigned sidebar navigation with collapsible accordion categories and automatic active-view expansion.
+- Enforced a uniform 3-slot member card action layout with accessible disabled states.
+- Subdued top notification banner contrast and visual hierarchy.
+- Re-aligned page primary CTA to sit in direct proximity to page headings.
+- Increased notification banner 'Read' button height to 32px for WCAG touch target compliance.
+- Pinned desktop sidebar footer so Settings and Log out remain permanently above the fold.
+
 ## [1.3.0] - 2026-08-23
 ### Added
 - Interactive Kunjachaya Residential Area Google Map (`CommunityMap.jsx`) with live embedding.
