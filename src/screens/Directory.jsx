@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Search, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User, FileText, Home, Building, Printer, Shield } from "lucide-react";
 import { Card, Badge, Btn, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C, BLOCKS, BADGE_CATALOG, BADGE_ICONS } from "../theme";
@@ -13,22 +13,25 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
   const isTopTier = session?.role === "admin" && (session?.post === "President" || session?.post === "General Secretary");
   const canManage = session?.role === "admin" && (session?.permissions?.canManageMembers || isTopTier);
 
-  const active = (db?.users || []).filter(u => u.status === "active");
-  const query = q.trim().toLowerCase();
+  // Memoize filtering and member code sorting to prevent redundant O(N log N) localeCompare sorting on re-renders (e.g., when toggling modal)
+  const filtered = useMemo(() => {
+    const active = (db?.users || []).filter(u => u.status === "active");
+    const query = q.trim().toLowerCase();
 
-  const filtered = active.filter(u => {
-    const matchesBlock = block === "All" || u.block === block;
-    const matchesSearch = !query ||
-      (u.name || "").toLowerCase().includes(query) ||
-      (u.nameBn || "").toLowerCase().includes(query) ||
-      (u.memberCode || "").toLowerCase().includes(query) ||
-      (u.unit || "").toLowerCase().includes(query) ||
-      (u.email || "").toLowerCase().includes(query) ||
-      (u.phone || "").toLowerCase().includes(query) ||
-      (u.post || "").toLowerCase().includes(query) ||
-      (u.memberClass || "").toLowerCase().includes(query);
-    return matchesBlock && matchesSearch;
-  }).sort(sortByMemberCode);
+    return active.filter(u => {
+      const matchesBlock = block === "All" || u.block === block;
+      const matchesSearch = !query ||
+        (u.name || "").toLowerCase().includes(query) ||
+        (u.nameBn || "").toLowerCase().includes(query) ||
+        (u.memberCode || "").toLowerCase().includes(query) ||
+        (u.unit || "").toLowerCase().includes(query) ||
+        (u.email || "").toLowerCase().includes(query) ||
+        (u.phone || "").toLowerCase().includes(query) ||
+        (u.post || "").toLowerCase().includes(query) ||
+        (u.memberClass || "").toLowerCase().includes(query);
+      return matchesBlock && matchesSearch;
+    }).sort(sortByMemberCode);
+  }, [db?.users, q, block]);
 
   return (
     <div>

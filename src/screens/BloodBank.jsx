@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Droplet, Phone, MessageCircle, Mail, HeartHandshake, Search } from "lucide-react";
 import { Btn, Card, Badge, inputCls, inputStyle, Empty, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -10,20 +10,23 @@ export default function BloodBank({ session, db, persist, toast, lang = "en", t 
   const [searchQ, setSearchQ] = useState("");
   const groups = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
 
-  const query = searchQ.trim().toLowerCase();
-  const donors = (db.users || []).filter(u => {
-    const isActive = u.status === "active";
-    const hasBloodGroup = !!u.bloodGroup;
-    const matchesFilter = filter === "All" || u.bloodGroup === filter;
-    const matchesSearch = !query ||
-      (u.name || "").toLowerCase().includes(query) ||
-      (u.unit || "").toLowerCase().includes(query) ||
-      (u.block || "").toLowerCase().includes(query) ||
-      (u.phone || "").toLowerCase().includes(query) ||
-      (u.bloodGroup || "").toLowerCase().includes(query);
+  // Memoize donor list calculation to avoid filtering users when local input states (e.g. myGroup / myDonor) change
+  const donors = useMemo(() => {
+    const query = searchQ.trim().toLowerCase();
+    return (db.users || []).filter(u => {
+      const isActive = u.status === "active";
+      const hasBloodGroup = !!u.bloodGroup;
+      const matchesFilter = filter === "All" || u.bloodGroup === filter;
+      const matchesSearch = !query ||
+        (u.name || "").toLowerCase().includes(query) ||
+        (u.unit || "").toLowerCase().includes(query) ||
+        (u.block || "").toLowerCase().includes(query) ||
+        (u.phone || "").toLowerCase().includes(query) ||
+        (u.bloodGroup || "").toLowerCase().includes(query);
 
-    return isActive && hasBloodGroup && matchesFilter && matchesSearch;
-  });
+      return isActive && hasBloodGroup && matchesFilter && matchesSearch;
+    });
+  }, [db.users, filter, searchQ]);
 
   const mine = (db.users || []).find(u => u.id === session.id);
   const [myGroup, setMyGroup] = useState(mine?.bloodGroup || "");
