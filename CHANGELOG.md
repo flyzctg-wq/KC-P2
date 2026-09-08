@@ -4,6 +4,17 @@ All notable changes to the Kunjachaya Club project will be documented in this fi
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.3.0] - 2026-09-08
+### Added
+- Multi-topic community forum and private Executive Committee council channel with topic filter chips (`#All`, `#General`, `#Notices`, `#Helpdesk`, `#Suggestions`).
+- Verified member identity credentials on every message (Member Code badge, Constitutional post, Block & Unit locator, blood group pill).
+- Member quick profile modal with direct WhatsApp chat and phone call actions.
+- Inline reply-to preview banner and quoted message rendering.
+- Emoji reaction picker (👍, ❤️, 👏, 🙏, 💡, 🔥) with dynamic reaction counts.
+- One-tap quick community phrases in Bengali for greetings, gratitude, and notice tags.
+- Message keyword & sender search bar with live filtering.
+- Community decorum guidelines banner and date separators.
+
 ## [2.2.0] - 2026-09-08
 ### Changed
 - Standardized treasury action buttons into canonical secondary and outline `<Btn>` variants.

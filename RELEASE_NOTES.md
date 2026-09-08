@@ -1,5 +1,32 @@
 # 🚀 Kunjachaya Club — Official Release Notes & "What's in this build"
 
+## [v2.3.0] — 2026-09-08
+### 💬 Community Chat & Forum UI/UX Overhaul (`Chat.jsx`)
+
+1. **Multi-Topic Community Channels**:
+   - **`# Community Forum (সাধারণ ফোরাম)`**: Open forum for verified residents & committee members.
+   - **`# EC Council (কার্যনির্বাহী পরিষদ)`**: Private, secured channel for Executive Committee members (Articles 10 & 14).
+   - Topic filter chips for `#All`, `#General`, `#Notices`, `#Helpdesk`, and `#Suggestions`.
+2. **Rich Member Identity & Trust Badges**:
+   - Every message displays verified community credentials:
+     - **Official Member Code Badge** (`#001`, `#015`, etc.).
+     - **Constitutional Post & Designation** (President, General Secretary, Resident).
+     - **Apartment Locator** (`Block A · Unit 402`).
+     - **Blood Group Pill** (e.g. `B+`).
+3. **Interactive Member Quick-Card**:
+   - Tapping any member's avatar or name opens an accessible profile modal with direct **WhatsApp Chat** and **Phone Call** actions.
+4. **Reply & Quote Threading**:
+   - One-tap reply button to quote messages with an inline preview banner in the composer and styled quote block inside the sent message.
+5. **Emoji Reactions & Community Phrases**:
+   - Interactive reaction picker (👍, ❤️, 👏, 🙏, 💡, 🔥) with toggle count pills below bubbles.
+   - One-tap quick community phrases (`👋 আসসালামু আলাইকুম`, `🙏 অনেক ধন্যবাদ`, `📢 জরুরি বিজ্ঞপ্তি`, `💡 মতামত ও প্রস্তাবনা`).
+6. **Search & Guidelines**:
+   - Real-time message search by keyword or sender name.
+   - Dismissible community decorum guidelines banner.
+   - Clean calendar date dividers (`Today`, `Yesterday`, etc.) and delivery receipts (`✓✓`).
+
+---
+
 ## [v2.2.0] — 2026-09-08
 ### 📊 Treasury Suite Usability & Motion Accessibility Overhaul (8 Issues Resolved)
 
