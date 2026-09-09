@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   FileSearch, ShieldCheck, FileDown, Wallet, Vote, Users, ScrollText,
   ClipboardList, AlertCircle, Clock,
@@ -71,10 +71,13 @@ export default function Audit({ session, db, lang = "en", t = {} }) {
   const [cat, setCat] = useState("all");
 
   // ── AUDIT tab data ──────────────────────────────────────────
-  const auditEntries = (db.activity || [])
-    .filter(a => isSignificant(a.action))
-    .map(a => ({ ...a, cat: categorize(a.action) }))
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Memoize governance audit filtering and sorting to prevent re-parsing regexes and dates on tab/filter switching
+  const auditEntries = useMemo(() => {
+    return (db.activity || [])
+      .filter(a => isSignificant(a.action))
+      .map(a => ({ ...a, cat: categorize(a.action) }))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [db.activity]);
 
   const auditCats = [
     { k: "all",        l: isBn ? "সকল"       : "All" },
@@ -83,13 +86,16 @@ export default function Audit({ session, db, lang = "en", t = {} }) {
     { k: "membership", l: isBn ? "সদস্যপদ"   : "Membership" },
     { k: "other",      l: isBn ? "অন্যান্য"  : "Other" },
   ];
-  const auditFiltered =
-    cat === "all" ? auditEntries : auditEntries.filter(e => e.cat === cat);
+
+  const auditFiltered = useMemo(() => {
+    return cat === "all" ? auditEntries : auditEntries.filter(e => e.cat === cat);
+  }, [cat, auditEntries]);
 
   // ── ACTIVITY tab data ───────────────────────────────────────
-  const activityEntries = [...(db.activity || [])].sort(
-    (a, b) => new Date(b.date) - new Date(a.date)
-  );
+  // Memoize activity log date sorting
+  const activityEntries = useMemo(() => {
+    return [...(db.activity || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [db.activity]);
 
   // ── Export CSV ──────────────────────────────────────────────
   const exportCSV = () => {
