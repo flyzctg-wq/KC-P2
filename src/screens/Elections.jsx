@@ -1,5 +1,5 @@
 import { NominationView, ElectionOversight } from "./electionsShared";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Vote, ChevronRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Btn, Card, Badge, Avatar, Modal, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -9,7 +9,11 @@ import { trackEvent } from "../lib/analytics";
 export default function Elections({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [openEl, setOpenEl] = useState(null);
-  const sorted = [...db.elections].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+  // Memoize election sorting by startDate to prevent re-sorting when opening/closing modal or selecting options
+  const sorted = useMemo(() => {
+    return [...(db.elections || [])].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+  }, [db.elections]);
   const canVote = session.memberClass !== "New";
   const isCouncil = !!session.standingCouncil || (session.role === "admin" && (session.post === "President" || session.post === "General Secretary"));
 
