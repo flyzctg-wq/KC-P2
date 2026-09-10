@@ -111,7 +111,8 @@ export async function resetPassword(email) {
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
     redirectTo: `${getAppBaseUrl()}/`,
   });
-  if (error) throw new Error(error.message);
+  // Security: Do not expose raw Supabase Auth internal errors/stack traces to client
+  if (error) throw new Error("Unable to send password reset email. Please try again later.");
   return true;
 }
 
