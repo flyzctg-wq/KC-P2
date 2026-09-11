@@ -327,7 +327,11 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
             autoFocus
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="p-1 rounded-md text-gray-400 hover:text-gray-600">
+            <button
+              onClick={() => setSearchQuery("")}
+              aria-label={isBn ? "অনুসন্ধান মুছুন" : "Clear search"}
+              className="p-1 rounded-md text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-emerald-600 outline-none transition-colors"
+            >
               <X size={14} />
             </button>
           )}
@@ -373,7 +377,12 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
                 : "🤝 Community Decorum: Keep discussions constructive, respect neighbors, and maintain resident harmony."}
             </span>
           </div>
-          <button onClick={dismissGuidelines} className="p-1 rounded hover:bg-emerald-200/50 text-emerald-800 dark:text-emerald-300 shrink-0" title={isBn ? "বন্ধ করুন" : "Dismiss"}>
+          <button
+            onClick={dismissGuidelines}
+            aria-label={isBn ? "দিকনির্দেশনা বন্ধ করুন" : "Dismiss guidelines"}
+            title={isBn ? "বন্ধ করুন" : "Dismiss"}
+            className="p-1 rounded hover:bg-emerald-200/50 text-emerald-800 dark:text-emerald-300 shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-600 outline-none transition-colors"
+          >
             <X size={14} />
           </button>
         </div>
@@ -641,7 +650,11 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
               {isBn ? "উত্তর দিচ্ছেন" : "Replying to"} <b>{replyingTo.userName}</b>: <i>"{replyingTo.cleanBody}"</i>
             </span>
           </div>
-          <button onClick={() => setReplyingTo(null)} className="p-1 rounded hover:bg-emerald-200/50 shrink-0">
+          <button
+            onClick={() => setReplyingTo(null)}
+            aria-label={isBn ? "উত্তর বাতিল করুন" : "Cancel reply"}
+            className="p-1 rounded hover:bg-emerald-200/50 shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-600 outline-none transition-colors"
+          >
             <X size={14} />
           </button>
         </div>
