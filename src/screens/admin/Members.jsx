@@ -387,7 +387,10 @@ function MemberProfileInspector({ user, session, db, canManage, isTopTier, persi
     }
     setScanUploading(true);
     try {
-      const ext = file.name.split(".").pop();
+      // Security: Validate and sanitize file extension to avoid path traversal or unexpected file types
+      const rawExt = (file.name.split(".").pop() || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const validExts = ["jpg", "jpeg", "png", "webp", "pdf"];
+      const ext = validExts.includes(rawExt) ? rawExt : "jpg";
       const path = `forms/${user.id}/membership-form.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("member-forms")
