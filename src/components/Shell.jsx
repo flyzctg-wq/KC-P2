@@ -227,9 +227,11 @@ export default function Shell({
 
         {/* Issue #10: Pinned Desktop Footer (Settings & Logout always above the fold) */}
         <footer className="shrink-0 pt-3 mt-auto border-t space-y-1" style={{ borderColor: C.outlineVariant }}>
-          <div
+          <button
+            type="button"
             onClick={() => setView("r-profile")}
-            className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
+            aria-label={lang === "bn" ? "প্রোফাইল দেখুন ও সম্পাদনা করুন" : "View and edit profile"}
+            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors text-left"
             title="Edit Profile"
           >
             <Avatar name={session.name} photoUrl={session.photoUrl} size={32} />
@@ -240,12 +242,14 @@ export default function Shell({
             <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ backgroundColor: C.primaryContainer, color: "#fff" }}>
               {lang === "bn" ? "প্রোফাইল" : "Edit"}
             </span>
-          </div>
+          </button>
 
           {/* Desktop Theme Switcher */}
           <button
+            type="button"
             onClick={toggleThemeNext}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            aria-label={lang === "bn" ? `থিম পরিবর্তন করুন (বর্তমান: ${theme})` : `Toggle theme (Current: ${theme})`}
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors"
             style={{ color: C.onSurfaceVariant }}
             title="Toggle Theme"
           >
@@ -260,8 +264,10 @@ export default function Shell({
 
           {/* Desktop Settings Shortcut */}
           <button
+            type="button"
             onClick={() => setView("settings")}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            aria-label={lang === "bn" ? "অ্যাপ সেটিংস" : "App Settings"}
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors"
             style={view === "settings" ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
             title="App Settings"
           >
@@ -274,11 +280,23 @@ export default function Shell({
             </span>
           </button>
 
-          <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
+          <button
+            type="button"
+            onClick={() => setLang(l => l === "en" ? "bn" : "en")}
+            aria-label={lang === "en" ? "Switch language to Bangla" : "Switch language to English"}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
+            style={{ color: C.onSurfaceVariant }}
+          >
             <Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}
           </button>
 
-          <button onClick={logout} className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" style={{ color: C.error }}>
+          <button
+            type="button"
+            onClick={logout}
+            aria-label={t.logout}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 focus-visible:ring-2 focus-visible:ring-red-500 outline-none transition-colors"
+            style={{ color: C.error }}
+          >
             <LogOut size={14} /> {t.logout}
           </button>
         </footer>
@@ -368,9 +386,11 @@ export default function Shell({
               </div>
 
               {/* User Profile Card */}
-              <div
+              <button
+                type="button"
                 onClick={() => { setView("r-profile"); setNavOpen(false); }}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl mb-3 border cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                aria-label={lang === "bn" ? "প্রোফাইল দেখুন ও সম্পাদনা করুন" : "View and edit profile"}
+                className="w-full flex items-center gap-2.5 p-2.5 rounded-xl mb-3 border hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors text-left"
                 style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}
               >
                 <Avatar name={session.name} photoUrl={session.photoUrl} size={38} />
@@ -381,7 +401,7 @@ export default function Shell({
                 <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ backgroundColor: C.primary, color: "#fff" }}>
                   {lang === "bn" ? "প্রোফাইল" : "Profile"}
                 </span>
-              </div>
+              </button>
 
               {/* Scrollable Navigation List (Collapsible) */}
               <nav className="flex flex-col flex-1 overflow-y-auto pr-1 my-1 space-y-1" aria-label="Main navigation">
