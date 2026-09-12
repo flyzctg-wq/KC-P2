@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Calendar, MapPin, CalendarRange } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -8,7 +8,8 @@ export default function Events({ session, db, persist, toast, logActivity, lang 
   const isBn = lang === "bn";
   const [form, setForm] = useState(false);
   const canManage = session.role === "admin" && (session.permissions?.canManageNotices || session.post === "President");
-  const sorted = [...(db.events || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Memoize event sorting to prevent unnecessary re-sorting on modal state or input changes
+  const sorted = useMemo(() => [...(db.events || [])].sort((a, b) => new Date(a.date) - new Date(b.date)), [db.events]);
 
   const create = (title, description, date, location) => {
     persist(d => logActivity({ ...d, events: [...(d.events || []), { id: uid("ev"), title, description, date, location, rsvps: [] }] }, session.name, `Created event: ${title}`));
