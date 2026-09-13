@@ -2,8 +2,17 @@ export const uid = (p = "id") => {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
+  // Cryptographically secure fallback using crypto.getRandomValues if randomUUID is unavailable
+  const getRandomByte = () => {
+    if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+      const buf = new Uint8Array(1);
+      crypto.getRandomValues(buf);
+      return buf[0];
+    }
+    return Math.floor(Math.random() * 256);
+  };
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
+    const r = (getRandomByte() % 16);
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
