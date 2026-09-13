@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Vote, LifeBuoy, TrendingUp, UserCheck, FileText } from "lucide-react";
 import { Card, SectionTitle, StatMini } from "../../components/primitives";
 import CommunityMap from "../../components/CommunityMap";
@@ -7,13 +7,66 @@ import { currency, monthLabel, currentMonthYM } from "../../utils";
 
 export default function AdminDashboard({ session, db, go, lang = "en", t = {} }) {
   const isBn = lang === "bn";
-  const pendingMembers = db.users.filter(u => u.status === "pending").length;
-  const collected = db.dues.filter(d => d.status === "paid").reduce((s, d) => s + d.amount, 0);
-  const outstanding = db.dues.filter(d => d.status !== "paid").reduce((s, d) => s + d.amount, 0);
-  const openTickets = db.tickets.filter(t => t.status !== "resolved").length;
-  const activeElections = db.elections.filter(e => e.status === "active").length;
-  const totalVotes = db.votes.length;
-  const collectionRate = Math.round((collected / Math.max(1, collected + outstanding)) * 100);
+
+  // Bolt Performance Optimization:
+  // Memoize dashboard KPIs and member class counts to prevent running multiple
+  // O(N) array filters over users, dues, tickets, and elections on every render pass.
+  const {
+    pendingMembers,
+    collected,
+    outstanding,
+    openTickets,
+    activeElections,
+    totalVotes,
+    collectionRate,
+    memberClassCounts,
+    totalActiveMembers,
+  } = useMemo(() => {
+    const users = db?.users || [];
+    const dues = db?.dues || [];
+    const tickets = db?.tickets || [];
+    const elections = db?.elections || [];
+    const votes = db?.votes || [];
+
+    const pendingMembers = users.filter(u => u.status === "pending").length;
+
+    let collected = 0;
+    let outstanding = 0;
+    for (const d of dues) {
+      if (d.status === "paid") {
+        collected += d.amount || 0;
+      } else {
+        outstanding += d.amount || 0;
+      }
+    }
+
+    const openTickets = tickets.filter(t => t.status !== "resolved").length;
+    const activeElections = elections.filter(e => e.status === "active").length;
+    const totalVotes = votes.length;
+    const collectionRate = Math.round((collected / Math.max(1, collected + outstanding)) * 100);
+
+    const memberClassCounts = {};
+    let activeCount = 0;
+    for (const u of users) {
+      if (u.status === "active") {
+        activeCount++;
+        const mc = u.memberClass || "General";
+        memberClassCounts[mc] = (memberClassCounts[mc] || 0) + 1;
+      }
+    }
+
+    return {
+      pendingMembers,
+      collected,
+      outstanding,
+      openTickets,
+      activeElections,
+      totalVotes,
+      collectionRate,
+      memberClassCounts,
+      totalActiveMembers: Math.max(1, activeCount),
+    };
+  }, [db?.users, db?.dues, db?.tickets, db?.elections, db?.votes]);
 
   const memberClassLabels = {
     New: isBn ? "নতুন" : "New",
@@ -54,13 +107,12 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
           </p>
           <div className="flex flex-col gap-2">
             {MEMBER_CLASSES.map(mc => {
-              const count = db.users.filter(u => u.memberClass === mc && u.status === "active").length;
-              const max = Math.max(1, db.users.filter(u => u.status === "active").length);
+              const count = memberClassCounts[mc] || 0;
               return (
                 <div key={mc} className="flex items-center gap-2 text-xs">
                   <span className="w-20 font-semibold shrink-0">{memberClassLabels[mc] || mc}</span>
                   <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: C.surfaceContainerHigh }}>
-                    <div className="h-full rounded-full" style={{ width: `${(count / max) * 100}%`, backgroundColor: C.secondary }} />
+                    <div className="h-full rounded-full" style={{ width: `${(count / totalActiveMembers) * 100}%`, backgroundColor: C.secondary }} />
                   </div>
                   <span className="w-6 text-right font-bold">{count}</span>
                 </div>
