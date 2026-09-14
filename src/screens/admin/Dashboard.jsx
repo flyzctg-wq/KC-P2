@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Vote, LifeBuoy, TrendingUp, UserCheck, FileText } from "lucide-react";
 import { Card, SectionTitle, StatMini } from "../../components/primitives";
 import CommunityMap from "../../components/CommunityMap";
@@ -7,13 +7,37 @@ import { currency, monthLabel, currentMonthYM } from "../../utils";
 
 export default function AdminDashboard({ session, db, go, lang = "en", t = {} }) {
   const isBn = lang === "bn";
-  const pendingMembers = db.users.filter(u => u.status === "pending").length;
-  const collected = db.dues.filter(d => d.status === "paid").reduce((s, d) => s + d.amount, 0);
-  const outstanding = db.dues.filter(d => d.status !== "paid").reduce((s, d) => s + d.amount, 0);
-  const openTickets = db.tickets.filter(t => t.status !== "resolved").length;
-  const activeElections = db.elections.filter(e => e.status === "active").length;
-  const totalVotes = db.votes.length;
-  const collectionRate = Math.round((collected / Math.max(1, collected + outstanding)) * 100);
+
+  // ⚡ Bolt Optimization: Memoize KPI calculations and member class composition counts
+  // Avoid re-running multiple `.filter()` and `.reduce()` operations over users, dues, tickets, elections, and votes on every render cycle.
+  const { pendingMembers, collected, outstanding, openTickets, activeElections, totalVotes, collectionRate } = useMemo(() => {
+    const users = db.users || [];
+    const dues = db.dues || [];
+    const tickets = db.tickets || [];
+    const elections = db.elections || [];
+    const votes = db.votes || [];
+
+    const pendingMembers = users.filter(u => u.status === "pending").length;
+    const collected = dues.filter(d => d.status === "paid").reduce((s, d) => s + (d.amount || 0), 0);
+    const outstanding = dues.filter(d => d.status !== "paid").reduce((s, d) => s + (d.amount || 0), 0);
+    const openTickets = tickets.filter(t => t.status !== "resolved").length;
+    const activeElections = elections.filter(e => e.status === "active").length;
+    const totalVotes = votes.length;
+    const collectionRate = Math.round((collected / Math.max(1, collected + outstanding)) * 100);
+
+    return { pendingMembers, collected, outstanding, openTickets, activeElections, totalVotes, collectionRate };
+  }, [db.users, db.dues, db.tickets, db.elections, db.votes]);
+
+  const memberClassCounts = useMemo(() => {
+    const users = db.users || [];
+    const activeUsers = users.filter(u => u.status === "active");
+    const max = Math.max(1, activeUsers.length);
+    const counts = {};
+    MEMBER_CLASSES.forEach(mc => {
+      counts[mc] = activeUsers.filter(u => u.memberClass === mc).length;
+    });
+    return { counts, max };
+  }, [db.users]);
 
   const memberClassLabels = {
     New: isBn ? "নতুন" : "New",
@@ -54,8 +78,8 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
           </p>
           <div className="flex flex-col gap-2">
             {MEMBER_CLASSES.map(mc => {
-              const count = db.users.filter(u => u.memberClass === mc && u.status === "active").length;
-              const max = Math.max(1, db.users.filter(u => u.status === "active").length);
+              const count = memberClassCounts.counts[mc] || 0;
+              const max = memberClassCounts.max;
               return (
                 <div key={mc} className="flex items-center gap-2 text-xs">
                   <span className="w-20 font-semibold shrink-0">{memberClassLabels[mc] || mc}</span>
