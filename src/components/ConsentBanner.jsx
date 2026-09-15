@@ -42,7 +42,15 @@ export default function ConsentBanner() {
               </p>
             )}
           </div>
-          <button onClick={decline} className="p-1 rounded-full shrink-0" style={{ color: C.outline }}><X size={14} /></button>
+          <button
+            onClick={decline}
+            aria-label="Dismiss cookie consent notice"
+            title="Dismiss"
+            className="p-1 rounded-full shrink-0 hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-600 outline-none transition-colors"
+            style={{ color: C.outline }}
+          >
+            <X size={14} />
+          </button>
         </div>
         <div className="flex gap-2 mt-3">
           <Btn size="sm" variant="outline" full onClick={decline}>Decline</Btn>
