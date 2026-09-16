@@ -132,4 +132,27 @@ export const canViewFullContact = (session) => {
   return session.status === "active";
 };
 
+/**
+ * Validates whether a URL or URI scheme is safe to render in href or src attributes.
+ * Allows http, https, mailto, tel, blob, and safe image/video data URIs.
+ * Rejects javascript:, vbscript:, data:text/html, etc.
+ */
+export const isSafeUrl = (url = "") => {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim().toLowerCase();
+  if (trimmed.startsWith("javascript:") || trimmed.startsWith("vbscript:")) return false;
+  if (trimmed.startsWith("data:")) {
+    // Allow standard safe media data URIs (e.g., data:image/png, data:video/mp4)
+    if (/^data:(image|video|audio)\//i.test(trimmed)) return true;
+    return false;
+  }
+  return true;
+};
+
+/**
+ * Returns the URL if safe, or '#' fallback if unsafe to prevent XSS / malicious schemes.
+ */
+export const sanitizeUrl = (url = "", fallback = "#") => {
+  return isSafeUrl(url) ? url : fallback;
+};
 
