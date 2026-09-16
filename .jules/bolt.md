@@ -5,3 +5,7 @@
 ## 2026-09-09 - Memoizing Activity Log Filtering & Sorting in Audit Screen
 **Learning:** `Audit.jsx` processed the system activity log array (`db.activity`) by running regex tests (`NOISE_PATTERNS`), string category matching, and Date object sorting on every render cycle and whenever category filters (`cat`) or tabs were toggled.
 **Action:** Wrap `auditEntries`, `auditFiltered`, and `activityEntries` in `useMemo` with dependencies `[db.activity]` and `[auditEntries, cat]` to skip redundant filtering and array sorting.
+
+## 2026-09-10 - Memoizing Member List Filtering & Member Code Sorting in Admin Members Screen
+**Learning:** `src/screens/admin/Members.jsx` filtered `db.users` for pending members and active members, and sorted active members using `sortByMemberCode` on every render cycle. State updates inside `AdminMembers` (switching tabs between active/pending, opening member modals, or editing roles) triggered redundant array filtering and sorting operations.
+**Action:** Wrap `pending`, `activeUsers`, and `allUsers` calculations in `useMemo` with `[db?.users]` dependency to skip unnecessary array allocation and sorting operations on internal component state updates.
