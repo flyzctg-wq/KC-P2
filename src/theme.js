@@ -8,6 +8,11 @@ import { Home, Wallet, Award, CalendarCheck, Star, Gift } from "lucide-react";
 export const LOGO_MARK = "/logo-mark.png";
 export const LOGO_FULL = "/logo-full.png"; // mark + Bengali wordmark, for splash/login
 
+/* ============================== VERSION ============================== */
+// Single source of truth — update this on every release. Imported by
+// Shell.jsx (sidebar badge) and Settings.jsx (app info card + about section).
+export const APP_VERSION = "2.3.0";
+
 export const C = {
   primary: "var(--c-primary, #154212)",
   primaryContainer: "var(--c-primary-container, #2d5a27)",

@@ -1,11 +1,11 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Settings, Bell, Type, Moon, Sun, Laptop, Globe, Volume2, VolumeX,
   Smartphone, Trash2, RefreshCw, ShieldCheck, CheckCircle2, Sliders,
   Info, HardDrive, Wifi, Lock, Zap, Sparkles, SmartphoneCharging, BellRing
 } from "lucide-react";
 import { Btn, Card, Badge, Field, SectionTitle, Modal } from "../components/primitives";
-import { C } from "../theme";
+import { C, APP_VERSION } from "../theme";
 
 export default function SettingsScreen({
   session,
@@ -108,7 +108,7 @@ export default function SettingsScreen({
             </h3>
             <p className="text-xs flex items-center gap-1.5 mt-0.5" style={{ color: C.onSurfaceVariant }}>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>v1.8.0 (Android & Web) · {session.name}</span>
+              <span>v{APP_VERSION} (Android & Web) · {session.name}</span>
             </p>
           </div>
         </div>
@@ -412,7 +412,7 @@ export default function SettingsScreen({
         <Card className="p-4 space-y-2.5 border" style={{ borderColor: C.outlineVariant }}>
           <div className="flex items-center justify-between text-xs">
             <span style={{ color: C.onSurfaceVariant }}>{isBn ? "অ্যাপ সংস্করণ" : "App Version"}</span>
-            <span className="font-bold" style={{ color: C.onSurface }}>v1.8.0 (Release Build)</span>
+            <span className="font-bold" style={{ color: C.onSurface }}>v{APP_VERSION} (Release Build)</span>
           </div>
 
           <div className="flex items-center justify-between text-xs border-t pt-2" style={{ borderColor: C.outlineVariant }}>

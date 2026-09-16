@@ -6,7 +6,7 @@ import {
   FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
-import { C, LOGO_MARK } from "../theme";
+import { C, LOGO_MARK, APP_VERSION } from "../theme";
 import TvBulletin from "./TvBulletin";
 
 /* ============================== SHELL / NAV ============================== */
@@ -270,7 +270,7 @@ export default function Shell({
               {lang === "bn" ? "অ্যাপ সেটিংস" : "App Settings"}
             </span>
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>
-              v1.8
+              v{APP_VERSION}
             </span>
           </button>
 
@@ -384,7 +384,7 @@ export default function Shell({
               </div>
 
               {/* Scrollable Navigation List (Collapsible) */}
-              <nav className="flex flex-col flex-1 overflow-y-auto pr-1 my-1 space-y-1" aria-label="Main navigation">
+              <nav className="flex flex-col flex-1 min-h-0 overflow-y-auto pr-1 my-1 space-y-1" aria-label="Main navigation">
                 {navGroups.map((group, gi) => {
                   const isOpen = !!openGroups[gi];
                   const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
