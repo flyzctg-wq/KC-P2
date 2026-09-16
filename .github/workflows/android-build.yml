@@ -33,8 +33,19 @@ jobs:
           distribution: "temurin"
 
       # ── 4. Android SDK ───────────────────────────────────────────────────────
+      # Explicitly list supported packages — the legacy "tools" package no
+      # longer exists in the SDK repository and causes sdkmanager to fail.
+      # Versions match compileSdkVersion=34 declared in android/variables.gradle.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-34
+            build-tools;34.0.0
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses >/dev/null || true
 
       # ── 5. Install JS dependencies ────────────────────────────────────────────
       - name: Install dependencies
