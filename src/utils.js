@@ -117,3 +117,19 @@ export const sortByMemberCode = (a, b) => {
   return (a?.name || "").localeCompare(b?.name || "");
 };
 
+/**
+ * Privacy gate — returns true if the viewer is allowed to see full member
+ * contact info (phone, email, address, ID, family details).
+ *
+ * Tiers:
+ *   admin                → always true
+ *   status === "active"  → true (verified resident)
+ *   status === "pending" → false (unverified / awaiting approval)
+ */
+export const canViewFullContact = (session) => {
+  if (!session) return false;
+  if (session.role === "admin") return true;
+  return session.status === "active";
+};
+
+

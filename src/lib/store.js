@@ -51,6 +51,7 @@ async function fetchAll() {
     supabase.from("events").select("*"),
     supabase.from("event_rsvps").select("*"),
     supabase.from("inductions").select("*"),
+    supabase.from("app_config").select("*").eq("key", "kc_modules").maybeSingle(),
   ]);
 
   const [
@@ -62,7 +63,13 @@ async function fetchAll() {
     budgetItems, budgetVotes,
     chatMessages, handoverChecklist,
     events, eventRsvps, inductions,
+    appConfigRaw,
   ] = results.map(r => r.status === "fulfilled" ? (r.value?.data ?? []) : []);
+
+  // app_config uses .maybeSingle() so result.data is an object, not array
+  const moduleFlags = (appConfigRaw && !Array.isArray(appConfigRaw))
+    ? appConfigRaw?.value
+    : (Array.isArray(appConfigRaw) && appConfigRaw[0]?.value) || null;
 
   const by = (rows, fk) => {
     const map = {};
@@ -221,6 +228,7 @@ async function fetchAll() {
     handoverChecklist: (handoverChecklist || []).map(h => ({ id: h.id, item: h.item, category: h.category, done: h.done, doneBy: h.done_by, doneDate: h.done_date })),
     events: (events || []).map(ev => ({ id: ev.id, title: ev.title, description: ev.description, date: ev.date, location: ev.location, rsvps: (rsvpsByEvent[ev.id] || []).map(r => r.user_id) })),
     inductions: (inductions || []).map(i => ({ id: i.id, name: i.name, position: i.position, date: i.date, electionTitle: i.election_title })),
+    moduleFlags,  // null if app_config table doesn't exist yet — callers fall back to DEFAULT_MODULE_FLAGS
   };
 }
 
@@ -240,6 +248,7 @@ const WATCHED_TABLES = [
   "tickets", "activity", "emergency_contacts", "agm_events", "agm_resolutions", "agm_attendees", "agm_proxies",
   "amendments", "amendment_votes", "budget_items", "budget_votes", "chat_messages", "handover_checklist",
   "events", "event_rsvps", "inductions",
+  "app_config",  // realtime module flag changes propagate to all clients
 ];
 
 export function subscribeDB(onChange) {

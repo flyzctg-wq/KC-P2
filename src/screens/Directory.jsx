@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Search, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User, FileText, Home, Building, Printer, Shield } from "lucide-react";
 import { Card, Badge, Btn, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C, BLOCKS, BADGE_CATALOG, BADGE_ICONS } from "../theme";
-import { cleanPhone, fmtDate, sortByMemberCode } from "../utils";
+import { cleanPhone, fmtDate, sortByMemberCode, canViewFullContact } from "../utils";
 
 export default function Directory({ session = {}, db = {}, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -12,6 +12,8 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
 
   const isTopTier = session?.role === "admin" && (session?.post === "President" || session?.post === "General Secretary");
   const canManage = session?.role === "admin" && (session?.permissions?.canManageMembers || isTopTier);
+  // Privacy gate: active members + admins see full contact info; pending members see masked data
+  const canSeeContact = canViewFullContact(session);
 
   // Memoize filtering and member code sorting to prevent redundant O(N log N) localeCompare sorting on re-renders (e.g., when toggling modal)
   const filtered = useMemo(() => {
@@ -110,43 +112,59 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                     {isBn ? "ব্লক" : "Block"} <span className="font-semibold">{u.block}</span> · {isBn ? "ইউনিট" : "Unit"} <span className="font-semibold">{u.unit}</span>
                   </p>
 
+                  {/* Phone — masked for unverified members */}
                   <div className="flex items-center gap-1.5 mt-1.5 text-xs">
                     <Phone size={12} style={{ color: C.primary }} className="shrink-0" />
-                    <span className="font-semibold select-all text-gray-800">{u.phone || "—"}</span>
+                    {canSeeContact ? (
+                      <span className="font-semibold select-all text-gray-800">{u.phone || "—"}</span>
+                    ) : (
+                      <span className="italic text-[11px]" style={{ color: C.outline }}>
+                        {isBn ? "🔒 শুধুমাত্র সক্রিয় সদস্যরা দেখতে পারবেন" : "🔒 Visible to verified members"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons — hidden for unverified members */}
               <div className="flex items-center gap-2 pt-2 border-t" style={{ borderColor: C.outlineVariant }}>
-                {phoneFormatted ? (
-                  <>
+                {canSeeContact ? (
+                  phoneFormatted ? (
+                    <>
+                      <a
+                        href={`tel:${phoneFormatted}`}
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
+                        style={{ backgroundColor: C.primaryContainer, color: "#fff" }}
+                        title={isBn ? "কল করুন" : "Call Phone"}
+                      >
+                        <Phone size={13} /> {isBn ? "কল" : "Call"}
+                      </a>
+                      <a
+                        href={`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${u.name}, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${u.name}, reaching out from Kunjachaya Club.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                        title={isBn ? "হোয়াটসঅ্যাপ বার্তা পাঠান" : "WhatsApp Chat"}
+                      >
+                        <MessageCircle size={13} /> WhatsApp
+                      </a>
+                    </>
+                  ) : (
                     <a
-                      href={`tel:${phoneFormatted}`}
+                      href={`mailto:${u.email}?subject=${encodeURIComponent("Kunjachaya Club Message")}`}
                       className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
-                      style={{ backgroundColor: C.primaryContainer, color: "#fff" }}
-                      title={isBn ? "কল করুন" : "Call Phone"}
+                      style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}
                     >
-                      <Phone size={13} /> {isBn ? "কল" : "Call"}
+                      <Mail size={13} /> {isBn ? "ইমেইল" : "Email"}
                     </a>
-                    <a
-                      href={`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${u.name}, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${u.name}, reaching out from Kunjachaya Club.`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                      title={isBn ? "হোয়াটসঅ্যাপ বার্তা পাঠান" : "WhatsApp Chat"}
-                    >
-                      <MessageCircle size={13} /> WhatsApp
-                    </a>
-                  </>
+                  )
                 ) : (
-                  <a
-                    href={`mailto:${u.email}?subject=${encodeURIComponent("Kunjachaya Club Message")}`}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
-                    style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}
+                  <div
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[11px] font-semibold"
+                    style={{ backgroundColor: C.surfaceContainerLow, color: C.outline }}
                   >
-                    <Mail size={13} /> {isBn ? "ইমেইল" : "Email"}
-                  </a>
+                    🔒 {isBn ? "সক্রিয় সদস্যতার পরে যোগাযোগ করুন" : "Contact visible after membership is approved"}
+                  </div>
                 )}
 
                 <button
@@ -203,15 +221,23 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
               </div>
             </div>
 
-            {/* Basic Profile Details (Visible to all) */}
+            {/* Basic Profile Details */}
             <div className="p-3.5 rounded-2xl space-y-2 text-xs border" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
               <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                 <span className="flex items-center gap-1.5 opacity-70"><Phone size={13} /> {isBn ? "মোবাইল ফোন:" : "Mobile Phone:"}</span>
-                <span className="font-bold select-all text-gray-900">{selectedUser.phone || "—"}</span>
+                {canSeeContact ? (
+                  <span className="font-bold select-all text-gray-900">{selectedUser.phone || "—"}</span>
+                ) : (
+                  <span className="italic text-[11px]" style={{ color: C.outline }}>🔒 {isBn ? "লুকানো" : "Hidden"}</span>
+                )}
               </div>
               <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                 <span className="flex items-center gap-1.5 opacity-70"><Mail size={13} /> {isBn ? "ইমেইল অ্যাড্রেস:" : "Email Address:"}</span>
-                <span className="font-semibold select-all text-gray-900">{selectedUser.email}</span>
+                {canSeeContact ? (
+                  <span className="font-semibold select-all text-gray-900">{selectedUser.email}</span>
+                ) : (
+                  <span className="italic text-[11px]" style={{ color: C.outline }}>🔒 {isBn ? "লুকানো" : "Hidden"}</span>
+                )}
               </div>
               <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: C.outlineVariant }}>
                 <span className="flex items-center gap-1.5 opacity-70"><MapPin size={13} /> {isBn ? "বাসা ও ইউনিট:" : "Block & Unit:"}</span>
@@ -314,33 +340,44 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
               </div>
             )}
 
-            {/* Direct Contact Action Buttons */}
+            {/* Direct Contact Action Buttons — masked for unverified */}
             <div className="grid grid-cols-2 gap-2 pt-1">
-              {selectedUser.phone ? (
-                <>
+              {canSeeContact ? (
+                selectedUser.phone ? (
+                  <>
+                    <a
+                      href={`tel:${cleanPhone(selectedUser.phone)}`}
+                      className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white transition-colors"
+                      style={{ backgroundColor: C.primary }}
+                    >
+                      <Phone size={15} /> {isBn ? "সরাসরি কল" : "Call Phone"}
+                    </a>
+                    <a
+                      href={`https://wa.me/${cleanPhone(selectedUser.phone)}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${selectedUser.name}, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${selectedUser.name}, contacting you from Kunjachaya Club.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                    >
+                      <MessageCircle size={15} /> WhatsApp
+                    </a>
+                  </>
+                ) : (
                   <a
-                    href={`tel:${cleanPhone(selectedUser.phone)}`}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white transition-colors"
-                    style={{ backgroundColor: C.primary }}
+                    href={`mailto:${selectedUser.email}?subject=${encodeURIComponent("Kunjachaya Club Official Communication")}`}
+                    className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-colors"
                   >
-                    <Phone size={15} /> {isBn ? "সরাসরি কল" : "Call Phone"}
+                    <Mail size={15} /> {isBn ? "ইমেইল পাঠান" : "Send Email"}
                   </a>
-                  <a
-                    href={`https://wa.me/${cleanPhone(selectedUser.phone)}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${selectedUser.name}, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${selectedUser.name}, contacting you from Kunjachaya Club.`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                  >
-                    <MessageCircle size={15} /> WhatsApp
-                  </a>
-                </>
+                )
               ) : (
-                <a
-                  href={`mailto:${selectedUser.email}?subject=${encodeURIComponent("Kunjachaya Club Official Communication")}`}
-                  className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-colors"
+                <div
+                  className="col-span-2 flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-semibold border"
+                  style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant, color: C.outline }}
                 >
-                  <Mail size={15} /> {isBn ? "ইমেইল পাঠান" : "Send Email"}
-                </a>
+                  🔒 {isBn
+                    ? "সদস্যপদ অনুমোদনের পরে যোগাযোগের তথ্য দৃশ্যমান হবে।"
+                    : "Contact details visible once your membership is approved."}
+                </div>
               )}
             </div>
 

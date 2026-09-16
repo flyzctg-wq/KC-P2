@@ -1,6 +1,7 @@
 import React, { useState, lazy, Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { C } from "./theme";
+import { isNavKeyEnabled } from "./lib/moduleConfig";
 
 // Every screen is its own lazy chunk. A resident who never opens the
 // admin portal, Standing Council tools, or committee handover screen
@@ -34,6 +35,7 @@ const AdminNotices = lazy(() => import("./screens/admin/Notices"));
 const AdminDues = lazy(() => import("./screens/admin/Dues"));
 const AdminElections = lazy(() => import("./screens/admin/Elections"));
 const AdminTickets = lazy(() => import("./screens/admin/Tickets"));
+const AdminModules = lazy(() => import("./screens/admin/Modules"));
 
 const AdminLetters = lazy(() => import("./screens/admin/Letters"));
 const PaymentHistory = lazy(() => import("./screens/admin/PaymentHistory"));
@@ -47,16 +49,43 @@ function ScreenFallback() {
   );
 }
 
+/** Shown when a non-admin tries to access a module the super-admin has disabled */
+function ModuleDisabled({ lang }) {
+  const isBn = lang === "bn";
+  return (
+    <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+      <div
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-sm"
+        style={{ backgroundColor: `${C.outline}20` }}
+      >
+        <Lock size={32} style={{ color: C.outline }} />
+      </div>
+      <h2 className="font-extrabold text-lg mb-2" style={{ color: C.onSurface }}>
+        {isBn ? "মডিউলটি অক্ষম করা হয়েছে" : "Module Disabled"}
+      </h2>
+      <p className="text-sm max-w-xs" style={{ color: C.onSurfaceVariant }}>
+        {isBn
+          ? "এই বিভাগটি সাময়িকভাবে নিষ্ক্রিয় করা হয়েছে। পুনরায় সক্রিয় হলে অ্যাক্সেস পাওয়া যাবে।"
+          : "This module has been temporarily disabled by the administrator. It will be accessible again once re-enabled."}
+      </p>
+    </div>
+  );
+}
+
 export default function Router({
   session, db, persist, view, setView, toast, logActivity, setSession,
-  lang, setLang, t, theme, setTheme, fontSize, setFontSize, appSettings, setAppSettings
+  lang, setLang, t, theme, setTheme, fontSize, setFontSize, appSettings, setAppSettings,
+  moduleFlags,
 }) {
   const [params, setParams] = useState({});
   const go = (v, p = {}) => { setParams(p); setView(v); };
 
+  const isAdmin = session?.role === "admin";
+
   const props = {
     session, db, persist, toast, logActivity, go, params, setSession,
-    lang, setLang, t, theme, setTheme, fontSize, setFontSize, appSettings, setAppSettings
+    lang, setLang, t, theme, setTheme, fontSize, setFontSize, appSettings, setAppSettings,
+    moduleFlags,
   };
 
   const Screen = (() => {
@@ -78,6 +107,7 @@ export default function Router({
       case "a-letters":
       case "letters": return AdminLetters;
       case "a-payment-history": return PaymentHistory;
+      case "a-modules": return AdminModules;
       case "agm": return AGM;
       case "amendments": return Amendments;
       case "hotlines": return Hotlines;
@@ -96,9 +126,12 @@ export default function Router({
     }
   })();
 
+  // Non-admin users are blocked from disabled modules
+  const isBlocked = !isAdmin && !isNavKeyEnabled(moduleFlags, view);
+
   return (
     <Suspense fallback={<ScreenFallback />}>
-      <Screen {...props} />
+      {isBlocked ? <ModuleDisabled lang={lang} /> : <Screen {...props} />}
     </Suspense>
   );
 }

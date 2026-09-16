@@ -8,6 +8,7 @@ import {
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK, APP_VERSION } from "../theme";
 import TvBulletin from "./TvBulletin";
+import { isNavKeyEnabled } from "../lib/moduleConfig";
 
 /* ============================== SHELL / NAV ============================== */
 /* ---- Grouped nav: each group has a heading label + items array ---- */
@@ -63,6 +64,7 @@ const ADMIN_NAV_GROUPS = [
       { key: "a-members", label: "members", icon: Users },
       { key: "a-dues", label: "financials", icon: Wallet },
       { key: "a-payment-history", label: "paymentHistory", icon: Receipt },
+      { key: "a-modules", label: "modules", icon: Globe, superAdminOnly: true },
     ],
   },
   {
@@ -124,9 +126,11 @@ const ADMIN_BOTTOM_NAV = [
 
 export default function Shell({
   session, db, persist, view, setView, logout, lang, setLang, t, children,
-  navOpen, setNavOpen, theme = "system", setTheme = () => {}
+  navOpen, setNavOpen, theme = "system", setTheme = () => {},
+  moduleFlags,
 }) {
   const isAdmin = session.role === "admin";
+  const isSuperAdmin = isAdmin && (session.post === "President" || session.post === "General Secretary");
   const nav = isAdmin ? ADMIN_NAV : RESIDENT_NAV;
   const bottomNav = isAdmin ? ADMIN_BOTTOM_NAV : RESIDENT_BOTTOM_NAV;
 
@@ -183,6 +187,15 @@ export default function Shell({
             const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
             const hasActiveItem = group.items.some(item => item.key === view);
 
+            // Filter items: superAdminOnly items only shown to super-admin;
+            // module-controlled items hidden from non-admins when disabled
+            const visibleItems = group.items.filter(item => {
+              if (item.superAdminOnly && !isSuperAdmin) return false;
+              if (!isAdmin && !isNavKeyEnabled(moduleFlags, item.key)) return false;
+              return true;
+            });
+            if (visibleItems.length === 0) return null;
+
             return (
               <div key={gi} className="rounded-xl overflow-hidden mb-1">
                 <button
@@ -201,10 +214,11 @@ export default function Shell({
 
                 {isOpen && (
                   <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                    {group.items.map(item => {
+                    {visibleItems.map(item => {
                       const Icon = item.icon;
                       const active = view === item.key;
-                      const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
+                      const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label === "modules" ? (lang === "bn" ? "অ্যাপ মডিউল" : "App Modules") : item.label);
+                      const disabled = isAdmin && !isNavKeyEnabled(moduleFlags, item.key);
                       return (
                         <button
                           key={item.key}
@@ -214,7 +228,8 @@ export default function Shell({
                           style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                         >
                           <Icon size={16} strokeWidth={active ? 2.4 : 2} />
-                          <span className="truncate">{labelText}</span>
+                          <span className="truncate flex-1">{labelText}</span>
+                          {disabled && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Module disabled" />}
                         </button>
                       );
                     })}
@@ -390,6 +405,13 @@ export default function Shell({
                   const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
                   const hasActiveItem = group.items.some(item => item.key === view);
 
+                  const visibleItems = group.items.filter(item => {
+                    if (item.superAdminOnly && !isSuperAdmin) return false;
+                    if (!isAdmin && !isNavKeyEnabled(moduleFlags, item.key)) return false;
+                    return true;
+                  });
+                  if (visibleItems.length === 0) return null;
+
                   return (
                     <div key={gi} className="rounded-xl overflow-hidden mb-1">
                       <button
@@ -408,9 +430,10 @@ export default function Shell({
 
                       {isOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                          {group.items.map(item => {
+                          {visibleItems.map(item => {
                             const Icon = item.icon;
                             const active = view === item.key;
+                            const disabled = isAdmin && !isNavKeyEnabled(moduleFlags, item.key);
                             return (
                               <button
                                 key={item.key}
@@ -419,7 +442,8 @@ export default function Shell({
                                 style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                               >
                                 <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                                <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
+                                <span className="truncate flex-1">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label === "modules" ? (lang === "bn" ? "অ্যাপ মডিউল" : "App Modules") : item.label)}</span>
+                                {disabled && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Module disabled" />}
                               </button>
                             );
                           })}

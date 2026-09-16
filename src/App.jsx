@@ -6,6 +6,7 @@ import { supabase } from "./lib/supabase";
 import { Loader2, KeyRound, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { C, STR, LOGO_MARK } from "./theme";
 import { uid, nowISO } from "./utils";
+import { DEFAULT_MODULE_FLAGS } from "./lib/moduleConfig";
 import { Toasts, Modal, Btn, Field, inputCls, inputStyle } from "./components/primitives";
 import ConsentBanner from "./components/ConsentBanner";
 import { hasStoredConsent, loadAnalytics, trackEvent } from "./lib/analytics";
@@ -604,8 +605,10 @@ export default function App() {
             </div>
           }>
             <Shell session={session} db={db} persist={persist} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
-              navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}>
-              <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings} />
+              navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}
+              moduleFlags={db?.moduleFlags ?? DEFAULT_MODULE_FLAGS}>
+              <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings}
+                moduleFlags={db?.moduleFlags ?? DEFAULT_MODULE_FLAGS} />
             </Shell>
           </Suspense>
         )}
