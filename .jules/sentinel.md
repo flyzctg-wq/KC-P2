@@ -7,3 +7,8 @@
 **Vulnerability:** User-controllable URLs (`formScanUrl`, `mediaPreviewModal.url`) rendered directly in anchor tags (`<a href={url}>`) were vulnerable to XSS via unsafe URI schemes like `javascript:` or `data:text/html`.
 **Learning:** Checking protocol scheme via `new URL(url, "https://dummy.local").protocol` reliably detects disallowed protocols regardless of casing or whitespace trickery.
 **Prevention:** Use `sanitizeUrl(url)` from `src/utils.js` on all user-supplied dynamic link attributes.
+
+## 2026-09-10 - URL Sanitization for User-Contributed Hardcopy & Media Links
+**Vulnerability:** User-supplied links (`formScanUrl`, `scanUrl`, attachment URLs) embedded directly in `<a href="...">` can be exploited via `javascript:` or untrusted `data:` URIs for stored XSS.
+**Learning:** React JSX automatically escapes HTML text nodes but does NOT sanitize `href` scheme protocols in `<a>` tags.
+**Prevention:** Use `sanitizeUrl()` from `src/utils.js` when passing dynamic user URLs to `href` properties.
