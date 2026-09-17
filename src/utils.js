@@ -132,4 +132,35 @@ export const canViewFullContact = (session) => {
   return session.status === "active";
 };
 
+/**
+ * Validates external URLs against XSS / JavaScript URI scheme injection.
+ * Permits relative URLs, safe protocols (http, https, mailto, tel, blob),
+ * and safe data URIs (image, video, pdf).
+ */
+export const isSafeUrl = (url) => {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
+
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("javascript:") || lower.startsWith("vbscript:")) return false;
+
+  if (lower.startsWith("data:")) {
+    return lower.startsWith("data:image/") || lower.startsWith("data:video/") || lower.startsWith("data:application/pdf");
+  }
+
+  try {
+    const base = typeof window !== "undefined" && window.location?.origin ? window.location.origin : "https://localhost";
+    const parsed = new URL(trimmed, base);
+    return ["http:", "https:", "mailto:", "tel:", "blob:"].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+};
+
+/** Sanitizes a URL, returning fallback '#' if unsafe */
+export const sanitizeUrl = (url, fallback = "#") => {
+  return isSafeUrl(url) ? url.trim() : fallback;
+};
 
