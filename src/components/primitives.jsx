@@ -104,6 +104,17 @@ export function Empty({ icon: Icon, title, subtitle }) {
 }
 
 export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
+  React.useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose?.();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div
