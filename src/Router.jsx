@@ -81,6 +81,7 @@ export default function Router({
   const go = (v, p = {}) => { setParams(p); setView(v); };
 
   const isAdmin = session?.role === "admin";
+  const isSuperAdmin = isAdmin && (session?.post === "President" || session?.post === "General Secretary");
 
   const props = {
     session, db, persist, toast, logActivity, go, params, setSession,
@@ -126,8 +127,8 @@ export default function Router({
     }
   })();
 
-  // Non-admin users are blocked from disabled modules
-  const isBlocked = !isAdmin && !isNavKeyEnabled(moduleFlags, view);
+  // Users other than top-tier super-admin are blocked from disabled modules
+  const isBlocked = !isSuperAdmin && !isNavKeyEnabled(moduleFlags, view);
 
   return (
     <Suspense fallback={<ScreenFallback />}>

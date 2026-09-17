@@ -188,16 +188,16 @@ export default function Shell({
             const hasActiveItem = group.items.some(item => item.key === view);
 
             // Filter items: superAdminOnly items only shown to super-admin;
-            // module-controlled items hidden from non-admins when disabled
+            // disabled modules hidden from navigation
             const visibleItems = group.items.filter(item => {
               if (item.superAdminOnly && !isSuperAdmin) return false;
-              if (!isAdmin && !isNavKeyEnabled(moduleFlags, item.key)) return false;
+              if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
               return true;
             });
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={gi} className="rounded-xl overflow-hidden mb-1">
+              <div key={gi} className="rounded-xl mb-1">
                 <button
                   type="button"
                   onClick={() => toggleGroup(gi)}
@@ -217,19 +217,17 @@ export default function Shell({
                     {visibleItems.map(item => {
                       const Icon = item.icon;
                       const active = view === item.key;
-                      const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label === "modules" ? (lang === "bn" ? "অ্যাপ মডিউল" : "App Modules") : item.label);
-                      const disabled = isAdmin && !isNavKeyEnabled(moduleFlags, item.key);
+                      const labelText = t[item.label] || item.label;
                       return (
                         <button
                           key={item.key}
                           onClick={() => setView(item.key)}
                           aria-current={active ? "page" : undefined}
-                          className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full min-h-[38px]"
                           style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                         >
-                          <Icon size={16} strokeWidth={active ? 2.4 : 2} />
-                          <span className="truncate flex-1">{labelText}</span>
-                          {disabled && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Module disabled" />}
+                          <Icon size={16} strokeWidth={active ? 2.4 : 2} className="shrink-0" />
+                          <span className="truncate flex-1 leading-normal py-0.5">{labelText}</span>
                         </button>
                       );
                     })}
@@ -399,7 +397,11 @@ export default function Shell({
               </div>
 
               {/* Scrollable Navigation List (Collapsible) */}
-              <nav className="flex flex-col flex-1 min-h-0 overflow-y-auto pr-1 my-1 space-y-1" aria-label="Main navigation">
+              <nav
+                className="flex flex-col flex-1 min-h-0 overflow-y-auto pr-1 my-1 space-y-1 pb-10 overscroll-contain"
+                aria-label="Main navigation"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
                 {navGroups.map((group, gi) => {
                   const isOpen = !!openGroups[gi];
                   const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
@@ -407,13 +409,13 @@ export default function Shell({
 
                   const visibleItems = group.items.filter(item => {
                     if (item.superAdminOnly && !isSuperAdmin) return false;
-                    if (!isAdmin && !isNavKeyEnabled(moduleFlags, item.key)) return false;
+                    if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
                     return true;
                   });
                   if (visibleItems.length === 0) return null;
 
                   return (
-                    <div key={gi} className="rounded-xl overflow-hidden mb-1">
+                    <div key={gi} className="rounded-xl mb-1">
                       <button
                         type="button"
                         onClick={() => toggleGroup(gi)}
@@ -433,17 +435,16 @@ export default function Shell({
                           {visibleItems.map(item => {
                             const Icon = item.icon;
                             const active = view === item.key;
-                            const disabled = isAdmin && !isNavKeyEnabled(moduleFlags, item.key);
+                            const labelText = t[item.label] || item.label;
                             return (
                               <button
                                 key={item.key}
                                 onClick={() => { setView(item.key); setNavOpen(false); }}
-                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full"
+                                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full min-h-[38px]"
                                 style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                               >
-                                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                                <span className="truncate flex-1">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label === "modules" ? (lang === "bn" ? "অ্যাপ মডিউল" : "App Modules") : item.label)}</span>
-                                {disabled && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Module disabled" />}
+                                <Icon size={16} strokeWidth={active ? 2.5 : 2} className="shrink-0" />
+                                <span className="truncate flex-1 leading-normal py-0.5">{labelText}</span>
                               </button>
                             );
                           })}
