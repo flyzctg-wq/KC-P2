@@ -5,9 +5,16 @@ import { C } from "../../theme";
 import { MODULE_META, MODULE_NAV_KEYS, DEFAULT_MODULE_FLAGS } from "../../lib/moduleConfig";
 import { supabase } from "../../lib/supabase";
 
-export default function AdminModules({ session, moduleFlags: rawFlags, lang, toast }) {
+export default function AdminModules({ session, moduleFlags: rawFlags, lang, toast, persist }) {
   const isBn = lang === "bn";
-  const moduleFlags = rawFlags ?? DEFAULT_MODULE_FLAGS;
+  const [localFlags, setLocalFlags] = useState(() => rawFlags ?? DEFAULT_MODULE_FLAGS);
+
+  // Sync whenever incoming prop updates
+  React.useEffect(() => {
+    if (rawFlags) {
+      setLocalFlags(rawFlags);
+    }
+  }, [rawFlags]);
 
   const isSuperAdmin = session?.role === "admin" &&
     (session?.post === "President" || session?.post === "General Secretary");
@@ -17,13 +24,20 @@ export default function AdminModules({ session, moduleFlags: rawFlags, lang, toa
 
   const handleToggle = async (modKey) => {
     if (!isSuperAdmin || saving) return;
-    const currentVal = moduleFlags[modKey] !== false; // default true
+    const currentVal = localFlags[modKey] !== false; // default true
     const newVal = !currentVal;
+    const newFlags = { ...localFlags, [modKey]: newVal };
+
+    // 1. Instant optimistic local UI update (switch flips immediately)
+    setLocalFlags(newFlags);
+
+    // 2. Instant global state update (shell / navigation menus update immediately)
+    if (typeof persist === "function") {
+      persist(prev => ({ ...prev, moduleFlags: newFlags }));
+    }
 
     setSaving(modKey);
     try {
-      const newFlags = { ...moduleFlags, [modKey]: newVal };
-
       const { error } = await supabase
         .from("app_config")
         .upsert({ key: "kc_modules", value: newFlags, updated_at: new Date().toISOString() });
@@ -37,6 +51,11 @@ export default function AdminModules({ session, moduleFlags: rawFlags, lang, toa
         newVal ? "success" : "info"
       );
     } catch (err) {
+      // Revert optimistic changes on error
+      setLocalFlags(localFlags);
+      if (typeof persist === "function") {
+        persist(prev => ({ ...prev, moduleFlags: localFlags }));
+      }
       toast(err?.message || "Failed to update module flags", "error");
     } finally {
       setSaving(null);
@@ -77,7 +96,7 @@ export default function AdminModules({ session, moduleFlags: rawFlags, lang, toa
       <div className="grid sm:grid-cols-2 gap-3">
         {Object.entries(MODULE_META).map(([modKey, meta]) => {
           const Icon = meta.icon;
-          const enabled = moduleFlags[modKey] !== false;
+          const enabled = localFlags[modKey] !== false;
           const isSaving = saving === modKey;
           const navKeys = MODULE_NAV_KEYS[modKey] || [];
 
