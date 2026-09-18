@@ -132,4 +132,22 @@ export const canViewFullContact = (session) => {
   return session.status === "active";
 };
 
+/** Checks if a URL is safe against dangerous URI schemes (e.g., javascript:, data:text/html) */
+export const isSafeUrl = (url) => {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith("/") || trimmed.startsWith("#") || trimmed.startsWith("./") || trimmed.startsWith("../")) return true;
+  try {
+    const parsed = new URL(trimmed, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+    return ["http:", "https:", "mailto:", "tel:", "blob:"].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+};
+
+/** Sanitizes a URL, returning a safe fallback '#' if the URL scheme is insecure */
+export const sanitizeUrl = (url, fallback = "#") => {
+  return isSafeUrl(url) ? url : fallback;
+};
 
