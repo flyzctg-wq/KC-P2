@@ -6,6 +6,10 @@
 **Learning:** `Audit.jsx` processed the system activity log array (`db.activity`) by running regex tests (`NOISE_PATTERNS`), string category matching, and Date object sorting on every render cycle and whenever category filters (`cat`) or tabs were toggled.
 **Action:** Wrap `auditEntries`, `auditFiltered`, and `activityEntries` in `useMemo` with dependencies `[db.activity]` and `[auditEntries, cat]` to skip redundant filtering and array sorting.
 
+## 2026-09-10 - Memoizing Financial Aggregations and Admin Member Lists
+**Learning:** In `AdminDues.jsx` and `AdminMembers.jsx`, 6x array `.filter()` and 5x `.reduce()` passes over financial dues/expenses and member list sorting (`sortByMemberCode`) ran on every render (e.g. typing in search inputs or toggling UI modals).
+**Action:** Wrap financial aggregations and user list sorting in `useMemo` with explicit dependencies (`[allDues, allExpenses, selectedMonth]` and `[db?.users]`).
+
 ## 2026-09-10 - Memoizing Dues Filtering & Outstanding Balance Calculation
 **Learning:** `Dues.jsx` filtered `db.dues` by `session.id`, sorted month strings via `localeCompare`, and summed `totalDue` on every render cycle (including modal state updates like toggling payment modals or receipt modals).
 **Action:** Wrap `mine` array filtering/sorting in `useMemo` dependent on `[db.dues, session.id]` and `totalDue` sum calculation in `useMemo` dependent on `[mine]`.
