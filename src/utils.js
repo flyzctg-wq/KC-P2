@@ -169,4 +169,3 @@ export const isSafeUrl = (url) => {
 export const sanitizeUrl = (url, fallback = "#") => {
   return isSafeUrl(url) ? url.trim() : fallback;
 };
-
