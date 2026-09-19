@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Search, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User, FileText, Home, Building, Printer, Shield } from "lucide-react";
 import { Card, Badge, Btn, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C, BLOCKS, BADGE_CATALOG, BADGE_ICONS } from "../theme";
-import { cleanPhone, fmtDate, sortByMemberCode, canViewFullContact } from "../utils";
+import { cleanPhone, fmtDate, sortByMemberCode, canViewFullContact, sanitizeUrl } from "../utils";
 
 export default function Directory({ session = {}, db = {}, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -328,7 +328,7 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                   </Btn>
                   {(selectedUser.permissions?.formScanUrl || selectedUser.formScanUrl) && (
                     <a
-                      href={selectedUser.permissions?.formScanUrl || selectedUser.formScanUrl}
+                      href={sanitizeUrl(selectedUser.permissions?.formScanUrl || selectedUser.formScanUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-1.5 rounded-xl font-bold text-xs text-white bg-teal-700 hover:bg-teal-800 flex items-center justify-center gap-1.5 shrink-0"

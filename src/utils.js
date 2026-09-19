@@ -132,4 +132,29 @@ export const canViewFullContact = (session) => {
   return session.status === "active";
 };
 
+/**
+ * Security: Validates whether a URL uses a safe protocol scheme (http, https, mailto, tel, relative path).
+ * Prevents XSS injection via unsafe schemes such as javascript:, data:, vbscript:.
+ */
+export const isSafeUrl = (url) => {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
+  try {
+    const parsed = new URL(trimmed, "https://dummy.local");
+    const safeProtocols = ["http:", "https:", "mailto:", "tel:"];
+    return safeProtocols.includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Security: Sanitizes a URL, returning "#" or a fallback if the URL scheme is unsafe.
+ */
+export const sanitizeUrl = (url, fallback = "#") => {
+  if (isSafeUrl(url)) return url.trim();
+  return fallback;
+};
 
