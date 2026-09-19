@@ -2,7 +2,7 @@
 import { Shield, Send, Paperclip, Eye, Play, Film, Download, ExternalLink } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Modal, SectionTitle, Empty } from "../../components/primitives";
 import { C } from "../../theme";
-import { fmtDate } from "../../utils";
+import { fmtDate, sanitizeUrl } from "../../utils";
 
 export default function AdminTickets({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -161,7 +161,7 @@ export default function AdminTickets({ session, db, persist, toast, logActivity,
             <div className="flex items-center gap-2">
               {mediaPreviewModal?.url && (
                 <a
-                  href={mediaPreviewModal.url}
+                  href={sanitizeUrl(mediaPreviewModal.url)}
                   download={mediaPreviewModal.name || "attachment"}
                   className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-colors"
                   style={{ backgroundColor: C.primaryContainer, color: C.onPrimaryContainer }}
