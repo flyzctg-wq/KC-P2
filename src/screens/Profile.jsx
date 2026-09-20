@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Modal, SectionTitle } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
-import { fmtDate } from "../utils";
+import { fmtDate, sanitizeUrl } from "../utils";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -1082,7 +1082,7 @@ export default function Profile({
                     {isBn ? "স্বাক্ষরিত অফিশিয়াল সদস্য ফরম (PDF)" : "Official Signed Form (PDF)"}
                   </p>
                   <a
-                    href={session?.permissions?.formScanUrl || session?.formScanUrl}
+                    href={sanitizeUrl(session?.permissions?.formScanUrl || session?.formScanUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900"
@@ -1107,7 +1107,7 @@ export default function Profile({
                       <ZoomIn size={14} />
                     </button>
                     <a
-                      href={session?.permissions?.formScanUrl || session?.formScanUrl}
+                      href={sanitizeUrl(session?.permissions?.formScanUrl || session?.formScanUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 hover:bg-white/20 rounded-lg text-xs font-bold"
@@ -1162,7 +1162,7 @@ export default function Profile({
                 <span className="text-gray-500 font-semibold">{session?.name} · Unit {session?.unit}</span>
                 <div className="flex gap-2">
                   <a
-                    href={session?.permissions?.formScanUrl || session?.formScanUrl}
+                    href={sanitizeUrl(session?.permissions?.formScanUrl || session?.formScanUrl)}
                     download={`kunjachaya_form_${(session?.name || "member").replace(/\s+/g, "_")}`}
                     target="_blank"
                     rel="noopener noreferrer"
