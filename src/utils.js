@@ -144,3 +144,18 @@ export const sortByMemberCode = (a, b) => {
   return (a?.name || "").localeCompare(b?.name || "");
 };
 
+/** Validates if a URL uses a safe protocol (prevents XSS via javascript: or data: schemes) */
+export const isSafeUrl = (url = "") => {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim().toLowerCase();
+  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
+  if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;
+  if (trimmed.startsWith("blob:") || trimmed.startsWith("data:image/")) return true;
+  return false;
+};
+
+/** Returns the URL if it uses a safe protocol, otherwise returns fallback */
+export const sanitizeUrl = (url = "", fallback = "#") => {
+  return isSafeUrl(url) ? url.trim() : fallback;
+};
