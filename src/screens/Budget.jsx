@@ -11,18 +11,10 @@ export default function Budget({ session, db, persist, toast, logActivity, lang 
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
   const canPropose = session.role === "admin" && (session.permissions?.canManageFinancials || isTopTier);
 
-  // Memoize budget items sorting to avoid re-sorting on form state changes or modal toggles
-  const items = useMemo(() => {
-    return [...(db.budgetItems || [])].sort((a, b) => (a.status === "voting" ? -1 : 1));
-  }, [db.budgetItems]);
-
-  const totalApproved = useMemo(() => {
-    return items.filter(i => i.status === "approved").reduce((s, i) => s + i.amount, 0);
-  }, [items]);
-
-  const totalProposed = useMemo(() => {
-    return items.reduce((s, i) => s + i.amount, 0);
-  }, [items]);
+  // Memoize sorted items and totals to prevent recalculations on modal toggles or form input
+  const items = useMemo(() => [...(db.budgetItems || [])].sort((a, b) => (a.status === "voting" ? -1 : 1)), [db.budgetItems]);
+  const totalApproved = useMemo(() => items.filter(i => i.status === "approved").reduce((s, i) => s + i.amount, 0), [items]);
+  const totalProposed = useMemo(() => items.reduce((s, i) => s + i.amount, 0), [items]);
 
   const statusLabels = {
     proposed: isBn ? "প্রস্তাবিত" : "PROPOSED",

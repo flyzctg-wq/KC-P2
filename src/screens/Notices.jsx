@@ -7,11 +7,8 @@ import { uid, nowISO, fmtDateTime } from "../utils";
 export default function Notices({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [open, setOpen] = useState(null);
-
-  // Memoize notice sorting by date to prevent unnecessary re-sorting when opening/closing comment boxes or typing
-  const sorted = useMemo(() => {
-    return [...(db.notices || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [db.notices]);
+  // Memoize notice sorting to avoid re-sorting when expanded comments toggle or comment text changes
+  const sorted = useMemo(() => [...(db.notices || [])].sort((a, b) => new Date(b.date) - new Date(a.date)), [db.notices]);
 
   const react = (id) => persist(d => ({
     ...d, notices: d.notices.map(n => {
