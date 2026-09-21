@@ -6,6 +6,6 @@
 **Learning:** `Audit.jsx` processed the system activity log array (`db.activity`) by running regex tests (`NOISE_PATTERNS`), string category matching, and Date object sorting on every render cycle and whenever category filters (`cat`) or tabs were toggled.
 **Action:** Wrap `auditEntries`, `auditFiltered`, and `activityEntries` in `useMemo` with dependencies `[db.activity]` and `[auditEntries, cat]` to skip redundant filtering and array sorting.
 
-## 2026-09-10 - Memoizing Dashboard KPI & Composition Calculations in Admin Dashboard
-**Learning:** `AdminDashboard.jsx` calculated KPIs and performed repetitive array filtering over `db.users` for every member class in `MEMBER_CLASSES.map()` on every render (e.g., language toggles, interactive map movements).
-**Action:** Single-pass pre-compute member class distribution in `useMemo` and memoize overall KPI stats with dependencies on dataset arrays (`db.users`, `db.dues`, `db.tickets`, `db.elections`, `db.votes`).
+## 2026-09-10 - Memoizing Member List Filtering & Member Code Sorting in Admin Members Screen
+**Learning:** `src/screens/admin/Members.jsx` filtered `db.users` for pending members and active members, and sorted active members using `sortByMemberCode` on every render cycle. State updates inside `AdminMembers` (switching tabs between active/pending, opening member modals, or editing roles) triggered redundant array filtering and sorting operations.
+**Action:** Wrap `pending`, `activeUsers`, and `allUsers` calculations in `useMemo` with `[db?.users]` dependency to skip unnecessary array allocation and sorting operations on internal component state updates.
