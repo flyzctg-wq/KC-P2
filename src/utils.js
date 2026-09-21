@@ -104,23 +104,6 @@ export const playTapSound = (type = "send") => {
 };
 
 /** Sorts members by their assigned Member Code (#001, #002, etc.) naturally */
-/** Sanitizes URLs to prevent XSS via dangerous protocols like javascript: */
-export const sanitizeUrl = (url = "") => {
-  if (!url || typeof url !== "string") return "#";
-  const trimmed = url.trim();
-  if (
-    trimmed.startsWith("https://") ||
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("mailto:") ||
-    trimmed.startsWith("tel:") ||
-    trimmed.startsWith("blob:") ||
-    trimmed.startsWith("data:image/") ||
-    trimmed.startsWith("/")
-  ) {
-    return trimmed;
-  }
-  return "#";
-};
 
 export const sortByMemberCode = (a, b) => {
   const codeA = (a?.memberCode || "").trim();
