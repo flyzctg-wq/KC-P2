@@ -1,16 +1,15 @@
-/**
- * Generates a cryptographically secure UUIDv4.
- * Uses `crypto.randomUUID()` when available, falls back to `crypto.getRandomValues()`,
- * and falls back to Math.random() only in non-secure legacy environments.
- */
 export const uid = (p = "id") => {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
+  // Cryptographically secure fallback when crypto.randomUUID is not supported
   if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
-    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
-      (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
-    );
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // RFC4122 version 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // RFC4122 variant 1
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   }
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
@@ -127,54 +126,3 @@ export const sortByMemberCode = (a, b) => {
   return (a?.name || "").localeCompare(b?.name || "");
 };
 
-/**
- * Privacy gate — returns true if the viewer is allowed to see full member
- * contact info (phone, email, address, ID, family details).
- *
- * Tiers:
- *   admin                → always true
- *   status === "active"  → true (verified resident)
- *   status === "pending" → false (unverified / awaiting approval)
- */
-export const canViewFullContact = (session) => {
-  if (!session) return false;
-  if (session.role === "admin") return true;
-  return session.status === "active";
-};
-/**
- * Checks if a URL is safe against XSS attacks (e.g. javascript: or data:text/html).
- * Allows standard protocols (http, https, mailto, tel), relative paths, blob URLs, and safe data URIs (images/PDFs).
- */
-export const isSafeUrl = (url) => {
-  if (typeof url !== "string") return false;
-  const cleaned = url.trim().replace(/[\x00-\x20\x7f-\x9f]/g, "");
-  if (!cleaned) return false;
-
-  if (cleaned.startsWith("/") || cleaned.startsWith("#")) return true;
-
-  try {
-    const parsed = new URL(cleaned, "https://dummy.local");
-    const protocol = parsed.protocol.toLowerCase();
-
-    if (protocol === "http:" || protocol === "https:" || protocol === "mailto:" || protocol === "tel:") {
-      return true;
-    }
-
-    if (protocol === "blob:") {
-      return true;
-    }
-
-    if (protocol === "data:") {
-      return /^data:(image\/(png|jpg|jpeg|gif|webp|svg\+xml)|application\/pdf);/i.test(cleaned);
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
-};
-
-/** Sanitizes a URL, returning fallback (default '#') if unsafe or invalid */
-export const sanitizeUrl = (url, fallback = "#") => {
-  return isSafeUrl(url) ? url.trim() : fallback;
-};
