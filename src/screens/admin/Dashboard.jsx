@@ -8,7 +8,9 @@ import { currency, monthLabel, currentMonthYM } from "../../utils";
 export default function AdminDashboard({ session, db, go, lang = "en", t = {} }) {
   const isBn = lang === "bn";
 
-  // Bolt optimization: Single-pass aggregation inside useMemo avoids redundant array filtering & O(N*M) inner loops on every render
+  // Bolt Performance Optimization:
+  // Memoize dashboard KPIs and member class counts to prevent running multiple
+  // O(N) array filters over users, dues, tickets, and elections on every render pass.
   const {
     pendingMembers,
     collected,
@@ -18,7 +20,7 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
     totalVotes,
     collectionRate,
     memberClassCounts,
-    maxActiveUsers,
+    totalActiveMembers,
   } = useMemo(() => {
     const users = db?.users || [];
     const dues = db?.dues || [];
@@ -26,49 +28,32 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
     const elections = db?.elections || [];
     const votes = db?.votes || [];
 
-    let pendingMembers = 0;
-    let activeUsersCount = 0;
-    const memberClassCounts = {};
-
-    for (let i = 0; i < users.length; i++) {
-      const u = users[i];
-      if (u.status === "pending") {
-        pendingMembers++;
-      } else if (u.status === "active") {
-        activeUsersCount++;
-        if (u.memberClass) {
-          memberClassCounts[u.memberClass] = (memberClassCounts[u.memberClass] || 0) + 1;
-        }
-      }
-    }
+    const pendingMembers = users.filter(u => u.status === "pending").length;
 
     let collected = 0;
     let outstanding = 0;
-    for (let i = 0; i < dues.length; i++) {
-      const d = dues[i];
+    for (const d of dues) {
       if (d.status === "paid") {
-        collected += Number(d.amount) || 0;
+        collected += d.amount || 0;
       } else {
-        outstanding += Number(d.amount) || 0;
+        outstanding += d.amount || 0;
       }
     }
 
-    let openTickets = 0;
-    for (let i = 0; i < tickets.length; i++) {
-      if (tickets[i].status !== "resolved") {
-        openTickets++;
-      }
-    }
-
-    let activeElections = 0;
-    for (let i = 0; i < elections.length; i++) {
-      if (elections[i].status === "active") {
-        activeElections++;
-      }
-    }
-
+    const openTickets = tickets.filter(t => t.status !== "resolved").length;
+    const activeElections = elections.filter(e => e.status === "active").length;
     const totalVotes = votes.length;
     const collectionRate = Math.round((collected / Math.max(1, collected + outstanding)) * 100);
+
+    const memberClassCounts = {};
+    let activeCount = 0;
+    for (const u of users) {
+      if (u.status === "active") {
+        activeCount++;
+        const mc = u.memberClass || "General";
+        memberClassCounts[mc] = (memberClassCounts[mc] || 0) + 1;
+      }
+    }
 
     return {
       pendingMembers,
@@ -79,7 +64,7 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
       totalVotes,
       collectionRate,
       memberClassCounts,
-      maxActiveUsers: Math.max(1, activeUsersCount),
+      totalActiveMembers: Math.max(1, activeCount),
     };
   }, [db?.users, db?.dues, db?.tickets, db?.elections, db?.votes]);
 
@@ -127,7 +112,7 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
                 <div key={mc} className="flex items-center gap-2 text-xs">
                   <span className="w-20 font-semibold shrink-0">{memberClassLabels[mc] || mc}</span>
                   <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: C.surfaceContainerHigh }}>
-                    <div className="h-full rounded-full" style={{ width: `${(count / maxActiveUsers) * 100}%`, backgroundColor: C.secondary }} />
+                    <div className="h-full rounded-full" style={{ width: `${(count / totalActiveMembers) * 100}%`, backgroundColor: C.secondary }} />
                   </div>
                   <span className="w-6 text-right font-bold">{count}</span>
                 </div>
