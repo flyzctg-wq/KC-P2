@@ -1,7 +1,7 @@
 import React from "react";
 import { X, AlertCircle, CheckCircle2 } from "lucide-react";
 import { C } from "../theme";
-import { initials, avatarHue } from "../utils";
+import { initials, avatarHue, sanitizeUrl } from "../utils";
 
 export function Btn({ children, variant = "primary", size = "md", icon: Icon, onClick, disabled, type = "button", full, className = "" }) {
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-4 py-2.5 text-sm", lg: "px-6 py-3 text-base" };
@@ -68,7 +68,7 @@ export function Avatar({ name = "User", photoUrl, size = 36, className = "" }) {
   if (photoUrl && !hasError) {
     return (
       <img
-        src={photoUrl}
+        src={sanitizeUrl(photoUrl)}
         alt={name}
         onError={() => setHasError(true)}
         style={{ width: size, height: size }}

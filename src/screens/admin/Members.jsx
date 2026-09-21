@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Check, XCircle, Shield, Edit3, UserCheck, UserPlus, Send, Copy, MessageCircle, Phone, Mail, CheckCircle2, UserX, AlertTriangle, Trash2, Loader2, Eye, Printer, FileText, MapPin, Droplet, Award, Calendar, Briefcase, GraduationCap, Home, Camera, Building, ExternalLink, Heart, Upload, ScanLine, ZoomIn, Trash } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C, BLOCKS, MEMBER_CLASSES, PERMISSION_KEYS, COMMITTEE_POSTS, POST_DEFAULT_PERMISSIONS, EC_CONSTITUTIONAL_STRUCTURE } from "../../theme";
-import { uid, nowISO, getAppBaseUrl, cleanPhone, fmtDate, sortByMemberCode } from "../../utils";
+import { uid, nowISO, getAppBaseUrl, cleanPhone, fmtDate, sortByMemberCode, sanitizeUrl } from "../../utils";
 import { supabase } from "../../lib/supabase";
 
 export default function AdminMembers({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
@@ -930,7 +930,7 @@ function MemberProfileInspector({ user, session, db, canManage, isTopTier, persi
                     <FileText size={48} className="mx-auto text-rose-600" />
                     <p className="font-bold text-sm text-gray-800">PDF Membership Form Document</p>
                     <a
-                      href={scanUrl}
+                      href={sanitizeUrl(scanUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900"
@@ -941,7 +941,7 @@ function MemberProfileInspector({ user, session, db, canManage, isTopTier, persi
                 ) : (
                   <div className="relative max-h-[380px] overflow-hidden flex items-center justify-center bg-black/5">
                     <img
-                      src={scanUrl}
+                      src={sanitizeUrl(scanUrl)}
                       alt="Scanned Membership Form"
                       className="w-full h-auto object-contain max-h-[380px] cursor-pointer hover:opacity-95 transition-opacity"
                       onClick={() => setScanPreview(true)}
@@ -955,7 +955,7 @@ function MemberProfileInspector({ user, session, db, canManage, isTopTier, persi
                         <ZoomIn size={14} />
                       </button>
                       <a
-                        href={scanUrl}
+                        href={sanitizeUrl(scanUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 hover:bg-white/20 rounded-lg text-xs font-bold"
@@ -1023,13 +1023,13 @@ function MemberProfileInspector({ user, session, db, canManage, isTopTier, persi
             <Modal open={scanPreview} onClose={() => setScanPreview(false)} title={isBn ? "সদস্য ফরম হার্ডকপি প্রিভিউ" : "Membership Form Scan Preview"} width="max-w-3xl">
               <div className="space-y-3 py-1">
                 <div className="max-h-[75vh] overflow-auto p-2 bg-slate-900 rounded-2xl flex items-center justify-center">
-                  <img src={scanUrl} alt="Form Full Preview" className="max-w-full h-auto rounded-lg shadow-lg" />
+                  <img src={sanitizeUrl(scanUrl)} alt="Form Full Preview" className="max-w-full h-auto rounded-lg shadow-lg" />
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-gray-500 font-semibold">{user.name} · {user.unit}</span>
                   <div className="flex gap-2">
                     <a
-                      href={scanUrl}
+                      href={sanitizeUrl(scanUrl)}
                       download={`kunjachaya_form_${user.name.replace(/\s+/g, "_")}`}
                       target="_blank"
                       rel="noopener noreferrer"
