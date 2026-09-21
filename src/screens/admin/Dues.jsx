@@ -75,22 +75,49 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   const gsUser = useMemo(() => activeResidents.find(u => u.post === "General Secretary") || { phone: "01722-227207", name: "Khalid Hasan", nameBn: "খালিদ হাসান" }, [activeResidents]);
   const presidentUser = useMemo(() => activeResidents.find(u => u.post === "President") || { phone: "01400-601051", name: "Zakaria Hasan", nameBn: "জাকারিয়া হাছান" }, [activeResidents]);
 
-  // Comprehensive Financial Metrics
-  const currentMonthDues = allDues.filter(d => !selectedMonth || selectedMonth === "all" || d.month === selectedMonth);
-  const paidDuesCurrentMonth = currentMonthDues.filter(d => d.status === "paid");
-  const unpaidDuesCurrentMonth = currentMonthDues.filter(d => d.status !== "paid");
+  // Bolt optimization: Memoize comprehensive financial calculations to avoid redundant 6x filter + 5x reduce passes over allDues/allExpenses on every render or search keystroke
+  const financialMetrics = useMemo(() => {
+    const currentMonthDues = allDues.filter(d => !selectedMonth || selectedMonth === "all" || d.month === selectedMonth);
+    const paidDuesCurrentMonth = currentMonthDues.filter(d => d.status === "paid");
+    const unpaidDuesCurrentMonth = currentMonthDues.filter(d => d.status !== "paid");
 
-  const paidCount = paidDuesCurrentMonth.length;
-  const unpaidCount = unpaidDuesCurrentMonth.length;
-  const receivedBillAmount = paidDuesCurrentMonth.reduce((s, d) => s + (Number(d.amount) || 0), 0);
-  const totalAllOverDue = allDues.filter(d => d.status !== "paid").reduce((s, d) => s + (Number(d.amount) || 0), 0);
-  const generatedBillMonth = currentMonthDues.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const paidCount = paidDuesCurrentMonth.length;
+    const unpaidCount = unpaidDuesCurrentMonth.length;
+    const receivedBillAmount = paidDuesCurrentMonth.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const totalAllOverDue = allDues.filter(d => d.status !== "paid").reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const generatedBillMonth = currentMonthDues.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const totalAdvanceAmount = allDues.filter(d => (Number(d.advance) || 0) > 0).reduce((s, d) => s + Number(d.advance), 0);
+
+    const totalClubExpenses = allExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    const totalAllCollected = allDues.filter(d => d.status === "paid").reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const netReserveBalance = totalAllCollected - totalClubExpenses;
+
+    return {
+      paidCount,
+      unpaidCount,
+      receivedBillAmount,
+      totalAllOverDue,
+      generatedBillMonth,
+      totalAdvanceAmount,
+      totalClubExpenses,
+      totalAllCollected,
+      netReserveBalance
+    };
+  }, [allDues, allExpenses, selectedMonth]);
+
+  const {
+    paidCount,
+    unpaidCount,
+    receivedBillAmount,
+    totalAllOverDue,
+    generatedBillMonth,
+    totalAdvanceAmount,
+    totalClubExpenses,
+    totalAllCollected,
+    netReserveBalance
+  } = financialMetrics;
+
   const totalMonthlyTargetBill = activeResidents.length * (billAmount || 1500);
-  const totalAdvanceAmount = allDues.filter(d => (Number(d.advance) || 0) > 0).reduce((s, d) => s + Number(d.advance), 0);
-
-  const totalClubExpenses = allExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-  const totalAllCollected = allDues.filter(d => d.status === "paid").reduce((s, d) => s + (Number(d.amount) || 0), 0);
-  const netReserveBalance = totalAllCollected - totalClubExpenses;
 
   // Filtered List of Invoices / Dues
   const filteredList = useMemo(() => {
