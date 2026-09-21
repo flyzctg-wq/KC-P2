@@ -23,25 +23,10 @@ export function Btn({ children, variant = "primary", size = "md", icon: Icon, on
   );
 }
 
-export function Card({ children, className = "", style = {}, onClick, ariaLabel }) {
-  const handleKeyDown = (e) => {
-    if (e.target !== e.currentTarget) return;
-    if (onClick && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-      onClick(e);
-    }
-  };
-
+export function Card({ children, className = "", style = {}, onClick }) {
   return (
-    <div
-      onClick={onClick}
-      onKeyDown={onClick ? handleKeyDown : undefined}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      aria-label={ariaLabel}
-      style={{ backgroundColor: C.surface, border: `1px solid ${C.outlineVariant}`, ...style }}
-      className={`rounded-2xl ${onClick ? "cursor-pointer hover:shadow-md transition-shadow focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none" : ""} ${className}`}
-    >
+    <div onClick={onClick} style={{ backgroundColor: C.surface, border: `1px solid ${C.outlineVariant}`, ...style }}
+      className={`rounded-2xl ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""} ${className}`}>
       {children}
     </div>
   );
@@ -119,29 +104,18 @@ export function Empty({ icon: Icon, title, subtitle }) {
 }
 
 export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
-  const closeBtnRef = React.useRef(null);
-
   React.useEffect(() => {
     if (!open) return;
-
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         onClose?.();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
-    if (closeBtnRef.current) {
-      closeBtnRef.current.focus();
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
@@ -153,7 +127,7 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
       <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }} className={`w-full ${width} rounded-t-2xl sm:rounded-2xl max-h-[88vh] overflow-y-auto border shadow-2xl`}>
         <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b z-10 backdrop-blur-md" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
           <h3 className="font-bold text-base" style={{ color: C.onSurface }}>{title}</h3>
-          <button ref={closeBtnRef} onClick={onClose} aria-label="Close dialog" className="p-1.5 rounded-full hover:opacity-70 transition-opacity focus-visible:ring-2 focus-visible:ring-emerald-600/60 outline-none" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
+          <button onClick={onClose} aria-label="Close modal" className="p-1.5 rounded-full hover:opacity-70 transition-opacity" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>
