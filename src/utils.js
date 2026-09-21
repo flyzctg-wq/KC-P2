@@ -131,7 +131,6 @@ export const canViewFullContact = (session) => {
   if (session.role === "admin") return true;
   return session.status === "active";
 };
-
 /**
  * Checks if a URL is safe against XSS attacks (e.g. javascript: or data:text/html).
  * Allows standard protocols (http, https, mailto, tel), relative paths, blob URLs, and safe data URIs (images/PDFs).
