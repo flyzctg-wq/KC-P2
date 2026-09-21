@@ -3,12 +3,11 @@ import {
   Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
-  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown, Power
+  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
-import { C, LOGO_MARK, APP_VERSION } from "../theme";
+import { C, LOGO_MARK } from "../theme";
 import TvBulletin from "./TvBulletin";
-import { isNavKeyEnabled } from "../lib/moduleConfig";
 
 /* ============================== SHELL / NAV ============================== */
 /* ---- Grouped nav: each group has a heading label + items array ---- */
@@ -64,7 +63,6 @@ const ADMIN_NAV_GROUPS = [
       { key: "a-members", label: "members", icon: Users },
       { key: "a-dues", label: "financials", icon: Wallet },
       { key: "a-payment-history", label: "paymentHistory", icon: Receipt },
-      { key: "a-modules", label: "modules", icon: Globe, superAdminOnly: true },
     ],
   },
   {
@@ -126,11 +124,9 @@ const ADMIN_BOTTOM_NAV = [
 
 export default function Shell({
   session, db, persist, view, setView, logout, lang, setLang, t, children,
-  navOpen, setNavOpen, theme = "system", setTheme = () => {},
-  moduleFlags, onExitApp,
+  navOpen, setNavOpen, theme = "system", setTheme = () => {}
 }) {
   const isAdmin = session.role === "admin";
-  const isSuperAdmin = isAdmin && (session.post === "President" || session.post === "General Secretary");
   const nav = isAdmin ? ADMIN_NAV : RESIDENT_NAV;
   const bottomNav = isAdmin ? ADMIN_BOTTOM_NAV : RESIDENT_BOTTOM_NAV;
 
@@ -187,17 +183,8 @@ export default function Shell({
             const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
             const hasActiveItem = group.items.some(item => item.key === view);
 
-            // Filter items: superAdminOnly items only shown to super-admin;
-            // disabled modules hidden from navigation
-            const visibleItems = group.items.filter(item => {
-              if (item.superAdminOnly && !isSuperAdmin) return false;
-              if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
-              return true;
-            });
-            if (visibleItems.length === 0) return null;
-
             return (
-              <div key={gi} className="rounded-xl mb-1">
+              <div key={gi} className="rounded-xl overflow-hidden mb-1">
                 <button
                   type="button"
                   onClick={() => toggleGroup(gi)}
@@ -214,20 +201,20 @@ export default function Shell({
 
                 {isOpen && (
                   <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                    {visibleItems.map(item => {
+                    {group.items.map(item => {
                       const Icon = item.icon;
                       const active = view === item.key;
-                      const labelText = t[item.label] || item.label;
+                      const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
                       return (
                         <button
                           key={item.key}
                           onClick={() => setView(item.key)}
                           aria-current={active ? "page" : undefined}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full min-h-[38px]"
+                          className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full"
                           style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                         >
-                          <Icon size={16} strokeWidth={active ? 2.4 : 2} className="shrink-0" />
-                          <span className="truncate flex-1 leading-normal py-0.5">{labelText}</span>
+                          <Icon size={16} strokeWidth={active ? 2.4 : 2} />
+                          <span className="truncate">{labelText}</span>
                         </button>
                       );
                     })}
@@ -240,9 +227,11 @@ export default function Shell({
 
         {/* Issue #10: Pinned Desktop Footer (Settings & Logout always above the fold) */}
         <footer className="shrink-0 pt-3 mt-auto border-t space-y-1" style={{ borderColor: C.outlineVariant }}>
-          <div
+          <button
+            type="button"
             onClick={() => setView("r-profile")}
-            className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors"
+            aria-label={lang === "bn" ? "প্রোফাইল দেখুন ও সম্পাদনা করুন" : "View and edit profile"}
+            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors text-left"
             title="Edit Profile"
           >
             <Avatar name={session.name} photoUrl={session.photoUrl} size={32} />
@@ -253,12 +242,14 @@ export default function Shell({
             <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ backgroundColor: C.primaryContainer, color: "#fff" }}>
               {lang === "bn" ? "প্রোফাইল" : "Edit"}
             </span>
-          </div>
+          </button>
 
           {/* Desktop Theme Switcher */}
           <button
+            type="button"
             onClick={toggleThemeNext}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            aria-label={lang === "bn" ? `থিম পরিবর্তন করুন (বর্তমান: ${theme})` : `Toggle theme (Current: ${theme})`}
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors"
             style={{ color: C.onSurfaceVariant }}
             title="Toggle Theme"
           >
@@ -273,8 +264,10 @@ export default function Shell({
 
           {/* Desktop Settings Shortcut */}
           <button
+            type="button"
             onClick={() => setView("settings")}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            aria-label={lang === "bn" ? "অ্যাপ সেটিংস" : "App Settings"}
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors"
             style={view === "settings" ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
             title="App Settings"
           >
@@ -283,24 +276,29 @@ export default function Shell({
               {lang === "bn" ? "অ্যাপ সেটিংস" : "App Settings"}
             </span>
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>
-              v{APP_VERSION}
+              v1.8
             </span>
           </button>
 
-          <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
+          <button
+            type="button"
+            onClick={() => setLang(l => l === "en" ? "bn" : "en")}
+            aria-label={lang === "en" ? "Switch language to Bangla" : "Switch language to English"}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
+            style={{ color: C.onSurfaceVariant }}
+          >
             <Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}
           </button>
 
-          <div className="flex items-center gap-1.5 pt-1 border-t" style={{ borderColor: C.outlineVariant }}>
-            <button onClick={logout} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" style={{ color: C.error }}>
-              <LogOut size={13} /> {t.logout}
-            </button>
-            {onExitApp && (
-              <button onClick={onExitApp} title={lang === "bn" ? "অ্যাপ বন্ধ করুন" : "Exit App"} className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors border" style={{ borderColor: `${C.error}40`, color: C.error }}>
-                <Power size={13} /> {lang === "bn" ? "প্রস্থান" : "Exit"}
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={logout}
+            aria-label={t.logout}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 focus-visible:ring-2 focus-visible:ring-red-500 outline-none transition-colors"
+            style={{ color: C.error }}
+          >
+            <LogOut size={14} /> {t.logout}
+          </button>
         </footer>
       </aside>
 
@@ -388,9 +386,11 @@ export default function Shell({
               </div>
 
               {/* User Profile Card */}
-              <div
+              <button
+                type="button"
                 onClick={() => { setView("r-profile"); setNavOpen(false); }}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl mb-3 border cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                aria-label={lang === "bn" ? "প্রোফাইল দেখুন ও সম্পাদনা করুন" : "View and edit profile"}
+                className="w-full flex items-center gap-2.5 p-2.5 rounded-xl mb-3 border hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors text-left"
                 style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}
               >
                 <Avatar name={session.name} photoUrl={session.photoUrl} size={38} />
@@ -401,28 +401,17 @@ export default function Shell({
                 <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ backgroundColor: C.primary, color: "#fff" }}>
                   {lang === "bn" ? "প্রোফাইল" : "Profile"}
                 </span>
-              </div>
+              </button>
 
               {/* Scrollable Navigation List (Collapsible) */}
-              <nav
-                className="flex flex-col flex-1 min-h-0 overflow-y-auto pr-1 my-1 space-y-1 pb-10 overscroll-contain"
-                aria-label="Main navigation"
-                style={{ WebkitOverflowScrolling: "touch" }}
-              >
+              <nav className="flex flex-col flex-1 overflow-y-auto pr-1 my-1 space-y-1" aria-label="Main navigation">
                 {navGroups.map((group, gi) => {
                   const isOpen = !!openGroups[gi];
                   const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
                   const hasActiveItem = group.items.some(item => item.key === view);
 
-                  const visibleItems = group.items.filter(item => {
-                    if (item.superAdminOnly && !isSuperAdmin) return false;
-                    if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
-                    return true;
-                  });
-                  if (visibleItems.length === 0) return null;
-
                   return (
-                    <div key={gi} className="rounded-xl mb-1">
+                    <div key={gi} className="rounded-xl overflow-hidden mb-1">
                       <button
                         type="button"
                         onClick={() => toggleGroup(gi)}
@@ -439,19 +428,18 @@ export default function Shell({
 
                       {isOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                          {visibleItems.map(item => {
+                          {group.items.map(item => {
                             const Icon = item.icon;
                             const active = view === item.key;
-                            const labelText = t[item.label] || item.label;
                             return (
                               <button
                                 key={item.key}
                                 onClick={() => { setView(item.key); setNavOpen(false); }}
-                                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full min-h-[38px]"
+                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full"
                                 style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                               >
-                                <Icon size={16} strokeWidth={active ? 2.5 : 2} className="shrink-0" />
-                                <span className="truncate flex-1 leading-normal py-0.5">{labelText}</span>
+                                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
+                                <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
                               </button>
                             );
                           })}
@@ -495,27 +483,13 @@ export default function Shell({
                   <span className="font-bold text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>{lang === "en" ? "বাংলা" : "English"}</span>
                 </button>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={logout}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-red-50 dark:hover:bg-red-950/20"
-                    style={{ color: C.error }}
-                  >
-                    <LogOut size={14} /> {t.logout}
-                  </button>
-                  {onExitApp && (
-                    <button
-                      onClick={() => {
-                        setNavOpen(false);
-                        onExitApp();
-                      }}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors border"
-                      style={{ borderColor: `${C.error}40`, color: C.error, backgroundColor: `${C.error}0d` }}
-                    >
-                      <Power size={14} /> {lang === "bn" ? "প্রস্থান (Exit)" : "Exit App"}
-                    </button>
-                  )}
-                </div>
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                  style={{ color: C.error }}
+                >
+                  <LogOut size={15} /> {t.logout}
+                </button>
               </div>
             </div>
           </div>

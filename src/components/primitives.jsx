@@ -23,10 +23,25 @@ export function Btn({ children, variant = "primary", size = "md", icon: Icon, on
   );
 }
 
-export function Card({ children, className = "", style = {}, onClick }) {
+export function Card({ children, className = "", style = {}, onClick, ariaLabel }) {
+  const handleKeyDown = (e) => {
+    if (e.target !== e.currentTarget) return;
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick(e);
+    }
+  };
+
   return (
-    <div onClick={onClick} style={{ backgroundColor: C.surface, border: `1px solid ${C.outlineVariant}`, ...style }}
-      className={`rounded-2xl ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""} ${className}`}>
+    <div
+      onClick={onClick}
+      onKeyDown={onClick ? handleKeyDown : undefined}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={ariaLabel}
+      style={{ backgroundColor: C.surface, border: `1px solid ${C.outlineVariant}`, ...style }}
+      className={`rounded-2xl ${onClick ? "cursor-pointer hover:shadow-md transition-shadow focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none" : ""} ${className}`}
+    >
       {children}
     </div>
   );
