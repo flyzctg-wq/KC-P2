@@ -132,4 +132,41 @@ export const canViewFullContact = (session) => {
   return session.status === "active";
 };
 
+/**
+ * Checks if a URL is safe against XSS attacks (e.g. javascript: or data:text/html).
+ * Allows standard protocols (http, https, mailto, tel), relative paths, blob URLs, and safe data URIs (images/PDFs).
+ */
+export const isSafeUrl = (url) => {
+  if (typeof url !== "string") return false;
+  const cleaned = url.trim().replace(/[\x00-\x20\x7f-\x9f]/g, "");
+  if (!cleaned) return false;
+
+  if (cleaned.startsWith("/") || cleaned.startsWith("#")) return true;
+
+  try {
+    const parsed = new URL(cleaned, "https://dummy.local");
+    const protocol = parsed.protocol.toLowerCase();
+
+    if (protocol === "http:" || protocol === "https:" || protocol === "mailto:" || protocol === "tel:") {
+      return true;
+    }
+
+    if (protocol === "blob:") {
+      return true;
+    }
+
+    if (protocol === "data:") {
+      return /^data:(image\/(png|jpg|jpeg|gif|webp|svg\+xml)|application\/pdf);/i.test(cleaned);
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+/** Sanitizes a URL, returning fallback (default '#') if unsafe or invalid */
+export const sanitizeUrl = (url, fallback = "#") => {
+  return isSafeUrl(url) ? url.trim() : fallback;
+};
 
