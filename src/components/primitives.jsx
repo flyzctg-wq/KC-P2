@@ -3,9 +3,9 @@ import { X, AlertCircle, CheckCircle2 } from "lucide-react";
 import { C } from "../theme";
 import { initials, avatarHue } from "../utils";
 
-export function Btn({ children, variant = "primary", size = "md", icon: Icon, onClick, disabled, type = "button", full, className = "" }) {
+export function Btn({ children, variant = "primary", size = "md", icon: Icon, onClick, disabled, type = "button", full, className = "", ...props }) {
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-4 py-2.5 text-sm", lg: "px-6 py-3 text-base" };
-  const base = "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]";
+  const base = "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2";
   const styles = {
     /* #2: 5 canonical button styles — use these everywhere; avoid ad-hoc inline button styling */
     primary:   { backgroundColor: C.primary, color: C.onPrimary },
@@ -16,17 +16,32 @@ export function Btn({ children, variant = "primary", size = "md", icon: Icon, on
   };
   return (
     <button type={type} onClick={onClick} disabled={disabled} style={styles[variant]}
-      className={`${base} ${sizes[size]} ${full ? "w-full" : ""} ${className}`}>
+      className={`${base} ${sizes[size]} ${full ? "w-full" : ""} ${className}`}
+      {...props}>
       {Icon && <Icon size={size === "sm" ? 14 : 16} strokeWidth={2.3} />}
       {children}
     </button>
   );
 }
 
-export function Card({ children, className = "", style = {}, onClick }) {
+export function Card({ children, className = "", style = {}, onClick, ...props }) {
+  const handleKeyDown = onClick ? (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick(e);
+    }
+  } : undefined;
+
   return (
-    <div onClick={onClick} style={{ backgroundColor: C.surface, border: `1px solid ${C.outlineVariant}`, ...style }}
-      className={`rounded-2xl ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""} ${className}`}>
+    <div
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      style={{ backgroundColor: C.surface, border: `1px solid ${C.outlineVariant}`, ...style }}
+      className={`rounded-2xl ${onClick ? "cursor-pointer hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2" : ""} ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -127,7 +142,7 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
       <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }} className={`w-full ${width} rounded-t-2xl sm:rounded-2xl max-h-[88vh] overflow-y-auto border shadow-2xl`}>
         <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b z-10 backdrop-blur-md" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
           <h3 className="font-bold text-base" style={{ color: C.onSurface }}>{title}</h3>
-          <button onClick={onClose} aria-label="Close modal" className="p-1.5 rounded-full hover:opacity-70 transition-opacity" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
+          <button onClick={onClose} aria-label="Close modal" className="p-1.5 rounded-full hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>
