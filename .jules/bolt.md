@@ -6,6 +6,6 @@
 **Learning:** `Audit.jsx` processed the system activity log array (`db.activity`) by running regex tests (`NOISE_PATTERNS`), string category matching, and Date object sorting on every render cycle and whenever category filters (`cat`) or tabs were toggled.
 **Action:** Wrap `auditEntries`, `auditFiltered`, and `activityEntries` in `useMemo` with dependencies `[db.activity]` and `[auditEntries, cat]` to skip redundant filtering and array sorting.
 
-## 2026-09-10 - Memoizing Dashboard Metrics & Composition Breakdown
-**Learning:** `AdminDashboard` (`src/screens/admin/Dashboard.jsx`) ran 13 array filters on `db.users` plus multi-pass traversals on `db.dues`, `db.tickets`, and `db.elections` on every render. `MEMBER_CLASSES.map()` recalculated total active members on every iteration.
-**Action:** Compute counts and totals in a single O(N) pass inside `useMemo` depending on `[db.users, db.dues, db.tickets, db.elections, db.votes]`.
+## 2026-09-10 - Memoizing Dashboard KPI & Composition Calculations in Admin Dashboard
+**Learning:** `AdminDashboard.jsx` calculated KPIs and performed repetitive array filtering over `db.users` for every member class in `MEMBER_CLASSES.map()` on every render (e.g., language toggles, interactive map movements).
+**Action:** Single-pass pre-compute member class distribution in `useMemo` and memoize overall KPI stats with dependencies on dataset arrays (`db.users`, `db.dues`, `db.tickets`, `db.elections`, `db.votes`).
