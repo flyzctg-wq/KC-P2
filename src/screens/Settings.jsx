@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { Btn, Card, Badge, Field, SectionTitle, Modal } from "../components/primitives";
 import { C, APP_VERSION } from "../theme";
+import { checkNotificationPermission, requestNotificationPermission, showLocalNotification } from "../lib/notifications";
+import { playNotificationSound } from "../lib/sound";
 
 export default function SettingsScreen({
   session,
@@ -21,14 +23,14 @@ export default function SettingsScreen({
   setAppSettings
 }) {
   const isBn = lang === "bn";
-  const [notificationPermission, setNotificationPermission] = useState("default");
+  const [notificationPermission, setNotificationPermission] = useState("prompt");
   const [cacheSize, setCacheSize] = useState("1.4 MB");
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setNotificationPermission(Notification.permission);
-    }
+    checkNotificationPermission().then(status => {
+      setNotificationPermission(status);
+    });
   }, []);
 
   const updateSetting = (key, value) => {
@@ -38,22 +40,25 @@ export default function SettingsScreen({
   };
 
   const requestPushPermission = async () => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      try {
-        const permission = await Notification.requestPermission();
-        setNotificationPermission(permission);
-        if (permission === "granted") {
-          toast(isBn ? "পুশ নোটিফিকেশন সফলভাবে চালু করা হয়েছে!" : "Push notifications enabled successfully!");
-          updateSetting("pushNotifications", true);
-        } else {
-          toast(isBn ? "নোটিফিকেশনের অনুমতি দেওয়া হয়নি।" : "Notification permission was denied.", "error");
-          updateSetting("pushNotifications", false);
-        }
-      } catch (e) {
-        toast(isBn ? "নোটিফিকেশন অনুমোদনে ত্রুটি।" : "Error requesting notification permission.", "error");
+    try {
+      const permission = await requestNotificationPermission();
+      setNotificationPermission(permission);
+      if (permission === "granted") {
+        toast(isBn ? "পুশ নোটিফিকেশন সফলভাবে চালু করা হয়েছে!" : "Push notifications enabled successfully!");
+        updateSetting("pushNotifications", true);
+        playNotificationSound("success", true);
+        showLocalNotification({
+          title: isBn ? "কুঞ্জছায়া ক্লাব নোটিফিকেশন" : "Kunjachaya Club Notifications",
+          body: isBn ? "আপনার ডিভাইসে নোটিফিকেশন সফলভাবে চালু হয়েছে।" : "Device notifications have been successfully enabled.",
+        });
+      } else if (permission === "denied") {
+        toast(isBn ? "নোটিফিকেশনের অনুমতি দেওয়া হয়নি। অনুগ্রহ করে ডিভাইস সেটিংস থেকে অনুমতি দিন।" : "Notification permission was denied. Please allow it in device settings.", "error");
+        updateSetting("pushNotifications", false);
+      } else {
+        toast(isBn ? "এই ডিভাইসে নোটিফিকেশন সমর্থিত নয়।" : "Notifications not supported on this browser/device.", "error");
       }
-    } else {
-      toast(isBn ? "এই ডিভাইসে পুশ নোটিফিকেশন সমর্থিত নয়।" : "Push notifications not supported on this browser/device.", "error");
+    } catch (e) {
+      toast(isBn ? "নোটিফিকেশন অনুমোদনে ত্রুটি।" : "Error requesting notification permission.", "error");
     }
   };
 
@@ -325,22 +330,41 @@ export default function SettingsScreen({
           </label>
 
           {/* Sound & Haptics */}
-          <label className="flex items-center justify-between cursor-pointer py-1 select-none border-t pt-2.5" style={{ borderColor: C.outlineVariant }}>
-            <div>
-              <p className="text-xs font-bold" style={{ color: C.onSurface }}>
-                {isBn ? "সাউন্ড ও হ্যাপটিক ভাইব্রেশন" : "Sound & Haptic Feedback"}
-              </p>
-              <p className="text-[11px]" style={{ color: C.onSurfaceVariant }}>
-                {isBn ? "বাটনে ক্লিক ও ইন্টারঅ্যাকশনের সময় মৃদু ভাইব্রেশন" : "Subtle feedback when tapping actions"}
-              </p>
+          <div className="border-t pt-2.5 space-y-2" style={{ borderColor: C.outlineVariant }}>
+            <label className="flex items-center justify-between cursor-pointer py-1 select-none">
+              <div>
+                <p className="text-xs font-bold" style={{ color: C.onSurface }}>
+                  {isBn ? "নোটিফিকেশন সাউন্ড ও অ্যালার্ট" : "Notification Sound & Alerts"}
+                </p>
+                <p className="text-[11px]" style={{ color: C.onSurfaceVariant }}>
+                  {isBn ? "নোটিশ, চাঁদা ও বার্তার সময় মিষ্টি সুরের নোটিফিকেশন সাউন্ড" : "Pleasant bell chime on notices, dues and alerts"}
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={appSettings.soundEnabled !== false}
+                onChange={e => updateSetting("soundEnabled", e.target.checked)}
+                className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+              />
+            </label>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px]" style={{ color: C.onSurfaceVariant }}>
+                {isBn ? "সাউন্ড কেমন শোনাবে তা পরীক্ষা করতে পারেন:" : "Preview how the chime sounds:"}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  playNotificationSound("notice", true);
+                  toast(isBn ? "🔔 নোটিফিকেশন সুর বাজানো হয়েছে!" : "🔔 Notification chime played!");
+                }}
+                className="px-2.5 py-1 text-[11px] font-bold rounded-lg border flex items-center gap-1.5 transition-colors hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+                style={{ borderColor: C.primary, color: C.primary }}
+              >
+                <Volume2 size={13} />
+                <span>{isBn ? "সাউন্ড টেস্ট করুন" : "Test Chime"}</span>
+              </button>
             </div>
-            <input
-              type="checkbox"
-              checked={appSettings.soundEnabled !== false}
-              onChange={e => updateSetting("soundEnabled", e.target.checked)}
-              className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
-            />
-          </label>
+          </div>
         </Card>
       </div>
 

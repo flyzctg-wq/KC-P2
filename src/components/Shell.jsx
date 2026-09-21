@@ -3,7 +3,7 @@ import {
   Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
-  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown
+  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown, Power
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK, APP_VERSION } from "../theme";
@@ -127,7 +127,7 @@ const ADMIN_BOTTOM_NAV = [
 export default function Shell({
   session, db, persist, view, setView, logout, lang, setLang, t, children,
   navOpen, setNavOpen, theme = "system", setTheme = () => {},
-  moduleFlags,
+  moduleFlags, onExitApp,
 }) {
   const isAdmin = session.role === "admin";
   const isSuperAdmin = isAdmin && (session.post === "President" || session.post === "General Secretary");
@@ -291,9 +291,16 @@ export default function Shell({
             <Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}
           </button>
 
-          <button onClick={logout} className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" style={{ color: C.error }}>
-            <LogOut size={14} /> {t.logout}
-          </button>
+          <div className="flex items-center gap-1.5 pt-1 border-t" style={{ borderColor: C.outlineVariant }}>
+            <button onClick={logout} className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" style={{ color: C.error }}>
+              <LogOut size={13} /> {t.logout}
+            </button>
+            {onExitApp && (
+              <button onClick={onExitApp} title={lang === "bn" ? "অ্যাপ বন্ধ করুন" : "Exit App"} className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors border" style={{ borderColor: `${C.error}40`, color: C.error }}>
+                <Power size={13} /> {lang === "bn" ? "প্রস্থান" : "Exit"}
+              </button>
+            )}
+          </div>
         </footer>
       </aside>
 
@@ -488,13 +495,27 @@ export default function Shell({
                   <span className="font-bold text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>{lang === "en" ? "বাংলা" : "English"}</span>
                 </button>
 
-                <button
-                  onClick={logout}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
-                  style={{ color: C.error }}
-                >
-                  <LogOut size={15} /> {t.logout}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={logout}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-red-50 dark:hover:bg-red-950/20"
+                    style={{ color: C.error }}
+                  >
+                    <LogOut size={14} /> {t.logout}
+                  </button>
+                  {onExitApp && (
+                    <button
+                      onClick={() => {
+                        setNavOpen(false);
+                        onExitApp();
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors border"
+                      style={{ borderColor: `${C.error}40`, color: C.error, backgroundColor: `${C.error}0d` }}
+                    >
+                      <Power size={14} /> {lang === "bn" ? "প্রস্থান (Exit)" : "Exit App"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

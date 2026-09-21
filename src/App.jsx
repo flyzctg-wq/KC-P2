@@ -3,7 +3,7 @@ import { loadDB, saveDB, subscribeDB } from "./lib/store";
 import { syncChanges } from "./lib/write";
 import { signUpResident, signInWithPassword, signOutUser, updateUserPassword } from "./lib/authBridge";
 import { supabase } from "./lib/supabase";
-import { Loader2, KeyRound, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Loader2, KeyRound, CheckCircle2, Eye, EyeOff, Power } from "lucide-react";
 import { C, STR, LOGO_MARK } from "./theme";
 import { uid, nowISO } from "./utils";
 import { DEFAULT_MODULE_FLAGS } from "./lib/moduleConfig";
@@ -12,6 +12,9 @@ import ConsentBanner from "./components/ConsentBanner";
 import { hasStoredConsent, loadAnalytics, trackEvent } from "./lib/analytics";
 import AuthScreen from "./components/AuthScreen";
 import SplashIntro from "./components/SplashIntro";
+import { App as CapApp } from "@capacitor/app";
+import { playNotificationSound } from "./lib/sound";
+import { initNotificationChannels } from "./lib/notifications";
 
 const Shell = lazy(() => import("./components/Shell"));
 const Router = lazy(() => import("./Router"));
@@ -22,16 +25,19 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null); // current user object
   const [view, setView] = useState("home");
+  const [viewHistory, setViewHistory] = useState([]);
   const [lang, setLang] = useState("en");
   const [navOpen, setNavOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [authMode, setAuthMode] = useState("login");
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("kc_splash_done"));
   const [recoveryModal, setRecoveryModal] = useState(false);
+  const [exitConfirmModal, setExitConfirmModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPw, setShowNewPw] = useState(false);
   const [savingNewPw, setSavingNewPw] = useState(false);
   const unsubRef = useRef(null);
+  const lastBackPressRef = useRef(0);
 
   // Global Font Size and App Preferences for Android & Web
   const [fontSize, setFontSize] = useState(() => {
@@ -78,7 +84,120 @@ export default function App() {
     const id = uid("t");
     setToasts(ts => [...ts, { id, msg, type }]);
     setTimeout(() => setToasts(ts => ts.filter(x => x.id !== id)), 3200);
+
+    // Play notification chime according to user preference
+    try {
+      if (type === "error") {
+        playNotificationSound("error");
+      } else if (type === "success") {
+        playNotificationSound("success");
+      } else {
+        playNotificationSound("notice");
+      }
+    } catch (_) {}
+
+    // Subtle haptic vibration feedback
+    try {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(25);
+      }
+    } catch (_) {}
   }, []);
+
+  const navigateTo = useCallback((nextView) => {
+    setView(current => {
+      if (current !== nextView) {
+        setViewHistory(prev => [...prev.slice(-15), current]);
+      }
+      return nextView;
+    });
+  }, []);
+
+  const handleExitApp = useCallback(() => {
+    try {
+      CapApp.exitApp();
+    } catch (_) {
+      if (typeof window !== "undefined") {
+        window.close();
+      }
+    }
+  }, []);
+
+  // Initialize Android Notification Channel on app load
+  useEffect(() => {
+    initNotificationChannels();
+  }, []);
+
+  // Hardware Back Button and Exit Handling
+  useEffect(() => {
+    let backSub = null;
+
+    const setupBackButton = async () => {
+      try {
+        backSub = await CapApp.addListener("backButton", () => {
+          // Priority 1: Close Exit Confirmation Modal if open
+          if (exitConfirmModal) {
+            setExitConfirmModal(false);
+            return;
+          }
+
+          // Priority 2: Close Password Recovery Modal if open
+          if (recoveryModal) {
+            setRecoveryModal(false);
+            return;
+          }
+
+          // Priority 3: Close Mobile Navigation Drawer if open
+          if (navOpen) {
+            setNavOpen(false);
+            return;
+          }
+
+          const rootScreen = session ? (session.role === "admin" ? "a-dashboard" : "r-home") : "home";
+          const isAtRoot = view === rootScreen || (!session && (view === "home" || view === "login"));
+
+          // Priority 4: If on an internal sub-screen, step back to previous screen
+          if (!isAtRoot) {
+            setViewHistory(hist => {
+              if (hist && hist.length > 0) {
+                const prev = hist[hist.length - 1];
+                setView(prev);
+                return hist.slice(0, -1);
+              } else {
+                setView(rootScreen);
+                return [];
+              }
+            });
+            return;
+          }
+
+          // Priority 5: If on root screen, double-tap back within 2000ms to exit app process
+          const now = Date.now();
+          if (now - lastBackPressRef.current < 2000) {
+            handleExitApp();
+          } else {
+            lastBackPressRef.current = now;
+            toast(
+              lang === "bn"
+                ? "অ্যাপটি বন্ধ করতে আবার ব্যাক বাটনে চাপুন"
+                : "Press back again to exit Kunjachaya Club",
+              "info"
+            );
+          }
+        });
+      } catch (err) {
+        console.debug("CapApp backButton listener setup skipped:", err);
+      }
+    };
+
+    setupBackButton();
+
+    return () => {
+      if (backSub && backSub.remove) {
+        backSub.remove();
+      }
+    };
+  }, [session, view, navOpen, recoveryModal, exitConfirmModal, lang, toast, handleExitApp]);
 
   useEffect(() => {
     const applyTheme = () => {
@@ -604,10 +723,11 @@ export default function App() {
               <Loader2 className="animate-spin" size={28} style={{ color: C.primary }} />
             </div>
           }>
-            <Shell session={session} db={db} persist={persist} view={view} setView={setView} logout={logout} lang={lang} setLang={setLang} t={t}
+            <Shell session={session} db={db} persist={persist} view={view} setView={navigateTo} logout={logout} lang={lang} setLang={setLang} t={t}
               navOpen={navOpen} setNavOpen={setNavOpen} theme={theme} setTheme={setTheme}
-              moduleFlags={db?.moduleFlags ?? DEFAULT_MODULE_FLAGS}>
-              <Router session={session} db={db} persist={persist} view={view} setView={setView} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings}
+              moduleFlags={db?.moduleFlags ?? DEFAULT_MODULE_FLAGS}
+              onExitApp={() => setExitConfirmModal(true)}>
+              <Router session={session} db={db} persist={persist} view={view} setView={navigateTo} toast={toast} logActivity={logActivity} setSession={setSession} lang={lang} setLang={setLang} t={t} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} appSettings={appSettings} setAppSettings={setAppSettings}
                 moduleFlags={db?.moduleFlags ?? DEFAULT_MODULE_FLAGS} />
             </Shell>
           </Suspense>
@@ -664,6 +784,25 @@ export default function App() {
               ? (lang === "bn" ? "সংরক্ষণ হচ্ছে..." : "Saving...")
               : (lang === "bn" ? "পাসওয়ার্ড নিশ্চিত করুন" : "Confirm Password")}
           </Btn>
+        </div>
+      </Modal>
+
+      {/* Exit Application Confirmation Modal */}
+      <Modal open={exitConfirmModal} onClose={() => setExitConfirmModal(false)} title={lang === "bn" ? "অ্যাপ থেকে প্রস্থান" : "Exit Application"}>
+        <div className="space-y-4 py-2">
+          <p className="text-xs sm:text-sm" style={{ color: C.onSurface }}>
+            {lang === "bn"
+              ? "আপনি কি নিশ্চিতভাবে কুঞ্জছায়া ক্লাব অ্যাপটি বন্ধ করতে চান? এর ফলে অ্যাপের সমস্ত ব্যাকগ্রাউন্ড প্রসেস সমাপ্ত হবে।"
+              : "Are you sure you want to exit Kunjachaya Club? This will terminate the application process."}
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Btn variant="outline" onClick={() => setExitConfirmModal(false)}>
+              {lang === "bn" ? "বাতিল" : "Cancel"}
+            </Btn>
+            <Btn tone="danger" icon={Power} onClick={handleExitApp}>
+              {lang === "bn" ? "প্রস্থান করুন" : "Exit App"}
+            </Btn>
+          </div>
         </div>
       </Modal>
     </div>
