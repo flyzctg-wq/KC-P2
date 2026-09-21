@@ -18,8 +18,17 @@ export default function Dues({ session, db, toast, lang = "en", t = {} }) {
   const gsUser = useMemo(() => allUsers.find(u => u.post === "General Secretary") || { name: "Khalid Hasan", nameBn: "খালিদ হাসান", post: "General Secretary" }, [allUsers]);
   const presidentUser = useMemo(() => allUsers.find(u => u.post === "President") || { name: "Zakaria Hasan", nameBn: "জাকারিয়া হাছান", post: "President" }, [allUsers]);
 
-  const mine = (db.dues || []).filter(d => d.residentId === session.id).sort((a, b) => b.month.localeCompare(a.month));
-  const totalDue = mine.filter(d => d.status !== "paid").reduce((s, d) => s + d.amount, 0);
+  // Memoize filtered and sorted dues array to prevent re-filtering and string sorting on every render
+  const mine = useMemo(
+    () => (db.dues || []).filter(d => d.residentId === session.id).sort((a, b) => b.month.localeCompare(a.month)),
+    [db.dues, session.id]
+  );
+
+  // Memoize total balance calculation to avoid unnecessary array iterations during unrelated state changes
+  const totalDue = useMemo(
+    () => mine.filter(d => d.status !== "paid").reduce((s, d) => s + d.amount, 0),
+    [mine]
+  );
 
   const pay = async (due) => {
     setPaying(true);
