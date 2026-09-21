@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Send, MessageSquare, ThumbsUp } from "lucide-react";
 import { Btn, Card, Badge, inputCls, inputStyle, Avatar, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -7,7 +7,11 @@ import { uid, nowISO, fmtDateTime } from "../utils";
 export default function Notices({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [open, setOpen] = useState(null);
-  const sorted = [...db.notices].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Memoize notice sorting by date to prevent unnecessary re-sorting when opening/closing comment boxes or typing
+  const sorted = useMemo(() => {
+    return [...(db.notices || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [db.notices]);
 
   const react = (id) => persist(d => ({
     ...d, notices: d.notices.map(n => {
