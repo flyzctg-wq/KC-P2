@@ -103,12 +103,19 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
     return [...new Set(allDues.map(d => d.collectedBy).filter(Boolean))];
   }, [allDues]);
 
+  // Bolt Optimization: Pre-index users by ID in an O(1) Map to avoid O(N * M) user find calls in allDues map
+  const usersById = useMemo(() => {
+    const map = new Map();
+    for (let i = 0; i < allUsers.length; i++) {
+      const u = allUsers[i];
+      if (u.id) map.set(u.id, u);
+    }
+    return map;
+  }, [allUsers]);
+
   const enrichedRecords = useMemo(() => {
-    return allDues.map(d => {
-      const user = allUsers.find(u => u.id === d.residentId) || {};
-      return { ...d, _user: user };
-    });
-  }, [allDues, allUsers]);
+    return allDues.map(d => ({ ...d, _user: usersById.get(d.residentId) || {} }));
+  }, [allDues, usersById]);
 
   const filtered = useMemo(() => {
     return enrichedRecords.filter(d => {
@@ -127,10 +134,38 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
     });
   }, [enrichedRecords, searchQ, monthFilter, blockFilter, statusFilter, chargeTypeFilter, methodFilter, collectorFilter, dateFrom, dateTo]);
 
-  const totalCollected = filtered.filter(d => d.status === "paid").reduce((s, d) => s + (Number(d.receivedAmount)||Number(d.amount)||0), 0);
-  const totalPending = filtered.filter(d => d.status !== "paid").reduce((s, d) => s + (Number(d.amount)||0), 0);
-  const totalDiscount = filtered.reduce((s, d) => s + (Number(d.discount)||0), 0);
-  const uniqueMembers = new Set(filtered.map(d => d.residentId)).size;
+  // Bolt Optimization: Consolidate 5 separate array reductions into a single-pass useMemo
+  // to prevent re-iterations on UI state updates (e.g., toggling filters or opening receipt modal).
+  const { totalCollected, totalPending, totalDiscount, totalBill, uniqueMembers } = useMemo(() => {
+    let collected = 0;
+    let pending = 0;
+    let discount = 0;
+    let bill = 0;
+    const memberIds = new Set();
+
+    for (let i = 0; i < filtered.length; i++) {
+      const d = filtered[i];
+      const isPaid = d.status === "paid";
+      const amt = Number(d.amount) || 0;
+      bill += amt;
+      discount += Number(d.discount) || 0;
+      if (isPaid) {
+        collected += Number(d.receivedAmount) || amt;
+      } else {
+        pending += amt;
+      }
+      memberIds.add(d.residentId);
+    }
+
+    return {
+      totalCollected: collected,
+      totalPending: pending,
+      totalDiscount: discount,
+      totalBill: bill,
+      uniqueMembers: memberIds.size,
+    };
+  }, [filtered]);
+
   const displayRows = filtered.slice(0, rowsPerPage);
 
   const handleExportCSV = () => {
@@ -326,7 +361,7 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
               <tfoot>
                 <tr className="border-t-2 font-black" style={{ borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow }}>
                   <td colSpan={8} className="px-3 py-2.5 text-right text-xs font-black text-gray-700">{isBn ? "মোট (ফিল্টার করা)" : "TOTALS (filtered)"}</td>
-                  <td className="px-3 py-2.5 text-xs font-black text-gray-900">৳{currency(filtered.reduce((s,d)=>s+(Number(d.amount)||0),0))}</td>
+                  <td className="px-3 py-2.5 text-xs font-black text-gray-900">৳{currency(totalBill)}</td>
                   <td className="px-3 py-2.5 text-xs font-black text-emerald-700">৳{currency(totalCollected)}</td>
                   <td className="px-3 py-2.5 text-xs font-black text-amber-700">৳{currency(totalDiscount)}</td>
                   <td className="px-3 py-2.5 text-xs font-black text-rose-700">৳{currency(totalPending)}</td>

@@ -9,3 +9,7 @@
 ## 2026-09-10 - Memoizing Member List Filtering & Member Code Sorting in Admin Members Screen
 **Learning:** `src/screens/admin/Members.jsx` filtered `db.users` for pending members and active members, and sorted active members using `sortByMemberCode` on every render cycle. State updates inside `AdminMembers` (switching tabs between active/pending, opening member modals, or editing roles) triggered redundant array filtering and sorting operations.
 **Action:** Wrap `pending`, `activeUsers`, and `allUsers` calculations in `useMemo` with `[db?.users]` dependency to skip unnecessary array allocation and sorting operations on internal component state updates.
+
+## 2026-09-11 - Pre-indexing User Lookups & Single-Pass KPI Reductions in Payment History
+**Learning:** `PaymentHistory.jsx` performed `allUsers.find(u => u.id === d.residentId)` inside `allDues.map`, creating an $O(N \times M)$ linear scan. Additionally, KPI totals (`totalCollected`, `totalPending`, `totalDiscount`, `uniqueMembers`, `totalBill`) ran as 5 separate unmemoized array loops on every render.
+**Action:** Build an $O(1)$ `Map` (`usersById`) via `useMemo` to reduce record enrichment to $O(N + M)$, and consolidate KPI reductions into a single-pass `useMemo` dependent on `filtered`.
