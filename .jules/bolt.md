@@ -13,3 +13,7 @@
 ## 2026-09-11 - Pre-indexing User Lookups & Single-Pass KPI Reductions in Payment History
 **Learning:** `PaymentHistory.jsx` performed `allUsers.find(u => u.id === d.residentId)` inside `allDues.map`, creating an $O(N \times M)$ linear scan. Additionally, KPI totals (`totalCollected`, `totalPending`, `totalDiscount`, `uniqueMembers`, `totalBill`) ran as 5 separate unmemoized array loops on every render.
 **Action:** Build an $O(1)$ `Map` (`usersById`) via `useMemo` to reduce record enrichment to $O(N + M)$, and consolidate KPI reductions into a single-pass `useMemo` dependent on `filtered`.
+
+## 2026-09-12 - Memoizing Resident Dues, Tickets & Notice Sorting on Resident Home Screen
+**Learning:** `ResidentHome` in `src/screens/Home.jsx` re-ran dues filtering, ticket counting, active election searching, and notice cloning with `new Date()` sorting on every render cycle (e.g., interactive map events, language toggles, or toast updates). Unused derived variables like `myVotes` also allocated unnecessary memory.
+**Action:** Consolidate screen KPI counts, active election lookup, and top 3 notice sorting into a single `useMemo` block with dependencies on database array references (`db.dues`, `db.elections`, `db.notices`, `db.tickets`).

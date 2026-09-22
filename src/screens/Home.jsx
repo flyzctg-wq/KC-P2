@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Bell, Wallet, Vote, LifeBuoy, ChevronRight, MapPin } from "lucide-react";
 import { Btn, Card, Badge, SectionTitle, StatMini } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
@@ -7,12 +7,30 @@ import { fmtDate } from "../utils";
 
 export default function ResidentHome({ session, db, go, lang = "en", t = {}, toast }) {
   const isBn = lang === "bn";
-  const myDues = db.dues.filter(d => d.residentId === session.id);
-  const pending = myDues.filter(d => d.status !== "paid");
-  const activeElection = db.elections.find(e => e.status === "active");
-  const myVotes = db.votes.filter(v => v.voterId === session.id);
-  const recentNotices = [...db.notices].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
-  const myTickets = db.tickets.filter(t => t.residentId === session.id);
+
+  // Bolt Optimization: Memoize resident dues, election lookup, my tickets, and notice sorting
+  // to avoid unnecessary array iterations, allocations, and Date parsing on every re-render (e.g. Map interaction or language switch).
+  const { pendingCount, activeElection, myTicketsCount, recentNotices, noticesCount } = useMemo(() => {
+    const dues = db?.dues || [];
+    const elections = db?.elections || [];
+    const notices = db?.notices || [];
+    const tickets = db?.tickets || [];
+
+    const pendingCount = dues.filter(d => d.residentId === session.id && d.status !== "paid").length;
+    const activeElection = elections.find(e => e.status === "active");
+    const myTicketsCount = tickets.filter(t => t.residentId === session.id).length;
+    const recentNotices = [...notices]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 3);
+
+    return {
+      pendingCount,
+      activeElection,
+      myTicketsCount,
+      recentNotices,
+      noticesCount: notices.length,
+    };
+  }, [db?.dues, db?.elections, db?.notices, db?.tickets, session.id]);
 
   const dateStr = new Date().toLocaleDateString(isBn ? "bn-BD" : "en-US", {
     weekday: "long",
@@ -33,8 +51,8 @@ export default function ResidentHome({ session, db, go, lang = "en", t = {}, toa
         <StatMini
           icon={Wallet}
           label={isBn ? "বকেয়া চাঁদা" : "Dues due"}
-          value={pending.length}
-          tone={pending.length ? "warning" : "success"}
+          value={pendingCount}
+          tone={pendingCount ? "warning" : "success"}
           onClick={() => go("r-dues")}
         />
         <StatMini
@@ -47,14 +65,14 @@ export default function ResidentHome({ session, db, go, lang = "en", t = {}, toa
         <StatMini
           icon={Bell}
           label={isBn ? "নোটিশসমূহ" : "Notices"}
-          value={db.notices.length}
+          value={noticesCount}
           tone="neutral"
           onClick={() => go("r-notices")}
         />
         <StatMini
           icon={LifeBuoy}
           label={isBn ? "আমার অভিযোগ/টিকিট" : "My tickets"}
-          value={myTickets.length}
+          value={myTicketsCount}
           tone="neutral"
           onClick={() => go("r-tickets")}
         />
