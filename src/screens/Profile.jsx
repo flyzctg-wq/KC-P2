@@ -1093,7 +1093,7 @@ export default function Profile({
               ) : (
                 <div className="relative rounded-2xl border overflow-hidden bg-slate-900/5 max-h-[360px] flex items-center justify-center" style={{ borderColor: C.outlineVariant }}>
                   <img
-                    src={session?.permissions?.formScanUrl || session?.formScanUrl}
+                    src={sanitizeUrl(session?.permissions?.formScanUrl || session?.formScanUrl)}
                     alt="Official Form Hardcopy"
                     className="w-full h-auto object-contain max-h-[360px] cursor-pointer hover:opacity-95 transition-opacity"
                     onClick={() => setScanModal(true)}
@@ -1153,7 +1153,7 @@ export default function Profile({
             <div className="space-y-3 py-1">
               <div className="max-h-[75vh] overflow-auto p-2 bg-slate-900 rounded-2xl flex items-center justify-center">
                 <img
-                  src={session?.permissions?.formScanUrl || session?.formScanUrl}
+                  src={sanitizeUrl(session?.permissions?.formScanUrl || session?.formScanUrl)}
                   alt="My Form Preview"
                   className="max-w-full h-auto rounded-lg shadow-lg"
                 />
