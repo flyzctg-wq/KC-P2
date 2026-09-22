@@ -93,7 +93,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                     >
                       {att.type === "video" ? (
                         <div className="relative w-full h-full flex items-center justify-center bg-slate-950 text-white">
-                          <video src={att.url} className="w-full h-full object-cover opacity-85" />
+                          <video src={sanitizeUrl(att.url)} className="w-full h-full object-cover opacity-85" />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-colors">
                             <div className="w-9 h-9 rounded-full bg-emerald-600/90 flex items-center justify-center text-white shadow-lg">
                               <Play size={16} className="ml-0.5" />
@@ -106,7 +106,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                       ) : (
                         <div className="w-full h-full relative bg-slate-900/10 flex items-center justify-center">
                           <img
-                            src={att.url}
+                            src={sanitizeUrl(att.url)}
                             alt={att.name || "Attachment"}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -156,7 +156,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
         <div className="flex flex-col items-center justify-center p-1 space-y-3">
           {mediaPreviewModal?.type === "video" ? (
             <video
-              src={mediaPreviewModal.url}
+              src={sanitizeUrl(mediaPreviewModal.url)}
               controls
               autoPlay
               playsInline
@@ -164,7 +164,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
             />
           ) : (
             <img
-              src={mediaPreviewModal?.url}
+              src={sanitizeUrl(mediaPreviewModal?.url)}
               alt="Preview"
               className="max-h-[70vh] w-auto max-w-full rounded-2xl object-contain shadow-xl"
             />
@@ -404,12 +404,12 @@ export function TicketForm({ onSubmit, lang = "en", isBn = false, toast }) {
               <div key={att.id} className="relative rounded-lg overflow-hidden border aspect-video bg-black/10 group" style={{ borderColor: C.outlineVariant }}>
                 {att.type === "video" ? (
                   <div className="w-full h-full flex items-center justify-center bg-slate-900 text-white relative">
-                    <video src={att.url} className="w-full h-full object-cover opacity-70" />
+                    <video src={sanitizeUrl(att.url)} className="w-full h-full object-cover opacity-70" />
                     <Play size={14} className="absolute text-white drop-shadow" />
                     <span className="absolute bottom-1 right-1 text-[8px] font-bold px-1 rounded bg-black/60 text-white">Video</span>
                   </div>
                 ) : (
-                  <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+                  <img src={sanitizeUrl(att.url)} alt={att.name} className="w-full h-full object-cover" />
                 )}
                 
                 {/* Delete button */}
