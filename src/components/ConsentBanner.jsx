@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, Cookie } from "lucide-react";
 import { Btn } from "./primitives";
 import { C } from "../theme";
@@ -8,17 +8,29 @@ export default function ConsentBanner() {
   const [visible, setVisible] = useState(!hasStoredConsent());
   const [expanded, setExpanded] = useState(false);
 
-  if (!visible) return null;
-
-  const accept = () => {
+  const accept = useCallback(() => {
     storeConsent(true);
     loadAnalytics();
     setVisible(false);
-  };
-  const decline = () => {
+  }, []);
+
+  const decline = useCallback(() => {
     storeConsent(false);
     setVisible(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        decline();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [visible, decline]);
+
+  if (!visible) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] p-4 sm:p-5 sm:max-w-md sm:left-auto sm:right-4 sm:bottom-4">
@@ -53,8 +65,8 @@ export default function ConsentBanner() {
           </button>
         </div>
         <div className="flex gap-2 mt-3">
-          <Btn size="sm" variant="outline" full onClick={decline}>Decline</Btn>
-          <Btn size="sm" full onClick={accept}>Accept</Btn>
+          <Btn size="sm" variant="outline" full onClick={decline} aria-label="Decline analytics cookies">Decline</Btn>
+          <Btn size="sm" full onClick={accept} aria-label="Accept analytics cookies">Accept</Btn>
         </div>
       </div>
     </div>
