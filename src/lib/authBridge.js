@@ -102,8 +102,27 @@ export async function signUpResident({ name, email, password, phone, block, unit
 }
 
 export async function signInWithPassword(email, password) {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    throw new Error("You appear to be offline. Please check your internet connection.");
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-  if (error) throw new Error("Invalid email or password.");
+  if (error) {
+    const rawMsg = (error.message || "").toLowerCase();
+    const isNetworkError =
+      rawMsg.includes("failed to fetch") ||
+      rawMsg.includes("network") ||
+      rawMsg.includes("fetch failed") ||
+      rawMsg.includes("load failed") ||
+      rawMsg.includes("timeout") ||
+      error.status === 0 ||
+      (error.status && error.status >= 500);
+
+    if (isNetworkError) {
+      throw new Error("Unable to connect to Supabase server. Please verify your internet connection and try again.");
+    }
+    throw new Error("Invalid email or password.");
+  }
   return data.user.id;
 }
 

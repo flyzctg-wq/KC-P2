@@ -11,6 +11,7 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
   const [selectedUser, setSelectedUser] = useState(null);
   const [inviteModal, setInviteModal] = useState(false);
   const [kickOutTarget, setKickOutTarget] = useState(null);
+  const [kickingOut, setKickingOut] = useState(false);
 
   const isTopTier = session?.role === "admin" && (session?.post === "President" || session?.post === "General Secretary");
   const canManage = session?.role === "admin" && (session?.permissions?.canManageMembers || isTopTier);
@@ -48,32 +49,46 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
   };
 
   const confirmKickOut = async (u) => {
+    if (kickingOut) return;
+    setKickingOut(true);
     try {
-      await supabase.from("dues").delete().eq("resident_id", u.id);
-      await supabase.from("tickets").delete().eq("resident_id", u.id);
-      await supabase.from("notice_comments").delete().eq("user_id", u.id);
-      await supabase.from("chat_messages").delete().eq("user_id", u.id);
-      await supabase.from("event_rsvps").delete().eq("user_id", u.id);
-      await supabase.from("agm_attendees").delete().eq("user_id", u.id);
-      await supabase.from("agm_proxies").delete().eq("granter_id", u.id);
-      await supabase.from("agm_proxies").delete().eq("grantee_id", u.id);
-      await supabase.from("amendment_votes").delete().eq("voter_id", u.id);
-      await supabase.from("budget_votes").delete().eq("voter_id", u.id);
-      await supabase.from("nominations").delete().eq("user_id", u.id);
-      await supabase.from("profiles").delete().eq("id", u.id);
-    } catch (err) {
-      console.warn("Cascade deletion warning on kick-out:", err);
-    }
+      const deletes = [
+        supabase.from("dues").delete().eq("resident_id", u.id),
+        supabase.from("tickets").delete().eq("resident_id", u.id),
+        supabase.from("notice_comments").delete().eq("user_id", u.id),
+        supabase.from("chat_messages").delete().eq("user_id", u.id),
+        supabase.from("event_rsvps").delete().eq("user_id", u.id),
+        supabase.from("agm_attendees").delete().eq("user_id", u.id),
+        supabase.from("agm_proxies").delete().eq("granter_id", u.id),
+        supabase.from("agm_proxies").delete().eq("grantee_id", u.id),
+        supabase.from("amendment_votes").delete().eq("voter_id", u.id),
+        supabase.from("budget_votes").delete().eq("voter_id", u.id),
+        supabase.from("nominations").delete().eq("user_id", u.id),
+      ];
+      const results = await Promise.allSettled(deletes);
+      const failed = results.filter(r => r.status === "rejected" || r.value?.error);
+      if (failed.length > 0) {
+        const errMsg = failed.map(r => r.reason?.message || r.value?.error?.message).filter(Boolean).join("; ");
+        throw new Error(isBn ? `ডাটা মোছাত ব্যর্থ: ${errMsg}` : `Data cleanup failed: ${errMsg}`);
+      }
+      const { error: profileErr } = await supabase.from("profiles").delete().eq("id", u.id);
+      if (profileErr) throw new Error(profileErr.message);
 
-    persist(d => logActivity({
-      ...d,
-      users: (d.users || []).filter(x => x.id !== u.id),
-      dues: (d.dues || []).filter(x => x.residentId !== u.id),
-      tickets: (d.tickets || []).filter(x => x.residentId !== u.id),
-    }, session?.name, `Removed member: ${u.name} (${u.phone || u.email || "No phone"}) [${u.memberClass || "Resident"}]`));
-    toast(isBn ? `${u.name}-এর সদস্যপদ বাতিল ও বহিষ্কার করা হয়েছে।` : `${u.name} has been removed from club membership.`);
-    setKickOutTarget(null);
-    if (selectedUser?.id === u.id) setSelectedUser(null);
+      persist(d => logActivity({
+        ...d,
+        users: (d.users || []).filter(x => x.id !== u.id),
+        dues: (d.dues || []).filter(x => x.residentId !== u.id),
+        tickets: (d.tickets || []).filter(x => x.residentId !== u.id),
+      }, session?.name, `Removed member: ${u.name} (${u.phone || u.email || "No phone"}) [${u.memberClass || "Resident"}]`));
+      toast(isBn ? `${u.name}-এর সদস্যপদ বাতিল ও বহিষ্কার করা হয়েছে।` : `${u.name} has been removed from club membership.`);
+      setKickOutTarget(null);
+      if (selectedUser?.id === u.id) setSelectedUser(null);
+    } catch (err) {
+      console.error("Kick-out failed:", err);
+      toast(err?.message || (isBn ? "বহিষ্কার সম্পন্ন হয়নি — আবার চেষ্টা করুন।" : "Kick-out could not be completed — please try again."), "error");
+    } finally {
+      setKickingOut(false);
+    }
   };
 
   return (
@@ -336,8 +351,10 @@ export default function AdminMembers({ session, db, persist, toast, logActivity,
               <Btn full variant="outline" onClick={() => setKickOutTarget(null)}>
                 {isBn ? "বাতিল করুন" : "Cancel"}
               </Btn>
-              <Btn full variant="danger" icon={Trash2} onClick={() => confirmKickOut(kickOutTarget)}>
-                {isBn ? "হ্যাঁ, বহিষ্কার করুন" : "Yes, Kick Out"}
+              <Btn full variant="danger" icon={kickingOut ? undefined : Trash2} onClick={() => confirmKickOut(kickOutTarget)} disabled={kickingOut}>
+                {kickingOut
+                  ? (isBn ? "সরানো হচ্ছে…" : "Removing…")
+                  : (isBn ? "হ্যাঁ, বহিষ্কার করুন" : "Yes, Kick Out")}
               </Btn>
             </div>
           </div>

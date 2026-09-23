@@ -8,6 +8,7 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
   const isBn = lang === "bn";
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [showPw, setShowPw] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [registering, setRegistering] = useState(false);
   const [reg, setReg] = useState({ name: "", email: "", phone: "", block: "A", unit: "", password: "", bloodGroup: "", idNumber: "" });
   const [forgot, setForgot] = useState(false); const [resetEmail, setResetEmail] = useState(""); const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -254,10 +255,20 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
 
               <Btn
                 full
-                onClick={() => register(reg)}
-                disabled={!reg.name.trim() || !reg.email.trim() || !reg.password || !reg.phone.trim()}
+                onClick={async () => {
+                  if (registering) return;
+                  setRegistering(true);
+                  try {
+                    await register(reg);
+                  } finally {
+                    setRegistering(false);
+                  }
+                }}
+                disabled={registering || !reg.name.trim() || !reg.email.trim() || !reg.password || !reg.phone.trim()}
               >
-                {isBn ? "সদস্যপদের আবেদন দাখিল করুন" : "Submit Membership Request"}
+                {registering
+                  ? <><Loader2 size={15} className="animate-spin" /> {isBn ? "দাখিল হচ্ছে…" : "Submitting…"}</>
+                  : (isBn ? "সদস্যপদের আবেদন দাখিল করুন" : "Submit Membership Request")}
               </Btn>
             </div>
           )}

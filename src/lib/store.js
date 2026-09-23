@@ -1,30 +1,28 @@
 // src/lib/store.js
 //
-// Replaces the single-Firestore-document store with real Postgres
-// tables (see ../../kunjachaya-supabase/schema/), while keeping the
-// exact same `db` object shape (db.users, db.notices, db.dues, ...)
-// every existing screen already reads — so none of the ~40 screens in
-// App.jsx needed to be rewritten to migrate backends.
-//
-// fetchAll() reads every table and reshapes rows (snake_case columns,
-// separate child tables) back into the camelCase, nested shape the app
-// expects (e.g. notices.reactions.like, elections.candidates).
-//
-// Deliberate simplicity tradeoff: realtime updates trigger a full
-// fetchAll() rather than an incremental per-row patch. That's more
-// reads than a fully optimized version, but it's correct and simple to
-// reason about — worth revisiting only if this app grows to a size
-// where that read volume actually matters.
+// Read and realtime sync engine for Kunjachaya Club (Postgres backend).
+// Maintains backward-compatible camelCase object shape across all screens.
 
 import { supabase } from "./supabase";
 
+/* ============================== CACHE & RESILIENCE ============================== */
+
+let lastDbSnapshot = null;
+
 /* ============================== READ ============================== */
 
-async function fetchAll() {
-  // RLS returns empty arrays (not errors) for unauthenticated callers.
-  // We use individual try-catch per table to avoid one failure blocking
-  // the whole load, and normalise every result to an array.
-  const safe = (result) => Array.isArray(result?.data) ? result.data : [];
+export async function fetchAll() {
+  const parseTable = (result, previous = []) => {
+    if (result.status === "fulfilled" && !result.value?.error && Array.isArray(result.value?.data)) {
+      return result.value.data;
+    }
+    if (result.status === "rejected" || result.value?.error) {
+      console.warn("Read query error:", result.reason || result.value?.error);
+    }
+    return previous || [];
+  };
+
+  const prev = lastDbSnapshot || {};
 
   const results = await Promise.allSettled([
     supabase.from("profiles").select("*"),
@@ -46,30 +44,81 @@ async function fetchAll() {
     supabase.from("amendment_votes").select("*"),
     supabase.from("budget_items").select("*"),
     supabase.from("budget_votes").select("*"),
-    supabase.from("chat_messages").select("*").order("created_at"),
+    // Order chat newest first with limit to avoid PostgREST 1000-row ascending cap truncation
+    supabase.from("chat_messages").select("*").order("created_at", { ascending: false }).limit(200),
     supabase.from("handover_checklist").select("*"),
     supabase.from("events").select("*"),
     supabase.from("event_rsvps").select("*"),
     supabase.from("inductions").select("*"),
     supabase.from("app_config").select("*").eq("key", "kc_modules").maybeSingle(),
+    supabase.from("expenses").select("*").order("date", { ascending: false }),
+    supabase.from("letters").select("*").order("created_at", { ascending: false }),
   ]);
 
   const [
-    profiles, notices, comments,
-    dues, elections, candidates, nominations, votes,
-    tickets, activity, emergencyContacts,
-    agmEvents, agmResolutions, agmAttendees, agmProxies,
-    amendments, amendmentVotes,
-    budgetItems, budgetVotes,
-    chatMessages, handoverChecklist,
-    events, eventRsvps, inductions,
-    appConfigRaw,
-  ] = results.map(r => r.status === "fulfilled" ? (r.value?.data ?? []) : []);
+    rProfiles, rNotices, rComments,
+    rDues, rElections, rCandidates, rNominations, rVotes,
+    rTickets, rActivity, rEmergencyContacts,
+    rAgmEvents, rAgmResolutions, rAgmAttendees, rAgmProxies,
+    rAmendments, rAmendmentVotes,
+    rBudgetItems, rBudgetVotes,
+    rChatMessages, rHandoverChecklist,
+    rEvents, rEventRsvps, rInductions,
+    rAppConfig,
+    rExpenses, rLetters,
+  ] = results;
 
-  // app_config uses .maybeSingle() so result.data is an object, not array
-  const moduleFlags = (appConfigRaw && !Array.isArray(appConfigRaw))
-    ? appConfigRaw?.value
-    : (Array.isArray(appConfigRaw) && appConfigRaw[0]?.value) || null;
+  const profiles = parseTable(rProfiles, prev.rawProfiles);
+  const notices = parseTable(rNotices, prev.rawNotices);
+  const comments = parseTable(rComments, prev.rawComments);
+  const dues = parseTable(rDues, prev.rawDues);
+  const elections = parseTable(rElections, prev.rawElections);
+  const candidates = parseTable(rCandidates, prev.rawCandidates);
+  const nominations = parseTable(rNominations, prev.rawNominations);
+  const votes = parseTable(rVotes, prev.rawVotes);
+  const tickets = parseTable(rTickets, prev.rawTickets);
+  const activity = parseTable(rActivity, prev.rawActivity);
+  const emergencyContacts = parseTable(rEmergencyContacts, prev.rawEmergencyContacts);
+  const agmEvents = parseTable(rAgmEvents, prev.rawAgmEvents);
+  const agmResolutions = parseTable(rAgmResolutions, prev.rawAgmResolutions);
+  const agmAttendees = parseTable(rAgmAttendees, prev.rawAgmAttendees);
+  const agmProxies = parseTable(rAgmProxies, prev.rawAgmProxies);
+  const amendments = parseTable(rAmendments, prev.rawAmendments);
+  const amendmentVotes = parseTable(rAmendmentVotes, prev.rawAmendmentVotes);
+  const budgetItems = parseTable(rBudgetItems, prev.rawBudgetItems);
+  const budgetVotes = parseTable(rBudgetVotes, prev.rawBudgetVotes);
+  const chatMessages = parseTable(rChatMessages, prev.rawChatMessages);
+  const handoverChecklist = parseTable(rHandoverChecklist, prev.rawHandoverChecklist);
+  const events = parseTable(rEvents, prev.rawEvents);
+  const eventRsvps = parseTable(rEventRsvps, prev.rawEventRsvps);
+  const inductions = parseTable(rInductions, prev.rawInductions);
+  const expenses = parseTable(rExpenses, prev.rawExpenses);
+  const letters = parseTable(rLetters, prev.rawLetters);
+
+  // app_config uses .maybeSingle()
+  let moduleFlags = null;
+  if (rAppConfig.status === "fulfilled" && !rAppConfig.value?.error) {
+    const rawVal = rAppConfig.value?.data;
+    moduleFlags = (rawVal && !Array.isArray(rawVal))
+      ? rawVal?.value
+      : (Array.isArray(rawVal) && rawVal[0]?.value) || null;
+  } else if (prev.moduleFlags) {
+    moduleFlags = prev.moduleFlags;
+  }
+
+  // Preserve raw tables for resilient fallbacks
+  lastDbSnapshot = {
+    rawProfiles: profiles, rawNotices: notices, rawComments: comments,
+    rawDues: dues, rawElections: elections, rawCandidates: candidates, rawNominations: nominations, rawVotes: votes,
+    rawTickets: tickets, rawActivity: activity, rawEmergencyContacts: emergencyContacts,
+    rawAgmEvents: agmEvents, rawAgmResolutions: agmResolutions, rawAgmAttendees: agmAttendees, rawAgmProxies: agmProxies,
+    rawAmendments: amendments, rawAmendmentVotes: amendmentVotes,
+    rawBudgetItems: budgetItems, rawBudgetVotes: budgetVotes,
+    rawChatMessages: chatMessages, rawHandoverChecklist: handoverChecklist,
+    rawEvents: events, rawEventRsvps: eventRsvps, rawInductions: inductions,
+    rawExpenses: expenses, rawLetters: letters,
+    moduleFlags,
+  };
 
   const by = (rows, fk) => {
     const map = {};
@@ -154,9 +203,28 @@ async function fetchAll() {
         bulletinDurationHours,
       };
     }),
-    dues: (dues || []).map(d => ({ id: d.id, residentId: d.resident_id, month: d.month, amount: Number(d.amount), status: d.status, paidDate: d.paid_date, ref: d.ref })),
+    dues: (dues || []).map(d => ({
+      id: d.id,
+      residentId: d.resident_id,
+      month: d.month,
+      amount: Number(d.amount),
+      status: d.status,
+      paidDate: d.paid_date,
+      ref: d.ref,
+      chargeType: d.charge_type || "monthly",
+      chargeTitle: d.charge_title || null,
+      dueDate: d.due_date || null,
+      method: d.method || null,
+      discount: Number(d.discount) || 0,
+      receivedAmount: d.received_amount != null ? Number(d.received_amount) : null,
+      balanceDue: d.balance_due != null ? Number(d.balance_due) : null,
+      collectedBy: d.collected_by || null,
+      note: d.note || null,
+      resolutionNo: d.resolution_no || null,
+      category: d.category || null,
+    })),
     elections: (elections || []).map(e => ({
-      id: e.id, title: e.title, status: e.status, positions: e.positions,
+      id: e.id, title: e.title, status: e.status, positions: e.positions || [],
       startDate: e.start_date, endDate: e.end_date,
       candidates: (candidatesByElection[e.id] || []).map(c => ({ id: c.id, name: c.name, position: c.position, block: c.block, manifesto: c.manifesto })),
       nominations: (nominationsByElection[e.id] || []).map(n => ({ id: n.id, userId: n.user_id, userName: n.user_name, position: n.position, manifesto: n.manifesto, status: n.status })),
@@ -166,7 +234,6 @@ async function fetchAll() {
       let desc = t.description || "";
       let atts = t.attachments || [];
 
-      // 1. Extract attachments embedded in description if present
       if (typeof desc === "string" && desc.includes("<!--KC_ATTACHMENTS-->")) {
         const match = desc.match(/<!--KC_ATTACHMENTS-->([\s\S]*?)<!--\/KC_ATTACHMENTS-->/);
         if (match) {
@@ -176,17 +243,14 @@ async function fetchAll() {
               atts = parsed;
             }
           } catch (_) {}
-          // Strip the attachment marker from display description
           desc = desc.replace(/<!--KC_ATTACHMENTS-->[\s\S]*?<!--\/KC_ATTACHMENTS-->/, "").trim();
         }
       }
 
-      // 2. Fallback: direct column or JSON string
       if ((!atts || atts.length === 0) && typeof t.attachments === "string") {
         try { atts = JSON.parse(t.attachments); } catch (_) {}
       }
 
-      // 3. Fallback: check localStorage cache
       if (!Array.isArray(atts) || atts.length === 0) {
         try {
           const cached = localStorage.getItem(`kc_ticket_att_${t.id}`);
@@ -224,22 +288,46 @@ async function fetchAll() {
       id: b.id, category: b.category, description: b.description, amount: Number(b.amount), proposedBy: b.proposed_by, status: b.status,
       councilVotes: (votesByBudget[b.id] || []).map(v => ({ voterId: v.voter_id, choice: v.choice })),
     })),
-    chatMessages: (chatMessages || []).map(m => ({ id: m.id, channel: m.channel, userId: m.user_id, userName: m.user_name, text: m.text, date: m.created_at })),
+    // Reverse newest 200 messages in memory so they render in chronological order
+    chatMessages: (chatMessages || []).map(m => ({ id: m.id, channel: m.channel, userId: m.user_id, userName: m.user_name, text: m.text, date: m.created_at })).reverse(),
     handoverChecklist: (handoverChecklist || []).map(h => ({ id: h.id, item: h.item, category: h.category, done: h.done, doneBy: h.done_by, doneDate: h.done_date })),
     events: (events || []).map(ev => ({ id: ev.id, title: ev.title, description: ev.description, date: ev.date, location: ev.location, rsvps: (rsvpsByEvent[ev.id] || []).map(r => r.user_id) })),
     inductions: (inductions || []).map(i => ({ id: i.id, name: i.name, position: i.position, date: i.date, electionTitle: i.election_title })),
-    moduleFlags,  // null if app_config table doesn't exist yet — callers fall back to DEFAULT_MODULE_FLAGS
+    expenses: (expenses || []).map(exp => ({
+      id: exp.id,
+      title: exp.title,
+      category: exp.category,
+      amount: Number(exp.amount),
+      voucherNo: exp.voucher_no || exp.voucherNo,
+      payee: exp.payee,
+      approvedBy: exp.approved_by || exp.approvedBy,
+      date: exp.date,
+    })),
+    letters: (letters || []).map(l => ({
+      id: l.id,
+      memoNo: l.memo_no || l.memoNo,
+      subject: l.subject,
+      recipient: l.recipient,
+      body: l.body,
+      letterType: l.letter_type || l.letterType || "general",
+      signatoryLeftTitle: l.signatory_left_title || l.signatoryLeftTitle,
+      signatoryLeftName: l.signatory_left_name || l.signatoryLeftName,
+      signatoryRightTitle: l.signatory_right_title || l.signatoryRightTitle,
+      signatoryRightName: l.signatory_right_name || l.signatoryRightName,
+      issuedBy: l.issued_by || l.issuedBy,
+      createdAt: l.created_at,
+    })),
+    moduleFlags,
   };
 }
 
 export async function loadDB() {
   return fetchAll();
 }
-// Kept for API-compatibility with the old Firestore version's
-// loadDB/saveDB pair — saveDB isn't used for reading Postgres (writes
-// go through the targeted functions in write.js instead), but
-// App.jsx's bootstrap effect calls it once if loadDB() looks empty.
-export async function saveDB() { return fetchAll(); }
+
+export async function saveDB() {
+  return fetchAll();
+}
 
 /* ============================== REALTIME ============================== */
 
@@ -247,17 +335,53 @@ const WATCHED_TABLES = [
   "profiles", "notices", "notice_comments", "dues", "elections", "candidates", "nominations", "votes",
   "tickets", "activity", "emergency_contacts", "agm_events", "agm_resolutions", "agm_attendees", "agm_proxies",
   "amendments", "amendment_votes", "budget_items", "budget_votes", "chat_messages", "handover_checklist",
-  "events", "event_rsvps", "inductions",
-  "app_config",  // realtime module flag changes propagate to all clients
+  "events", "event_rsvps", "inductions", "app_config", "expenses", "letters"
 ];
 
 export function subscribeDB(onChange) {
+  let debounceTimer = null;
+  const debouncedFetch = () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      try {
+        const fresh = await fetchAll();
+        onChange(fresh);
+      } catch (err) {
+        console.warn("Realtime sync fetch failed:", err);
+      }
+    }, 450);
+  };
+
   const channel = supabase.channel("kc-realtime");
   WATCHED_TABLES.forEach(table => {
-    channel.on("postgres_changes", { event: "*", schema: "public", table }, async () => {
-      onChange(await fetchAll());
+    channel.on("postgres_changes", { event: "*", schema: "public", table }, () => {
+      debouncedFetch();
     });
   });
-  channel.subscribe();
-  return () => supabase.removeChannel(channel);
+
+  channel.subscribe((status) => {
+    if (status === "SUBSCRIBED") {
+      debouncedFetch();
+    }
+  });
+
+  // Reconnection and visibility recovery listeners
+  const onOnline = () => debouncedFetch();
+  const onVisibility = () => {
+    if (document.visibilityState === "visible") debouncedFetch();
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisibility);
+  }
+
+  return () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisibility);
+    }
+    supabase.removeChannel(channel);
+  };
 }

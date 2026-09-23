@@ -1,23 +1,36 @@
 // src/lib/payments.js
 //
-// Replaces the demo "instant pay" button with a real checkout flow.
-// The client never talks to PipraPay directly (that needs a secret API
-// key it must never see) — it calls the piprapay-checkout Edge
-// Function, which returns a checkout URL to redirect to. The due only
-// actually gets marked "paid" later, by piprapay-webhook, once
-// PipraPay confirms the charge — see kunjachaya-supabase/functions/.
-//
-// This can't be tested from this sandbox (no live Supabase project,
-// no PipraPay credentials) — it's written to the same contract the
-// Edge Function expects, verified by reading, not by running.
+// Dues payment initiation via PipraPay Edge Function checkout.
 
 import { supabase } from "./supabase";
 
 export async function startDuesPayment({ dueId, residentId, amount, month }) {
-  const { data, error } = await supabase.functions.invoke("piprapay-checkout", {
+  // 15-second timeout guard to prevent hung payment requests
+  const timeoutMs = 15000;
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("Payment request timed out. Please check your network and try again.")), timeoutMs)
+  );
+
+  const invokePromise = supabase.functions.invoke("piprapay-checkout", {
     body: { dueId, residentId, amount, month },
   });
+
+  const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
+
   if (error) throw new Error(error.message || "Could not start payment. Please try again.");
   if (!data?.checkoutUrl) throw new Error("Payment provider did not return a checkout link.");
-  window.location.href = data.checkoutUrl; // resident completes payment on PipraPay's page
+
+  // URL security validation: enforce HTTPS protocol
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(data.checkoutUrl);
+  } catch (_) {
+    throw new Error("Invalid payment gateway URL received.");
+  }
+
+  if (parsedUrl.protocol !== "https:") {
+    throw new Error("Insecure payment gateway redirect blocked (HTTPS required).");
+  }
+
+  window.location.href = data.checkoutUrl;
 }

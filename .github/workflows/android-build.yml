@@ -55,6 +55,29 @@ jobs:
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
           echo "VITE_APP_URL=https://kc-p2.vercel.app" >> .env
 
+      # ── 6b. Guard: fail early if Supabase secrets are missing ──────────────────────
+      # Prevents shipping an APK that silently breaks at runtime because
+      # VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY were never set as
+      # repository secrets (they would just be empty strings in .env).
+      - name: Validate required secrets
+        run: |
+          SB_URL="${{ secrets.VITE_SUPABASE_URL }}"
+          SB_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+          FAIL=0
+          if [ -z "$SB_URL" ]; then
+            echo "::error::VITE_SUPABASE_URL secret is not set. Add it under Settings > Secrets and variables > Actions."
+            FAIL=1
+          fi
+          if [ -z "$SB_KEY" ]; then
+            echo "::error::VITE_SUPABASE_ANON_KEY secret is not set. Add it under Settings > Secrets and variables > Actions."
+            FAIL=1
+          fi
+          if echo "$SB_URL" | grep -qiE '(your-project|placeholder|localhost|example\.com|supabase\.co$)'; then
+            echo "::warning::VITE_SUPABASE_URL looks like a placeholder value: $SB_URL"
+          fi
+          if [ "$FAIL" = "1" ]; then exit 1; fi
+          echo "Supabase secrets validated OK."
+
       # ── 7. Build Vite web bundle ──────────────────────────────────────────────
       - name: Build web bundle (Vite)
         run: npm run build

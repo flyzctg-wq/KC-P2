@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Wallet, CreditCard, Loader2, FileText, Printer } from "lucide-react";
 import { Btn, Card, Badge, Empty, Modal, SectionTitle } from "../components/primitives";
 import InvoiceReceiptModal from "../components/InvoiceReceiptModal";
@@ -12,6 +12,12 @@ export default function Dues({ session, db, toast, lang = "en", t = {} }) {
   const [payModal, setPayModal] = useState(null);
   const [receiptModal, setReceiptModal] = useState(null);
   const [paying, setPaying] = useState(false);
+
+  useEffect(() => {
+    const handlePageShow = () => setPaying(false);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   const allUsers = useMemo(() => db.users || [], [db.users]);
   const treasurerUser = useMemo(() => allUsers.find(u => u.post === "Treasurer") || { name: "Golam Sarwar Jony", nameBn: "গোলাম সরোয়ার জনি", post: "Treasurer" }, [allUsers]);

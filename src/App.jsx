@@ -38,6 +38,10 @@ export default function App() {
   const [savingNewPw, setSavingNewPw] = useState(false);
   const unsubRef = useRef(null);
   const lastBackPressRef = useRef(0);
+  // Serialized persist queue — each sync waits for the previous one to
+  // settle so two rapid persist() calls can't race against the same prev.
+  const persistQueueRef = useRef(Promise.resolve());
+  const latestDbRef = useRef(null); // tracks committed db for queue hand-off
 
   // Global Font Size and App Preferences for Android & Web
   const [fontSize, setFontSize] = useState(() => {
@@ -338,7 +342,11 @@ export default function App() {
             // Load full DB and subscribe ONLY when user is confirmed authenticated
             const d = await loadDB();
             setDb(d);
-            unsubRef.current = subscribeDB((fresh) => setDb(fresh));
+            latestDbRef.current = d;
+            unsubRef.current = subscribeDB((fresh) => {
+              setDb(fresh);
+              latestDbRef.current = fresh;
+            });
           }
         }
       } catch (e) {
@@ -363,14 +371,27 @@ export default function App() {
   }, []);
 
   const persist = useCallback((updater) => {
-    setDb(prev => {
+    // Chain onto the existing queue so concurrent calls are serialized.
+    persistQueueRef.current = persistQueueRef.current.then(async () => {
+      const prev = latestDbRef.current;
       const next = typeof updater === "function" ? updater(prev) : updater;
-      syncChanges(prev, next).catch(err => {
+      // Commit optimistic state immediately so the UI feels instant.
+      latestDbRef.current = next;
+      setDb(next);
+      try {
+        await syncChanges(prev, next);
+      } catch (err) {
         console.error("Sync failed:", err);
+        // Roll back UI to the last confirmed server state only if we still
+        // hold the same snapshot (a later persist may have superseded us).
+        if (latestDbRef.current === next) {
+          latestDbRef.current = prev;
+          setDb(prev);
+        }
         toast(err?.message || "Some changes couldn't be saved — check your connection.", "error");
-      });
-      return next;
-    });
+      }
+    // Swallow queue-internal errors so the chain never stalls.
+    }).catch(() => {});
   }, [toast]);
 
   const logActivity = (dbObj, actor, action) => ({

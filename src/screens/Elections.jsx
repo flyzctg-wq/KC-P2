@@ -65,18 +65,24 @@ export default function Elections({ session, db, persist, toast, logActivity, la
 export function BallotView({ election, session, db, persist, toast, logActivity, canVote, lang = "en", isBn = false }) {
   const myVotes = db.votes.filter(v => v.electionId === election.id && v.voterId === session.id);
   const [choice, setChoice] = useState({});
+  const [voting, setVoting] = useState({}); // { [position]: true } while RPC is in-flight
 
   const submitVote = async (position) => {
     const candId = choice[position];
-    if (!candId) return;
-    const { error } = await supabase.rpc("cast_vote", { p_election_id: election.id, p_position: position, p_candidate_id: candId });
-    if (error) {
-      toast(error.message || (isBn ? "ভোট গ্রহণ করা যায়নি।" : "Could not cast vote."), "error");
-      return;
+    if (!candId || voting[position]) return;
+    setVoting(v => ({ ...v, [position]: true }));
+    try {
+      const { error } = await supabase.rpc("cast_vote", { p_election_id: election.id, p_position: position, p_candidate_id: candId });
+      if (error) {
+        toast(error.message || (isBn ? "ভোট গ্রহণ করা যায়নি।" : "Could not cast vote."), "error");
+        return;
+      }
+      persist(d => logActivity(d, session.name, `Voted for ${position} in ${election.title}`));
+      trackEvent("vote_cast", { election_id: election.id, position });
+      toast(isBn ? `${position} পদের জন্য আপনার ভোট সফলভাবে গৃহীত হয়েছে।` : `Vote recorded for ${position}.`);
+    } finally {
+      setVoting(v => ({ ...v, [position]: false }));
     }
-    persist(d => logActivity(d, session.name, `Voted for ${position} in ${election.title}`));
-    trackEvent("vote_cast", { election_id: election.id, position });
-    toast(isBn ? `${position} পদের জন্য আপনার ভোট সফলভাবে গৃহীত হয়েছে।` : `Vote recorded for ${position}.`);
   };
 
   const results = (position) => {
@@ -125,8 +131,10 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
                 <CheckCircle2 size={13} /> {isBn ? `${pos} পদের জন্য ভোট প্রদান সম্পন্ন হয়েছে` : `Vote submitted for ${pos}`}
               </p>
             ) : canVote && election.status === "active" && (
-              <Btn size="sm" className="mt-2.5" onClick={() => submitVote(pos)} disabled={!choice[pos]}>
-                {isBn ? "ভোট প্রদান করুন" : "Submit vote"}
+              <Btn size="sm" className="mt-2.5" onClick={() => submitVote(pos)} disabled={!choice[pos] || !!voting[pos]}>
+                {voting[pos]
+                  ? <>{isBn ? "ভোট হচ্ছে…" : "Submitting…"}</>
+                  : (isBn ? "ভোট প্রদান করুন" : "Submit vote")}
               </Btn>
             ))}
           </div>
