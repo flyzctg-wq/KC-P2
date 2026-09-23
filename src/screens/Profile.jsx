@@ -1413,7 +1413,8 @@ export default function Profile({
               {/* Viewfinder Frame */}
               <div className="relative w-64 h-64 sm:w-72 sm:h-72 bg-black rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center border-4 border-emerald-600">
                 {capturedSnapshot ? (
-                  <img src={capturedSnapshot} alt="Snapshot Preview" className="w-full h-full object-cover" />
+                  /* Security: Sanitize snapshot URL attribute to prevent DOM-based XSS execution */
+                  <img src={sanitizeUrl(capturedSnapshot)} alt="Snapshot Preview" className="w-full h-full object-cover" />
                 ) : (
                   <>
                     <video
