@@ -543,7 +543,7 @@ export default function Profile({
             <div className="w-24 h-28 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-2 text-center relative overflow-hidden bg-gray-50 shrink-0" style={{ borderColor: C.primary }}>
               {form.photoUrl ? (
                 <img
-                  src={form.photoUrl}
+                  src={sanitizeUrl(form.photoUrl)}
                   alt="Passport Photo"
                   className="w-full h-full object-cover rounded-lg"
                 />

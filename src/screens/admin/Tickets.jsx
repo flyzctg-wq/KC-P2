@@ -78,7 +78,7 @@ export default function AdminTickets({ session, db, persist, toast, logActivity,
                     >
                       {att.type === "video" ? (
                         <div className="relative w-full h-full flex items-center justify-center bg-slate-950 text-white">
-                          <video src={att.url} className="w-full h-full object-cover opacity-85" />
+                          <video src={sanitizeUrl(att.url)} className="w-full h-full object-cover opacity-85" />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-colors">
                             <div className="w-8 h-8 rounded-full bg-emerald-600/90 flex items-center justify-center text-white shadow-md">
                               <Play size={14} className="ml-0.5" />
@@ -91,7 +91,7 @@ export default function AdminTickets({ session, db, persist, toast, logActivity,
                       ) : (
                         <div className="w-full h-full relative bg-slate-900/10 flex items-center justify-center">
                           <img
-                            src={att.url}
+                            src={sanitizeUrl(att.url)}
                             alt={att.name || "Attachment"}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -143,7 +143,7 @@ export default function AdminTickets({ session, db, persist, toast, logActivity,
         <div className="flex flex-col items-center justify-center p-1 space-y-3">
           {mediaPreviewModal?.type === "video" ? (
             <video
-              src={mediaPreviewModal.url}
+              src={sanitizeUrl(mediaPreviewModal.url)}
               controls
               autoPlay
               playsInline
@@ -151,7 +151,7 @@ export default function AdminTickets({ session, db, persist, toast, logActivity,
             />
           ) : (
             <img
-              src={mediaPreviewModal?.url}
+              src={sanitizeUrl(mediaPreviewModal?.url)}
               alt="Preview"
               className="max-h-[70vh] w-auto max-w-full rounded-2xl object-contain shadow-xl"
             />

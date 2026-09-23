@@ -134,7 +134,7 @@ export const isSafeUrl = (url = "") => {
   if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
   if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;
-  if (trimmed.startsWith("blob:") || trimmed.startsWith("data:image/")) return true;
+  if (trimmed.startsWith("blob:") || trimmed.startsWith("data:image/") || trimmed.startsWith("data:video/") || trimmed.startsWith("data:audio/")) return true;
   return false;
 };
 
