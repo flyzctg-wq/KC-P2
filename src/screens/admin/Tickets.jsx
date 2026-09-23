@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Shield, Send, Paperclip, Eye, Play, Film, Download, ExternalLink } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Modal, SectionTitle, Empty } from "../../components/primitives";
 import { C } from "../../theme";
@@ -9,7 +9,12 @@ export default function AdminTickets({ session, db, persist, toast, logActivity,
   const canManage = session.permissions?.canManageComplaints || session.role === "admin";
   const [respondTo, setRespondTo] = useState(null);
   const [mediaPreviewModal, setMediaPreviewModal] = useState(null);
-  const sorted = [...(db.tickets || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Bolt Optimization: Memoize ticket sorting to avoid unnecessary array copy & Date construction on modal or form state changes
+  const sorted = useMemo(
+    () => [...(db.tickets || [])].sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [db.tickets]
+  );
 
   const respond = (tk, response, status) => {
     persist(d => logActivity({ ...d, tickets: d.tickets.map(x => x.id === tk.id ? { ...x, response, status } : x) }, session.name, `Responded to ticket: ${tk.subject}`));

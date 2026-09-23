@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   LifeBuoy, Plus, Camera, Image, Video, Paperclip, Trash2, Eye, Play, X,
   Maximize2, Film, AlertCircle, Download, ExternalLink
@@ -11,7 +11,12 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
   const isBn = lang === "bn";
   const [form, setForm] = useState(null);
   const [mediaPreviewModal, setMediaPreviewModal] = useState(null); // { type: 'image'|'video', url: '', name: '' }
-  const mine = (db.tickets || []).filter(t => t.residentId === session.id).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Bolt Optimization: Memoize resident tickets filtering & sorting to avoid redundant Date parsing and array allocations on modal/preview state updates
+  const mine = useMemo(
+    () => (db.tickets || []).filter(t => t.residentId === session.id).sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [db.tickets, session.id]
+  );
 
   const submit = (subject, category, description, attachments = []) => {
     if (!subject.trim() || !description.trim()) return;
