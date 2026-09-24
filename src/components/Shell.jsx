@@ -3,7 +3,7 @@ import {
   Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
-  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown
+  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown, LayoutGrid, TrendingDown
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK } from "../theme";
@@ -63,6 +63,7 @@ const ADMIN_NAV_GROUPS = [
       { key: "a-members", label: "members", icon: Users },
       { key: "a-dues", label: "financials", icon: Wallet },
       { key: "a-payment-history", label: "paymentHistory", icon: Receipt },
+      { key: "a-expenses", label: "expenses", icon: TrendingDown },
     ],
   },
   {
@@ -101,6 +102,7 @@ const ADMIN_NAV_GROUPS = [
       { key: "a-tickets", label: "tickets", icon: LifeBuoy },
       { key: "settings", label: "settings", icon: Settings },
       { key: "r-profile", label: "profile", icon: User },
+      { key: "a-modules", label: "modules", icon: LayoutGrid, superAdminOnly: true },
     ],
   },
 ];
@@ -184,7 +186,7 @@ export default function Shell({
             const hasActiveItem = group.items.some(item => item.key === view);
 
             return (
-              <div key={gi} className="rounded-xl overflow-hidden mb-1">
+              <div key={gi} className="rounded-xl mb-1">
                 <button
                   type="button"
                   onClick={() => toggleGroup(gi)}
@@ -201,7 +203,7 @@ export default function Shell({
 
                 {isOpen && (
                   <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                    {group.items.map(item => {
+                    {group.items.filter(item => !item.superAdminOnly || (session.role === "admin" && (session.post === "President" || session.post === "General Secretary"))).map(item => {
                       const Icon = item.icon;
                       const active = view === item.key;
                       const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
@@ -411,7 +413,7 @@ export default function Shell({
                   const hasActiveItem = group.items.some(item => item.key === view);
 
                   return (
-                    <div key={gi} className="rounded-xl overflow-hidden mb-1">
+                    <div key={gi} className="rounded-xl mb-1">
                       <button
                         type="button"
                         onClick={() => toggleGroup(gi)}
@@ -428,7 +430,7 @@ export default function Shell({
 
                       {isOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                          {group.items.map(item => {
+                          {group.items.filter(item => !item.superAdminOnly || (session.role === "admin" && (session.post === "President" || session.post === "General Secretary"))).map(item => {
                             const Icon = item.icon;
                             const active = view === item.key;
                             return (

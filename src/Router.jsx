@@ -38,6 +38,7 @@ const AdminTickets = lazy(() => import("./screens/admin/Tickets"));
 const AdminModules = lazy(() => import("./screens/admin/Modules"));
 
 const AdminLetters = lazy(() => import("./screens/admin/Letters"));
+const AdminExpenses = lazy(() => import("./screens/admin/Expenses"));
 const PaymentHistory = lazy(() => import("./screens/admin/PaymentHistory"));
 const Handover = lazy(() => import("./screens/Handover"));
 
@@ -107,6 +108,7 @@ export default function Router({
       case "a-activity": return Audit;
       case "a-letters":
       case "letters": return AdminLetters;
+      case "a-expenses": return AdminExpenses;
       case "a-payment-history": return PaymentHistory;
       case "a-modules": return AdminModules;
       case "agm": return AGM;
