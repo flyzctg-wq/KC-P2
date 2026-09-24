@@ -70,6 +70,16 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   const allDues = useMemo(() => db.dues || [], [db.dues]);
   const allExpenses = useMemo(() => db.expenses || [], [db.expenses]);
 
+  // Bolt optimization: Pre-index active residents by ID into an O(1) Map to replace O(N x M) linear scans
+  // during filtering, table rendering, CSV exports, and modal openers.
+  const activeResidentsMap = useMemo(() => {
+    const map = new Map();
+    for (const u of activeResidents) {
+      map.set(u.id, u);
+    }
+    return map;
+  }, [activeResidents]);
+
   // Dynamic Officers Info for Reminders & Invoices
   const treasurerUser = useMemo(() => activeResidents.find(u => u.post === "Treasurer") || { phone: "01787-268864", name: "Golam Sarwar Jony", nameBn: "গোলাম সরোয়ার জনি" }, [activeResidents]);
   const gsUser = useMemo(() => activeResidents.find(u => u.post === "General Secretary") || { phone: "01722-227207", name: "Khalid Hasan", nameBn: "খালিদ হাসান" }, [activeResidents]);
@@ -122,7 +132,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   // Filtered List of Invoices / Dues
   const filteredList = useMemo(() => {
     return allDues.filter(d => {
-      const user = activeResidents.find(u => u.id === d.residentId) || {};
+      const user = activeResidentsMap.get(d.residentId) || {};
       const matchesMonth = selectedMonth === "all" || d.month === selectedMonth;
       const matchesStatus = statusFilter === "all" || d.status === statusFilter;
       const matchesBlock = blockFilter === "all" || user.block === blockFilter;
@@ -137,7 +147,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
         (d.chargeTitle || "").toLowerCase().includes(q);
       return matchesMonth && matchesStatus && matchesBlock && matchesType && matchesSearch;
     });
-  }, [allDues, activeResidents, selectedMonth, statusFilter, blockFilter, chargeTypeFilter, searchQuery]);
+  }, [allDues, activeResidentsMap, selectedMonth, statusFilter, blockFilter, chargeTypeFilter, searchQuery]);
 
   // Toggle selection
   const toggleSelectAll = () => {
@@ -154,7 +164,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
 
   // Open "Bill Receive" Modal
   const openBillReceive = (dueItem) => {
-    const user = activeResidents.find(u => u.id === dueItem.residentId) || {};
+    const user = activeResidentsMap.get(dueItem.residentId) || {};
     setBillReceiveModal({
       ...dueItem,
       resident: user,
@@ -168,7 +178,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
 
   // Open "Generate Invoice" Modal
   const openGenerateInvoice = (dueItem) => {
-    const user = activeResidents.find(u => u.id === dueItem.residentId) || {};
+    const user = activeResidentsMap.get(dueItem.residentId) || {};
     setInvoiceModal({
       ...dueItem,
       resident: user,
@@ -318,7 +328,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   const handleExportCSV = () => {
     const headers = ["Invoice ID", "Member Name", "Unit", "Block", "Mobile Number", "Title", "Month", "Amount (BDT)", "Status", "Payment Date", "Payment Method", "Receipt Ref"];
     const rows = filteredList.map(d => {
-      const u = activeResidents.find(x => x.id === d.residentId) || {};
+      const u = activeResidentsMap.get(d.residentId) || {};
       return [
         d.id,
         `"${u.name || "Unknown"}"`,
@@ -629,7 +639,7 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredList.slice(0, rowsPerPage).map((d, index) => {
-                const member = activeResidents.find(u => u.id === d.residentId) || {};
+                const member = activeResidentsMap.get(d.residentId) || {};
                 const isPaid = d.status === "paid";
                 const isSelected = selectedRows.includes(d.id);
                 const rawPhone = cleanPhone(member.phone);
