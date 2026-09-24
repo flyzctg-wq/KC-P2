@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Search, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User, FileText, Home, Building, Printer, Shield } from "lucide-react";
+import { Search, X, Phone, Mail, MessageCircle, Eye, Droplet, Award, Calendar, ShieldCheck, MapPin, Briefcase, User, FileText, Home, Building, Printer, Shield } from "lucide-react";
 import { Card, Badge, Btn, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C, BLOCKS, BADGE_CATALOG, BADGE_ICONS } from "../theme";
 import { cleanPhone, fmtDate, sortByMemberCode, sanitizeUrl } from "../utils";
@@ -46,8 +46,17 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
             onChange={e => setQ(e.target.value)}
             placeholder={isBn ? "নাম, কোড, ইউনিট, মোবাইল নম্বর বা পদবী দিয়ে অনুসন্ধান…" : "Search by name, code, unit, phone or post…"}
             style={inputStyle()}
-            className={inputCls + " pl-9"}
+            className={inputCls + (q ? " pl-9 pr-9" : " pl-9")}
           />
+          {q && (
+            <button
+              onClick={() => setQ("")}
+              aria-label={isBn ? "অনুসন্ধান মুছুন" : "Clear search"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
         <select
           value={block}
