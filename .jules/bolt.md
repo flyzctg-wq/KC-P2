@@ -21,3 +21,7 @@
 ## 2026-09-13 - Memoizing Support Tickets & Notice Sorting in Admin & Member Screens
 **Learning:** `src/screens/Tickets.jsx`, `src/screens/admin/Tickets.jsx`, and `src/screens/admin/Notices.jsx` re-sorted tickets and notices using `new Date()` construction on every render. Toggling response modals, attachment file upload/preview, typing comments, or toggling bulletin states caused redundant array allocation and sorting.
 **Action:** Wrap sorted/filtered ticket arrays and notice arrays in `useMemo` blocks with `[db.tickets, session.id]`, `[db.tickets]`, and `[db?.notices]` dependencies.
+
+## 2026-09-14 - Pre-indexing Active Residents Lookup Map in Admin Dues
+**Learning:** `AdminDues` in `src/screens/admin/Dues.jsx` called `activeResidents.find(u => u.id === d.residentId)` repeatedly inside `allDues.filter`, table `.map` rendering, `handleExportCSV`, and modal handlers, creating an $O(N \times M)$ linear search overhead on every search query character or filter change.
+**Action:** Pre-index `activeResidents` into an $O(1)$ `Map` (`activeResidentsMap`) wrapped in `useMemo([activeResidents])` to reduce filtering and table lookup operations to $O(N + M)$.
