@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Plus, Trash2, Edit3, Zap, Siren, AlertTriangle,
   Clock, Radio, CheckCircle2, XCircle
@@ -13,7 +13,12 @@ export default function AdminNotices({ session, db, persist, toast, logActivity,
   const [editingNotice, setEditingNotice] = useState(null);
 
   const canManage = session.permissions?.canManageNotices || session.role === "admin";
-  const sorted = [...(db?.notices || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Bolt Optimization: Memoize notice sorting to prevent array re-allocation and Date object recreation during form inputs or modal toggles
+  const sorted = useMemo(
+    () => [...(db?.notices || [])].sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [db?.notices]
+  );
 
   // Compute expiry ISO from duration hours or custom expiry
   const computeExpiry = (durationOption, customDate) => {
