@@ -162,12 +162,22 @@ export function SectionTitle({ children, action }) {
 
 export function Toasts({ toasts }) {
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 items-end pointer-events-none">
+    <div
+      role="region"
+      aria-label="Notifications"
+      aria-live="polite"
+      aria-relevant="additions"
+      className="fixed top-4 right-4 z-[100] flex flex-col gap-2 items-end pointer-events-none"
+    >
       {toasts.map(t => (
-        <div key={t.id} style={{ backgroundColor: t.type === "error" ? C.error : C.primary, color: t.type === "error" ? "#fff" : C.onPrimary }}
-          className="px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xl flex items-center gap-2 animate-[fadeIn_0.2s_ease]">
-          {t.type === "error" ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
-          {t.msg}
+        <div
+          key={t.id}
+          role={t.type === "error" ? "alert" : "status"}
+          style={{ backgroundColor: t.type === "error" ? C.error : C.primary, color: t.type === "error" ? "#fff" : C.onPrimary }}
+          className="px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xl flex items-center gap-2 animate-[fadeIn_0.2s_ease] pointer-events-auto"
+        >
+          {t.type === "error" ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle2 size={15} aria-hidden="true" />}
+          <span>{t.msg}</span>
         </div>
       ))}
     </div>
