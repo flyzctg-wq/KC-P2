@@ -4,7 +4,7 @@ import {
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
   FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown, LayoutGrid, TrendingDown,
-  Power
+  Power, MapPin
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
 import { C, LOGO_MARK, APP_VERSION } from "../theme";
@@ -97,6 +97,7 @@ const ADMIN_NAV_GROUPS = [
       { key: "badges", label: "badges", icon: Award },
       { key: "budget", label: "budget", icon: PieChart },
       { key: "audit", label: "log", icon: FileSearch },
+      { key: "a-map-landmarks", label: "mapLandmarks", icon: MapPin, mapAdminOnly: true },
     ],
   },
   {
@@ -135,6 +136,13 @@ export default function Shell({
 }) {
   const isAdmin = session?.role === "admin";
   const isSuperAdmin = isAdmin && (session?.post === "President" || session?.post === "General Secretary");
+  // Officer-in-Charge: can manage map landmarks (same as Super Admin for map editing)
+  const isOIC = isAdmin && (
+    session?.post === "President" ||
+    session?.post === "General Secretary" ||
+    session?.post === "Officer-in-Charge" ||
+    session?.post === "Joint Secretary"
+  );
   const nav = isAdmin ? ADMIN_NAV : RESIDENT_NAV;
   const rawBottomNav = isAdmin ? ADMIN_BOTTOM_NAV : RESIDENT_BOTTOM_NAV;
   const bottomNav = rawBottomNav.filter(item => isNavKeyEnabled(moduleFlags, item.key));
@@ -193,9 +201,11 @@ export default function Shell({
             const hasActiveItem = group.items.some(item => item.key === view);
 
             // Filter items: superAdminOnly items only shown to super-admin;
+            // mapAdminOnly items shown to super-admin or OIC;
             // disabled modules hidden from navigation
             const visibleItems = group.items.filter(item => {
               if (item.superAdminOnly && !isSuperAdmin) return false;
+              if (item.mapAdminOnly && !isOIC) return false;
               if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
               return true;
             });
@@ -448,6 +458,7 @@ export default function Shell({
 
                   const visibleItems = group.items.filter(item => {
                     if (item.superAdminOnly && !isSuperAdmin) return false;
+                    if (item.mapAdminOnly && !isOIC) return false;
                     if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
                     return true;
                   });

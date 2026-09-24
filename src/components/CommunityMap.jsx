@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
@@ -15,63 +15,18 @@ export const KUNJACHAYA_MAP_URL = "https://www.google.com/maps/place/Kunjachaya+
 export const KUNJACHAYA_COORDS = { lat: 22.3810056, lng: 91.8165975 };
 export const KUNJACHAYA_DIRECTIONS_URL = `https://www.google.com/maps/dir/?api=1&destination=${KUNJACHAYA_COORDS.lat},${KUNJACHAYA_COORDS.lng}`;
 
-// Community landmarks inside Kunjachaya Residential Area
-const COMMUNITY_LANDMARKS = [
-  {
-    id: "office",
-    nameEn: "Society Office & Clubhouse",
-    nameBn: "সোসাইটি অফিস ও ক্লাব ভবন",
-    lat: 22.3810056,
-    lng: 91.8165975,
-    icon: "🏢",
-    color: "#059669",
-    type: "office"
-  },
-  {
-    id: "gate1",
-    nameEn: "Gate 1 (Main Entrance - Bayezid Road)",
-    nameBn: "১নং গেট (প্রধান প্রবেশদ্বার - বায়েজীদ রোড)",
-    lat: 22.38138,
-    lng: 91.81615,
-    icon: "🚪",
-    color: "#d97706",
-    type: "gate"
-  },
-  {
-    id: "gate2",
-    nameEn: "Gate 2 (West Exit / Ring Road access)",
-    nameBn: "২নং গেট (পশ্চিম নির্গমন / রিং রোড)",
-    lat: 22.38068,
-    lng: 91.81592,
-    icon: "🚪",
-    color: "#d97706",
-    type: "gate"
-  },
-  {
-    id: "mosque",
-    nameEn: "Kunjachaya Jamia Mosque",
-    nameBn: "কুঞ্জছায়া জামে মসজিদ",
-    lat: 22.38125,
-    lng: 91.81682,
-    icon: "🕌",
-    color: "#0284c7",
-    type: "mosque"
-  },
-  {
-    id: "park",
-    nameEn: "Community Park & Children Playground",
-    nameBn: "কমিউনিটি পার্ক ও শিশু খেলার মাঠ",
-    lat: 22.38148,
-    lng: 91.81710,
-    icon: "🌳",
-    color: "#16a34a",
-    type: "park"
-  },
+// Default hardcoded landmarks — used as fallback when Supabase has no data yet
+const DEFAULT_LANDMARKS = [
+  { id: "office",  nameEn: "Society Office & Clubhouse",           nameBn: "সোসাইটি অফিস ও ক্লাব ভবন",                    lat: 22.3810056, lng: 91.8165975, icon: "🏢", color: "#059669", type: "office" },
+  { id: "gate1",   nameEn: "Gate 1 (Main Entrance - Bayezid Road)", nameBn: "১নং গেট (প্রধান প্রবেশদ্বার - বায়েজীদ রোড)", lat: 22.38138,   lng: 91.81615,   icon: "🚪", color: "#d97706", type: "gate"   },
+  { id: "gate2",   nameEn: "Gate 2 (West Exit / Ring Road access)", nameBn: "২নং গেট (পশ্চিম নির্গমন / রিং রোড)",          lat: 22.38068,   lng: 91.81592,   icon: "🚪", color: "#d97706", type: "gate"   },
+  { id: "mosque",  nameEn: "Kunjachaya Jamia Mosque",               nameBn: "কুঞ্জছায়া জামে মসজিদ",                         lat: 22.38125,   lng: 91.81682,   icon: "🕌", color: "#0284c7", type: "mosque" },
+  { id: "park",    nameEn: "Community Park & Children Playground",  nameBn: "কমিউনিটি পার্ক ও শিশু খেলার মাঠ",             lat: 22.38148,   lng: 91.81710,   icon: "🌳", color: "#16a34a", type: "park"   },
   { id: "blockA", nameEn: "Block A", nameBn: "ব্লক এ", lat: 22.38155, lng: 91.81640, icon: "🅰️", color: "#6366f1", type: "block" },
   { id: "blockB", nameEn: "Block B", nameBn: "ব্লক বি", lat: 22.38118, lng: 91.81605, icon: "🅱️", color: "#6366f1", type: "block" },
-  { id: "blockC", nameEn: "Block C", nameBn: "ব্লক সি", lat: 22.38078, lng: 91.81665, icon: "🅲", color: "#6366f1", type: "block" },
-  { id: "blockD", nameEn: "Block D", nameBn: "ব্লক ডি", lat: 22.38058, lng: 91.81715, icon: "🅳", color: "#6366f1", type: "block" },
-  { id: "blockE", nameEn: "Block E", nameBn: "ব্লক ই", lat: 22.38115, lng: 91.81740, icon: "🅴", color: "#6366f1", type: "block" },
+  { id: "blockC", nameEn: "Block C", nameBn: "ব্লক সি", lat: 22.38078, lng: 91.81665, icon: "🅲",  color: "#6366f1", type: "block" },
+  { id: "blockD", nameEn: "Block D", nameBn: "ব্লক ডি", lat: 22.38058, lng: 91.81715, icon: "🅳",  color: "#6366f1", type: "block" },
+  { id: "blockE", nameEn: "Block E", nameBn: "ব্লক ই", lat: 22.38115, lng: 91.81740, icon: "🅴",  color: "#6366f1", type: "block" },
 ];
 
 // Helper: Calculate Haversine distance in km
@@ -113,6 +68,9 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   const [copied, setCopied] = useState(false);
   const [filterMode, setFilterMode] = useState("all"); // "all", "members", "landmarks"
 
+  // Dynamic landmarks loaded from Supabase (falls back to DEFAULT_LANDMARKS)
+  const [landmarks, setLandmarks] = useState(DEFAULT_LANDMARKS);
+
   // Private GPS "Locate Me" state
   const [myLocation, setMyLocation] = useState(null); // { lat, lng, accuracy }
   const [locating, setLocating] = useState(false);
@@ -139,6 +97,31 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   const watchIdRef = useRef(null);
 
   const isSecurityOrAdmin = session?.role === "admin" || session?.post === "Security Guard" || session?.post === "Security";
+
+  // --------------------------------------------------------------------------
+  // 0. Load Dynamic Landmarks from Supabase
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("app_config")
+          .select("value")
+          .eq("key", "kc_map_landmarks")
+          .maybeSingle();
+        if (!active) return;
+        if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
+          // Only show non-hidden landmarks on the map
+          setLandmarks(data.value.filter(lm => !lm.hidden));
+        }
+        // else: keep DEFAULT_LANDMARKS
+      } catch (_) {
+        // Silently fall back to defaults on network/permission error
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   // --------------------------------------------------------------------------
   // 1. Initialize Leaflet Map
@@ -228,7 +211,7 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
 
     if (filterMode === "members") return; // Hidden if filtered to only members
 
-    COMMUNITY_LANDMARKS.forEach((item) => {
+    landmarks.forEach((item) => {
       const name = isBn ? item.nameBn : item.nameEn;
 
       // Custom SVG / HTML divIcon
@@ -268,7 +251,7 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       marker.bindPopup(popupHtml);
       group.addLayer(marker);
     });
-  }, [filterMode, isBn]);
+  }, [filterMode, isBn, landmarks]);
 
   // --------------------------------------------------------------------------
   // 4. Supabase Realtime Presence Channel for Community Live Location

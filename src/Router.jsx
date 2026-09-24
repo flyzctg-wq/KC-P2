@@ -41,6 +41,7 @@ const AdminLetters = lazy(() => import("./screens/admin/Letters"));
 const AdminExpenses = lazy(() => import("./screens/admin/Expenses"));
 const PaymentHistory = lazy(() => import("./screens/admin/PaymentHistory"));
 const Handover = lazy(() => import("./screens/Handover"));
+const AdminMapLandmarks = lazy(() => import("./screens/admin/MapLandmarks"));
 
 function ScreenFallback() {
   return (
@@ -111,6 +112,7 @@ export default function Router({
       case "a-expenses": return AdminExpenses;
       case "a-payment-history": return PaymentHistory;
       case "a-modules": return AdminModules;
+      case "a-map-landmarks": return AdminMapLandmarks;
       case "agm": return AGM;
       case "amendments": return Amendments;
       case "hotlines": return Hotlines;
