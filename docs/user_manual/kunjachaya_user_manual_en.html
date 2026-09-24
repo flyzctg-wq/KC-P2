@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kunjachaya Club - User Manual</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@page {
+  size: A4;
+  margin: 16mm 14mm 16mm 14mm;
+  @bottom-right {
+    content: counter(page);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Hind Siliguri', 'Segoe UI', 'SolaimanLipi', 'Kalpurush', sans-serif;
+  color: #1e293b;
+  background: #ffffff;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.cover-page {
+  page-break-after: always;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 20px;
+  border: 2px solid #10b981;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #f0fdf4 0%, #ffffff 50%, #f8fafc 100%);
+  position: relative;
+}
+
+.cover-badge {
+  display: inline-block;
+  background: #059669;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  margin-bottom: 20px;
+}
+
+.cover-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #064e3b;
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+
+.cover-subtitle {
+  font-size: 17px;
+  color: #047857;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.cover-desc {
+  font-size: 13.5px;
+  color: #475569;
+  max-width: 580px;
+  line-height: 1.65;
+}
+
+.cover-meta {
+  border-top: 1px solid #cbd5e1;
+  padding-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  font-size: 12px;
+}
+
+.cover-meta strong {
+  color: #0f172a;
+}
+
+.page {
+  page-break-after: always;
+  padding: 10px 0;
+}
+
+.page:last-child {
+  page-break-after: avoid;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #064e3b;
+  border-bottom: 2px solid #10b981;
+  padding-bottom: 6px;
+  margin-top: 18px;
+  margin-bottom: 14px;
+  page-break-after: avoid;
+}
+
+h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  page-break-after: avoid;
+}
+
+h2::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 16px;
+  background: #10b981;
+  border-radius: 2px;
+}
+
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  page-break-after: avoid;
+}
+
+p {
+  margin-bottom: 9px;
+  color: #334155;
+  text-align: justify;
+}
+
+ul, ol {
+  margin-left: 20px;
+  margin-bottom: 10px;
+  color: #334155;
+}
+
+li {
+  margin-bottom: 4px;
+}
+
+.box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #059669;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  font-size: 12.5px;
+}
+
+.box.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  border-left-color: #d97706;
+}
+
+.box.info {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  border-left-color: #10b981;
+}
+
+.box.admin {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+  border-left-color: #7c3aed;
+}
+
+.box-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #0f172a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 12px;
+}
+
+th, td {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  text-align: left;
+}
+
+th {
+  background: #064e3b;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-emerald { background: #d1fae5; color: #065f46; }
+.badge-purple { background: #ede9fe; color: #5b21b6; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.card-title {
+  font-weight: 700;
+  color: #064e3b;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.footer-nav {
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+}
+</style>
+</head>
+<body>
+  
+  <div class="cover-page">
+    <div>
+      <span class="cover-badge">Official Documentation • v2.4</span>
+      <h1 class="cover-title">KUNJACHAYA CLUB</h1>
+      <div class="cover-subtitle">Complete Mobile & Web Application User Manual</div>
+      <p class="cover-desc">
+        A comprehensive guide for Residents, General Members, Executive Committee Officers, and Super Administrators of Kunjachaya Housing Society.
+        Includes interactive navigation, live community map, dues management, voting, digital letterhead, and system configuration.
+      </p>
+    </div>
+    <div class="cover-meta">
+      <div>
+        <strong>Application:</strong> Kunjachaya Mobile PWA<br>
+        <strong>Platform:</strong> Android (Capacitor) & Modern Web<br>
+        <strong>Backend:</strong> Supabase PostgreSQL (Realtime & RLS)
+      </div>
+      <div>
+        <strong>Target Audience:</strong> Residents & Administrative Council<br>
+        <strong>Supported Languages:</strong> English & Bengali (বাংলা)<br>
+        <strong>Published:</strong> September 2026
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+    <h1>1. System Overview & Getting Started</h1>
+    
+    <h2>1.1 About Kunjachaya Club App</h2>
+    <p>
+      The Kunjachaya Club Application is an all-in-one digital governance and community portal built specifically for the residents and governing committee of Kunjachaya Housing Society. It unites communications, billing, emergency services, democratic elections, official notices, and interactive mapping into a high-performance progressive web application.
+    </p>
+
+    <h2>1.2 Installation & Device Support</h2>
+    <ul>
+      <li><strong>Android App (APK / Play Store):</strong> Native Android application powered by Capacitor with push notifications and local offline caching.</li>
+      <li><strong>Progressive Web App (PWA):</strong> Open in Chrome or Safari on any smartphone or desktop, tap <em>"Add to Home Screen"</em> to install without app store download.</li>
+      <li><strong>Responsive Web:</strong> Operates seamlessly across desktop monitors, tablets, and handheld devices.</li>
+    </ul>
+
+    <h2>1.3 User Roles & Permission Hierarchy</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User Role</th>
+          <th>Designations</th>
+          <th>Key Privileges</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-emerald">Resident</span></td>
+          <td>Flat Owners, Tenants, Family Members</td>
+          <td>Access home dashboard, view notices, pay dues, download receipts, report complaints, use blood bank, view community map & share live location, participate in polls & secret ballot elections.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">Committee Officer</span></td>
+          <td>Vice-President, Joint Secretary, Treasurer, Organizing Sec., etc.</td>
+          <td>Manage specific portfolios: financial vouchers, complaints tracking, notice publication, membership verifications according to constitutional powers.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-amber">Officer-in-Charge</span></td>
+          <td>Officer-in-Charge, Joint Secretary</td>
+          <td>Full access to <strong>Map Landmarks Management</strong> (add/edit GPS coordinates, icons, color codes), community event coordination.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-purple">Super Admin</span></td>
+          <td>President, General Secretary</td>
+          <td>Highest tier (Article 17). Dynamic Module Toggle (turn entire tabs on/off), full member invitations, officer appointment, map landmark editing, official letters generator, EC handover.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="box info">
+      <div class="box-title">Bilingual & Theme Support</div>
+      Switch between <strong>English</strong> and <strong>বাংলা</strong> anytime using the language toggle in the top-right header or Profile screen. Dark Mode, Light Mode, and System Theme preferences are saved locally.
+    </div>
+  </div>
+
+  <div class="page">
+    <h1>2. Resident & Member Guide</h1>
+
+    <h2>2.1 Home Dashboard & Quick Access</h2>
+    <p>
+      Upon signing in, residents arrive at the Home Dashboard, which highlights:
+    </p>
+    <ul>
+      <li><strong>Active Alerts & Pinned Circulars:</strong> Critical security notices, water/electricity outage alerts.</li>
+      <li><strong>Monthly Dues Status:</strong> Quick card showing pending dues and one-tap payment options.</li>
+      <li><strong>Quick Actions:</strong> Shortcuts to Emergency Hotlines, Blood Bank, Maintenance Complaints, and Map.</li>
+    </ul>
+
+    <h2>2.2 Interactive Community Map & Live Location</h2>
+    <p>
+      The <strong>Community Map</strong> provides an interactive Leaflet-powered satellite/street map of the entire Kunjachaya society boundary:
+    </p>
+    <ul>
+      <li><strong>Landmarks & Facilities:</strong> Browse custom markers including the Central Mosque, Club House, Main Gate, Sub-Gates, Children's Play Zone, Waste Drop Points, and Water Pump House.</li>
+      <li><strong>Pin Details & Directions:</strong> Tap any landmark icon to read its details, operating hours, and tap <em>"Get Directions"</em> to open Google Maps turn-by-turn navigation directly to the landmark.</li>
+      <li><strong>Live Location Sharing:</strong> Tap <em>"Share My Live Location"</em> to broadcast your real-time position within the society. Ideal for emergencies, delivery guides, or event gatherings. Your battery level and timestamp are safely displayed. You can turn off sharing anytime with a single tap.</li>
+    </ul>
+
+    <h2>2.3 Financials, Dues & Verified Receipts</h2>
+    <ul>
+      <li><strong>Dues Breakdown:</strong> View monthly society maintenance fees, security charges, and utility dues.</li>
+      <li><strong>Payment Gateways:</strong> Pay through digital channels (bKash, Nagad, Bank Deposit) or record cash handed to the Treasurer.</li>
+      <li><strong>Official Stamped Receipts:</strong> Instantly generate and print or download official payment receipts equipped with verification QR codes and presidential signatures.</li>
+    </ul>
+
+    <h2>2.4 Emergency Services & Blood Bank</h2>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Emergency Hotlines</div>
+        <p>Direct 1-tap dialer for Society Security Gate, On-duty Electrician, Plumber, President, Local Police Station, and Fire Brigade.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Community Blood Bank</div>
+        <p>Search resident volunteer donors by blood group (A+, B+, O+, AB+, etc.) with direct contact buttons for urgent medical emergencies.</p>
+      </div>
+    </div>
+
+    <h2>2.5 Maintenance Complaints & Service Tickets</h2>
+    <p>
+      Encounter an electrical malfunction, water leakage, or cleanliness issue? Submit a ticket under <strong>Tickets / Complaints</strong>:
+    </p>
+    <ol>
+      <li>Click <em>"New Complaint"</em> and choose the issue category.</li>
+      <li>Enter flat number, issue description, and attach photos if required.</li>
+      <li>Track progress in real time as the committee assigns maintenance personnel and marks it <strong>Resolved</strong>.</li>
+    </ol>
+  </div>
+
+  <div class="page">
+    <h1>3. Governance, Elections & Community Features</h1>
+
+    <h2>3.1 Democratic Secret Ballot Elections</h2>
+    <p>
+      The Kunjachaya constitution mandates fair and digital elections for Executive Committee terms:
+    </p>
+    <ul>
+      <li><strong>Voter Eligibility:</strong> Verified active members in good financial standing receive digital ballot access.</li>
+      <li><strong>Secret Ballot:</strong> Each member casts 1 encrypted vote per candidate seat. Results are stored with cryptographic integrity.</li>
+      <li><strong>Candidate Profiles:</strong> Review candidates, photos, and election manifestos before voting.</li>
+      <li><strong>Real-time Counting:</strong> When the Election Commission closes voting, verified vote counts and winning candidate declarations are published instantly.</li>
+    </ul>
+
+    <h2>3.2 Annual General Meeting (AGM) & Resolutions</h2>
+    <p>
+      Access upcoming AGM schedules, digital agenda booklets, financial audit reports, and vote on formal constitutional amendments online.
+    </p>
+
+    <h2>3.3 Constitution & Bylaws</h2>
+    <p>
+      A complete, searchable repository of all 20+ articles of the Kunjachaya Society Constitution in both English and Bengali, including officer role guidelines, quorum rules, and disciplinary procedures.
+    </p>
+
+    <h2>3.4 Community Chat & Events</h2>
+    <ul>
+      <li><strong>Discussion Forum:</strong> Engage with neighbors in moderated topic threads.</li>
+      <li><strong>Society Events & RSVP:</strong> View community picnics, sports tournaments, Eid celebrations, and register attendee headcounts for catering.</li>
+    </ul>
+  </div>
+
+  <div class="page">
+    <h1>4. Administrator & Executive Committee Guide</h1>
+
+    <h2>4.1 Navigation Structure</h2>
+    <p>
+      Admins have access to an expanded navigation drawer grouped into 5 collapsible categories:
+    </p>
+    <ul>
+      <li><strong>Management (ব্যবস্থাপনা):</strong> Executive Dashboard, Members, Financials, Payment History, Expenses, App Modules.</li>
+      <li><strong>Communication (যোগাযোগ):</strong> Community Chat, Notice Board, Official Letters, Hotlines.</li>
+      <li><strong>Governance (পরিচালনা):</strong> Elections Manager, AGM, Constitutional Amendments, Officers, Handover.</li>
+      <li><strong>Community (সম্প্রদায়):</strong> Blood Bank, Events, Badges, Budget, Audit Log, <strong>Map Landmarks</strong>.</li>
+      <li><strong>Account (অ্যাকাউন্ট):</strong> Support Tickets, Profile, System Settings.</li>
+    </ul>
+
+    <h2>4.2 Managing Community Map Landmarks (Super Admin & OIC)</h2>
+    <div class="box admin">
+      <div class="box-title">Access Route: Admin Drawer → Community → Map Landmarks</div>
+      Authorized: <strong>President, General Secretary, Joint Secretary, Officer-in-Charge</strong>.
+    </div>
+    <p>This dedicated screen allows administrators to configure society map pins without writing code:</p>
+    <ul>
+      <li><strong>Add New Landmark:</strong> Enter Title (EN & BN), Category (Mosque, Gate, Park, Utility, etc.), GPS Latitude and Longitude.</li>
+      <li><strong>Icon & Color Picker:</strong> Choose from 28 custom emoji icons and 15 curated color palettes.</li>
+      <li><strong>Google Maps Preview:</strong> Click the preview button to verify exact coordinates on satellite imagery before saving.</li>
+      <li><strong>Show / Hide Toggle:</strong> Temporarily hide seasonal landmarks (e.g. temporary Eid stalls) without deleting them.</li>
+      <li><strong>Save to Database:</strong> Saves to Supabase <code>app_config</code> and instantly pushes updates to all residents via Realtime.</li>
+      <li><strong>Reset to Defaults:</strong> One-tap button to restore the original 10 verified society landmarks.</li>
+    </ul>
+
+    <h2>4.3 Super Admin Module Toggle System</h2>
+    <p>
+      Located under <strong>Admin Drawer → Management → App Modules</strong> (Super Admin Only: President / General Secretary):
+    </p>
+    <ul>
+      <li>Turn individual modules ON or OFF with a single toggle switch (e.g. disable Elections between terms, disable Chat during maintenance).</li>
+      <li>Disabled modules are instantly hidden from navigation drawers and protected by security routers for all non-admin users.</li>
+    </ul>
+
+    <h2>4.4 Official Letterhead & Notices Generator</h2>
+    <p>
+      Under <strong>Admin Drawer → Communication → Official Letters</strong>:
+    </p>
+    <ul>
+      <li>Issue formal letters, circulars, meeting notices, and warning letters with pre-formatted society header, emblem, reference number, and date.</li>
+      <li>Digitally signed by President / General Secretary.</li>
+      <li>One-click <em>"Print / PDF"</em> to generate clean printable documents.</li>
+    </ul>
+
+    <h2>4.5 Financial Management & Expense Vouchers</h2>
+    <ul>
+      <li><strong>Billing:</strong> Batch-generate monthly subscription invoices for all flats.</li>
+      <li><strong>Expense Tracker:</strong> Record utility bills, security guard wages, cleaning supplies, and repair invoices.</li>
+      <li><strong>Approval Workflow:</strong> Expenses require Presidential sign-off before closing accounts.</li>
+    </ul>
+  </div>
+
+  <div class="page">
+    <h1>5. Troubleshooting & Security Best Practices</h1>
+    
+    <h2>5.1 Location & GPS Permissions</h2>
+    <ul>
+      <li>Ensure <strong>Location Access (Precise / High Accuracy)</strong> is allowed in your phone browser settings (Chrome/Safari) or Android App permissions.</li>
+      <li>If coordinates do not update on the Community Map, verify that your device GPS is switched on.</li>
+    </ul>
+
+    <h2>5.2 Account Security</h2>
+    <ul>
+      <li>Never share your committee or resident login password.</li>
+      <li>Use the <em>"Change Password"</em> option in Profile to update credentials regularly.</li>
+      <li>If an officer steps down, the Super Admin must update their role in <strong>Members → Committee Appointment</strong> (Article 17) to revoke admin privileges immediately.</li>
+    </ul>
+
+    <div class="box warning">
+      <div class="box-title">Support & Inquiries</div>
+      For technical assistance or society inquiries, contact the Kunjachaya Executive Committee office or reach the technical team via the in-app Support Tickets.
+    </div>
+
+    <div class="footer-nav">
+      Kunjachaya Club (কুঞ্জছায়া ক্লাব) • Official User Manual • All Rights Reserved © 2026
+    </div>
+  </div>
+  
+</body>
+</html>

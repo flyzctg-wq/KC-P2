@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import {
   Settings, Bell, Type, Moon, Sun, Laptop, Globe, Volume2, VolumeX,
   Smartphone, Trash2, RefreshCw, ShieldCheck, CheckCircle2, Sliders,
-  Info, HardDrive, Wifi, Lock, Zap, Sparkles, SmartphoneCharging, BellRing
+  Info, HardDrive, Wifi, Lock, Zap, Sparkles, SmartphoneCharging, BellRing,
+  BookOpen, FileDown
 } from "lucide-react";
 import { Btn, Card, Badge, Field, SectionTitle, Modal } from "../components/primitives";
 import { C, APP_VERSION } from "../theme";
@@ -454,6 +455,57 @@ export default function SettingsScreen({
             <span className="font-bold flex items-center gap-1 text-emerald-500">
               <CheckCircle2 size={13} /> Connected (PostgreSQL)
             </span>
+          </div>
+        </Card>
+      </div>
+
+      {/* ── SECTION 5: USER MANUAL (BILINGUAL PDF) ───────────── */}
+      <div className="space-y-3">
+        <h4 className="text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5" style={{ color: C.primary }}>
+          <BookOpen size={14} />
+          <span>{isBn ? "ব্যবহার নির্দেশিকা ও গাইড (PDF)" : "User Manual & Documentation (PDF)"}</span>
+        </h4>
+
+        <Card className="p-4 space-y-3 border" style={{ borderColor: C.outlineVariant }}>
+          <p className="text-xs" style={{ color: C.onSurfaceVariant }}>
+            {isBn
+              ? "কুঞ্জছায়া ক্লাবের সকল মডিউল, চাঁদার রসিদ, কমিউনিটি ম্যাপ, ল্যান্ডমার্ক ও অ্যাডমিন পরিচালনার পূর্ণাঙ্গ ব্যবহার নির্দেশিকা ডাউনলোড করুন:"
+              : "Download the complete official user guide for Kunjachaya Club modules, community map, dues, and admin controls:"}
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <a
+              href="/docs/Kunjachaya_Club_User_Manual_Bengali.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              download="Kunjachaya_Club_User_Manual_Bengali.pdf"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-colors bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-300 shadow-sm"
+            >
+              <FileDown size={15} />
+              <span>{isBn ? "বাংলা নির্দেশিকা (PDF)" : "Bengali Manual (PDF)"}</span>
+            </a>
+
+            <a
+              href="/docs/Kunjachaya_Club_User_Manual_English.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              download="Kunjachaya_Club_User_Manual_English.pdf"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-colors bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300 shadow-sm"
+            >
+              <FileDown size={15} />
+              <span>{isBn ? "ইংরেজি নির্দেশিকা (PDF)" : "English Manual (PDF)"}</span>
+            </a>
+
+            <a
+              href="/docs/Kunjachaya_Club_User_Manual_Bilingual.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              download="Kunjachaya_Club_User_Manual_Bilingual.pdf"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-colors bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-800 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300 shadow-sm"
+            >
+              <FileDown size={15} />
+              <span>{isBn ? "দ্বিভাষিক পূর্ণাঙ্গ (PDF)" : "Full Bilingual (PDF)"}</span>
+            </a>
           </div>
         </Card>
       </div>
