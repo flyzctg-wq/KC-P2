@@ -40,9 +40,14 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
   const [activeEmojiMenuMsgId, setActiveEmojiMenuMsgId] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
   const [showGuidelines, setShowGuidelines] = useState(() => {
-    return localStorage.getItem("kc_chat_guidelines_hidden") !== "true";
+    try {
+      return localStorage.getItem("kc_chat_guidelines_hidden") !== "true";
+    } catch (_) {
+      return false;
+    }
   });
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -139,44 +144,49 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
   // Send message handler
   const send = () => {
-    if (!text.trim()) return;
+    if (!text.trim() || sending) return;
+    setSending(true);
 
-    let payloadText = text.trim();
+    try {
+      let payloadText = text.trim();
 
-    // Attach reply quote if replying
-    if (replyingTo) {
-      const snippet = replyingTo.cleanBody.length > 50 ? replyingTo.cleanBody.slice(0, 50) + "…" : replyingTo.cleanBody;
-      payloadText = `> ${replyingTo.userName}: ${snippet}\n\n${payloadText}`;
+      // Attach reply quote if replying
+      if (replyingTo) {
+        const snippet = replyingTo.cleanBody.length > 50 ? replyingTo.cleanBody.slice(0, 50) + "…" : replyingTo.cleanBody;
+        payloadText = `> ${replyingTo.userName}: ${snippet}\n\n${payloadText}`;
+      }
+
+      // Attach topic tag if inside a specific topic filter
+      if (topicFilter !== "all" && !payloadText.startsWith("[#")) {
+        const tagCapitalized = topicFilter.charAt(0).toUpperCase() + topicFilter.slice(1);
+        payloadText = `[#${tagCapitalized}] ${payloadText}`;
+      }
+
+      playTapSound("send");
+
+      persist(d => ({
+        ...d,
+        chatMessages: [
+          ...(d.chatMessages || []),
+          {
+            id: uid("chat"),
+            channel,
+            userId: session.id,
+            userName: session.name,
+            text: payloadText,
+            date: nowISO(),
+            reactions: {},
+          }
+        ]
+      }));
+
+      setText("");
+      setReplyingTo(null);
+      setShowEmojiPicker(false);
+      setTimeout(scrollToBottom, 50);
+    } finally {
+      setTimeout(() => setSending(false), 200);
     }
-
-    // Attach topic tag if inside a specific topic filter
-    if (topicFilter !== "all" && !payloadText.startsWith("[#")) {
-      const tagCapitalized = topicFilter.charAt(0).toUpperCase() + topicFilter.slice(1);
-      payloadText = `[#${tagCapitalized}] ${payloadText}`;
-    }
-
-    playTapSound("send");
-
-    persist(d => ({
-      ...d,
-      chatMessages: [
-        ...(d.chatMessages || []),
-        {
-          id: uid("chat"),
-          channel,
-          userId: session.id,
-          userName: session.name,
-          text: payloadText,
-          date: nowISO(),
-          reactions: {},
-        }
-      ]
-    }));
-
-    setText("");
-    setReplyingTo(null);
-    setShowEmojiPicker(false);
-    setTimeout(scrollToBottom, 50);
   };
 
   // Toggle emoji reaction
@@ -226,7 +236,9 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
   const dismissGuidelines = () => {
     setShowGuidelines(false);
-    localStorage.setItem("kc_chat_guidelines_hidden", "true");
+    try {
+      localStorage.setItem("kc_chat_guidelines_hidden", "true");
+    } catch (_) {}
   };
 
   // Lookup member details from userMap
@@ -719,7 +731,7 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
             className={inputCls + " flex-1"}
           />
 
-          <Btn size="md" icon={Send} onClick={send}>
+          <Btn size="md" icon={Send} onClick={send} disabled={!text.trim() || sending}>
             {isBn ? "পাঠান" : "Send"}
           </Btn>
         </div>

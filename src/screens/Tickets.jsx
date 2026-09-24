@@ -10,6 +10,7 @@ import { uid, nowISO, fmtDate, sanitizeUrl } from "../utils";
 export default function Tickets({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [form, setForm] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [mediaPreviewModal, setMediaPreviewModal] = useState(null); // { type: 'image'|'video', url: '', name: '' }
 
   // Bolt Optimization: Memoize resident tickets filtering & sorting to avoid redundant Date parsing and array allocations on modal/preview state updates
@@ -19,34 +20,39 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
   );
 
   const submit = (subject, category, description, attachments = []) => {
-    if (!subject.trim() || !description.trim()) return;
-    const newTicket = {
-      id: uid("tk"),
-      residentId: session.id,
-      residentName: session.name,
-      subject,
-      category,
-      description,
-      attachments,
-      status: "open",
-      response: "",
-      date: nowISO()
-    };
+    if (!subject.trim() || !description.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const newTicket = {
+        id: uid("tk"),
+        residentId: session?.id,
+        residentName: session?.name || "Resident",
+        subject,
+        category,
+        description,
+        attachments,
+        status: "open",
+        response: "",
+        date: nowISO()
+      };
 
-    // Backup attachments to localStorage for immediate resilience
-    if (attachments && attachments.length > 0) {
-      try {
-        localStorage.setItem(`kc_ticket_att_${newTicket.id}`, JSON.stringify(attachments));
-      } catch (_) {}
+      // Backup attachments to localStorage for immediate resilience
+      if (attachments && attachments.length > 0) {
+        try {
+          localStorage.setItem(`kc_ticket_att_${newTicket.id}`, JSON.stringify(attachments));
+        } catch (_) {}
+      }
+
+      persist(d => logActivity({
+        ...d,
+        tickets: [newTicket, ...(d.tickets || []).filter(x => x.id !== newTicket.id)]
+      }, session?.name || "Resident", `Submitted support ticket: ${subject}${attachments.length ? ` (${attachments.length} attachments)` : ""}`));
+
+      toast(isBn ? "টিকিট ও প্রমাণাদি সফলভাবে জমা হয়েছে।" : "Ticket with attachments submitted.");
+      setForm(null);
+    } finally {
+      setSubmitting(false);
     }
-
-    persist(d => logActivity({
-      ...d,
-      tickets: [newTicket, ...(d.tickets || []).filter(x => x.id !== newTicket.id)]
-    }, session.name, `Submitted support ticket: ${subject}${attachments.length ? ` (${attachments.length} attachments)` : ""}`));
-
-    toast(isBn ? "টিকিট ও প্রমাণাদি সফলভাবে জমা হয়েছে।" : "Ticket with attachments submitted.");
-    setForm(null);
   };
 
   const statusMap = {
@@ -152,8 +158,8 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
       </div>
 
       {/* Ticket Submission Modal */}
-      <Modal open={!!form} onClose={() => setForm(null)} title={isBn ? "নতুন সহায়তা ও অভিযোগ টিকিট" : "Submit a support ticket"}>
-        <TicketForm onSubmit={submit} lang={lang} isBn={isBn} toast={toast} />
+      <Modal open={!!form} onClose={() => !submitting && setForm(null)} title={isBn ? "নতুন সহায়তা ও অভিযোগ টিকিট" : "Submit a support ticket"}>
+        <TicketForm onSubmit={submit} submitting={submitting} lang={lang} isBn={isBn} toast={toast} />
       </Modal>
 
       {/* Fullscreen Media Preview Modal */}
@@ -198,7 +204,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
   );
 }
 
-export function TicketForm({ onSubmit, lang = "en", isBn = false, toast }) {
+export function TicketForm({ onSubmit, submitting = false, lang = "en", isBn = false, toast }) {
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState("Maintenance");
   const [description, setDescription] = useState("");
@@ -265,8 +271,8 @@ export function TicketForm({ onSubmit, lang = "en", isBn = false, toast }) {
     setIsProcessing(true);
 
     const newAttachments = [];
-    const MAX_IMAGE_SIZE = 12 * 1024 * 1024; // 12MB raw (will be compressed)
-    const MAX_VIDEO_SIZE = 25 * 1024 * 1024; // 25MB
+    const MAX_IMAGE_SIZE = 8 * 1024 * 1024; // 8MB raw (will be compressed)
+    const MAX_VIDEO_SIZE = 8 * 1024 * 1024; // 8MB limit for mobile clips
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -279,12 +285,12 @@ export function TicketForm({ onSubmit, lang = "en", isBn = false, toast }) {
       }
 
       if (isImage && file.size > MAX_IMAGE_SIZE) {
-        if (toast) toast(isBn ? `"${file.name}" ছবির সাইজ অনেক বড়।` : `Image "${file.name}" exceeds 12MB limit.`, "error");
+        if (toast) toast(isBn ? `"${file.name}" ছবির সাইজ অনেক বড় (সর্বোচ্চ ৮MB)।` : `Image "${file.name}" exceeds 8MB limit.`, "error");
         continue;
       }
 
       if (isVideo && file.size > MAX_VIDEO_SIZE) {
-        if (toast) toast(isBn ? `"${file.name}" ভিডিওর সাইজ ২৫MB এর বেশি (ছোট ভিডিও দিন)।` : `Video "${file.name}" exceeds 25MB limit. Please upload a short video.`, "error");
+        if (toast) toast(isBn ? `"${file.name}" ভিডিওর সাইজ ৮MB এর বেশি (ছোট ভিডিও দিন)।` : `Video "${file.name}" exceeds 8MB limit. Please upload a short video.`, "error");
         continue;
       }
 
@@ -438,8 +444,8 @@ export function TicketForm({ onSubmit, lang = "en", isBn = false, toast }) {
         )}
       </div>
 
-      <Btn full onClick={() => onSubmit(subject, category, description, attachments)} disabled={!subject.trim() || !description.trim() || isProcessing}>
-        {isBn ? "টিকিট জমা দিন" : "Submit ticket"}
+      <Btn full onClick={() => onSubmit(subject, category, description, attachments)} disabled={!subject.trim() || !description.trim() || isProcessing || submitting}>
+        {submitting ? (isBn ? "জমা হচ্ছে..." : "Submitting...") : (isBn ? "টিকিট জমা দিন" : "Submit ticket")}
       </Btn>
     </div>
   );

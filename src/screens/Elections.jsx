@@ -63,7 +63,7 @@ export default function Elections({ session, db, persist, toast, logActivity, la
 }
 
 export function BallotView({ election, session, db, persist, toast, logActivity, canVote, lang = "en", isBn = false }) {
-  const myVotes = db.votes.filter(v => v.electionId === election.id && v.voterId === session.id);
+  const myVotes = (db?.votes || []).filter(v => v.electionId === election.id && v.voterId === session?.id);
   const [choice, setChoice] = useState({});
   const [voting, setVoting] = useState({}); // { [position]: true } while RPC is in-flight
 
@@ -77,7 +77,7 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
         toast(error.message || (isBn ? "ভোট গ্রহণ করা যায়নি।" : "Could not cast vote."), "error");
         return;
       }
-      persist(d => logActivity(d, session.name, `Voted for ${position} in ${election.title}`));
+      persist(d => logActivity(d, session?.name || "Member", `Voted for ${position} in ${election.title}`));
       trackEvent("vote_cast", { election_id: election.id, position });
       toast(isBn ? `${position} পদের জন্য আপনার ভোট সফলভাবে গৃহীত হয়েছে।` : `Vote recorded for ${position}.`);
     } finally {
@@ -87,7 +87,7 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
 
   const results = (position) => {
     const cands = election.candidates.filter(c => c.position === position);
-    const votes = db.votes.filter(v => v.electionId === election.id && v.position === position);
+    const votes = (db?.votes || []).filter(v => v.electionId === election.id && v.position === position);
     const total = votes.length || 1;
     return cands.map(c => ({ ...c, count: votes.filter(v => v.candidateId === c.id).length, pct: Math.round((votes.filter(v => v.candidateId === c.id).length / total) * 100) }));
   };

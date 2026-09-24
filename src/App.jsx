@@ -20,7 +20,13 @@ const Shell = lazy(() => import("./components/Shell"));
 const Router = lazy(() => import("./Router"));
 
 export default function App() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("kc_theme") || "system");
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem("kc_theme") || "system";
+    } catch (_) {
+      return "system";
+    }
+  });
   const [db, setDb] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null); // current user object
@@ -30,7 +36,13 @@ export default function App() {
   const [navOpen, setNavOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [authMode, setAuthMode] = useState("login");
-  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("kc_splash_done"));
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return !sessionStorage.getItem("kc_splash_done");
+    } catch (_) {
+      return false;
+    }
+  });
   const [recoveryModal, setRecoveryModal] = useState(false);
   const [exitConfirmModal, setExitConfirmModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -207,7 +219,9 @@ export default function App() {
     const applyTheme = () => {
       const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
       document.documentElement.classList.toggle("dark", isDark);
-      localStorage.setItem("kc_theme", theme);
+      try {
+        localStorage.setItem("kc_theme", theme);
+      } catch (_) {}
 
       let metaThemeColor = document.querySelector("meta[name='theme-color']");
       if (!metaThemeColor) {
@@ -354,10 +368,18 @@ export default function App() {
       }
     })();
 
-    // Listen for auth events including password recovery redirect
+    // Listen for auth events including password recovery redirect and remote sign-out
     const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryModal(true);
+      } else if (event === "SIGNED_OUT") {
+        if (unsubRef.current) {
+          unsubRef.current();
+          unsubRef.current = null;
+        }
+        setSession(null);
+        setView("home");
+        setDb(emptyDb);
       }
     });
 

@@ -26,7 +26,7 @@ export async function syncTable(table, prevArr = [], nextArr = [], toRow) {
   const deletes = [...prevById.keys()].filter(id => !nextById.has(id));
 
   if (inserts.length) {
-    const { error } = await supabase.from(table).insert(inserts);
+    const { error } = await supabase.from(table).upsert(inserts, { onConflict: "id" });
     if (error) throw new Error(`Could not save to ${table}: ${error.message}`);
   }
   for (const u of updates) {

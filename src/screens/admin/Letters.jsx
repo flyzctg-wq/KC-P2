@@ -87,6 +87,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   const [mobileTab, setMobileTab] = useState("editor"); // "editor" | "preview" (for mobile view toggle)
   const [searchQuery, setSearchQuery] = useState("");
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
+  const [savingLetter, setSavingLetter] = useState(false);
 
   // Letter Form State
   const [memoNo, setMemoNo] = useState(`WC/C/2026/01-${Math.floor(100 + Math.random() * 900)}`);
@@ -162,41 +163,47 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   };
 
   const handleSaveLetter = () => {
-    if (!subject.trim() || !body.trim()) {
-      toast(isBn ? "অনুগ্রহ করে বিষয় ও পত্রের বিবরণ লিখুন।" : "Please enter subject and letter body.", "error");
+    if (!subject.trim() || !body.trim() || savingLetter) {
+      if (!subject.trim() || !body.trim()) {
+        toast(isBn ? "অনুগ্রহ করে বিষয় ও পত্রের বিবরণ লিখুন।" : "Please enter subject and letter body.", "error");
+      }
       return;
     }
+    setSavingLetter(true);
+    try {
+      const newLetter = {
+        id: uid("let"),
+        memoNo: memoNo.trim(),
+        date: letterDate,
+        recipient: recipient.trim(),
+        recipientPhone: recipientPhone.trim(),
+        subject: subject.trim(),
+        salutation: salutation.trim(),
+        body: body.trim(),
+        signatoryLeftTitle,
+        signatoryLeftName,
+        signatoryRightTitle,
+        signatoryRightName,
+        dateTopOffset,
+        dateRightOffset,
+        memoTopOffset,
+        memoRightOffset,
+        contentTopOffset,
+        signatureGap,
+        fontSizeScale,
+        issuedBy: session?.name || "President / General Secretary",
+        createdAt: new Date().toISOString(),
+      };
 
-    const newLetter = {
-      id: uid("let"),
-      memoNo: memoNo.trim(),
-      date: letterDate,
-      recipient: recipient.trim(),
-      recipientPhone: recipientPhone.trim(),
-      subject: subject.trim(),
-      salutation: salutation.trim(),
-      body: body.trim(),
-      signatoryLeftTitle,
-      signatoryLeftName,
-      signatoryRightTitle,
-      signatoryRightName,
-      dateTopOffset,
-      dateRightOffset,
-      memoTopOffset,
-      memoRightOffset,
-      contentTopOffset,
-      signatureGap,
-      fontSizeScale,
-      issuedBy: session?.name || "President / General Secretary",
-      createdAt: new Date().toISOString(),
-    };
+      persist(d => logActivity({
+        ...d,
+        letters: [newLetter, ...(d.letters || [])]
+      }, session?.name || "Admin", `Issued official letter [Memo: ${memoNo}] "${subject}"`));
 
-    persist(d => logActivity({
-      ...d,
-      letters: [newLetter, ...(d.letters || [])]
-    }, session?.name || "Admin", `Issued official letter [Memo: ${memoNo}] "${subject}"`));
-
-    toast(isBn ? `অফিসিয়াল পত্রটি স্মারক রেজিস্টারে সংরক্ষিত হয়েছে! [স্মারক: ${memoNo}]` : `Letter saved to official register! [Memo: ${memoNo}]`);
+      toast(isBn ? `অফিসিয়াল পত্রটি স্মারক রেজিস্টারে সংরক্ষিত হয়েছে! [স্মারক: ${memoNo}]` : `Letter saved to official register! [Memo: ${memoNo}]`);
+    } finally {
+      setTimeout(() => setSavingLetter(false), 300);
+    }
   };
 
   // Generate full HTML string for Print / PDF Export
@@ -875,8 +882,8 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 pt-3 border-t">
-                  <Btn full icon={Check} onClick={handleSaveLetter}>
-                    {isBn ? "স্মারক রেজিস্টারে সংরক্ষণ করুন" : "Save to Official Register"}
+                  <Btn full icon={Check} onClick={handleSaveLetter} disabled={savingLetter}>
+                    {savingLetter ? (isBn ? "সংরক্ষণ হচ্ছে..." : "Saving...") : (isBn ? "স্মারক রেজিস্টারে সংরক্ষণ করুন" : "Save to Official Register")}
                   </Btn>
                   <div className="grid grid-cols-2 gap-2">
                     <Btn full variant="outline" icon={Printer} onClick={handlePrint}>
