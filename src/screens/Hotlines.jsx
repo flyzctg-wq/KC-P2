@@ -46,7 +46,7 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
 
       {/* Community Geographic Map & Navigation */}
       <div className="mb-6">
-        <CommunityMap lang={lang} toast={toast} />
+        <CommunityMap lang={lang} toast={toast} session={session} />
       </div>
 
       {groups.map(g => {

@@ -140,7 +140,7 @@ export default function AdminDashboard({ session, db, go, lang = "en", t = {} })
 
       {/* Community Geographic Map */}
       <div className="mt-4">
-        <CommunityMap lang={lang} />
+        <CommunityMap lang={lang} session={session} />
       </div>
     </div>
   );

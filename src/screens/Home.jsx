@@ -97,7 +97,7 @@ export default function ResidentHome({ session, db, go, lang = "en", t = {}, toa
 
       {/* Community Location Map */}
       <div className="mb-6">
-        <CommunityMap lang={lang} toast={toast} />
+        <CommunityMap lang={lang} toast={toast} session={session} />
       </div>
 
       <SectionTitle
