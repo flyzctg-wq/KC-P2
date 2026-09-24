@@ -3,10 +3,12 @@ import {
   Home, Users, Bell, Wallet, Vote, LifeBuoy, User, LogOut, Menu, X, BarChart3,
   Award, ClipboardList, Globe, PhoneCall, Scale, ArrowLeftRight, CalendarCheck,
   MessageCircle, PieChart, FileSearch, Droplet, BadgeCheck, BookOpen, CalendarRange,
-  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown, LayoutGrid, TrendingDown
+  FileText, Sun, Moon, Laptop, Receipt, Settings, ChevronDown, LayoutGrid, TrendingDown,
+  Power
 } from "lucide-react";
 import { Avatar } from "../components/primitives";
-import { C, LOGO_MARK } from "../theme";
+import { C, LOGO_MARK, APP_VERSION } from "../theme";
+import { isNavKeyEnabled, DEFAULT_MODULE_FLAGS } from "../lib/moduleConfig";
 import TvBulletin from "./TvBulletin";
 
 /* ============================== SHELL / NAV ============================== */
@@ -64,6 +66,7 @@ const ADMIN_NAV_GROUPS = [
       { key: "a-dues", label: "financials", icon: Wallet },
       { key: "a-payment-history", label: "paymentHistory", icon: Receipt },
       { key: "a-expenses", label: "expenses", icon: TrendingDown },
+      { key: "a-modules", label: "modules", icon: LayoutGrid, superAdminOnly: true },
     ],
   },
   {
@@ -126,11 +129,15 @@ const ADMIN_BOTTOM_NAV = [
 
 export default function Shell({
   session, db, persist, view, setView, logout, lang, setLang, t, children,
-  navOpen, setNavOpen, theme = "system", setTheme = () => {}
+  navOpen, setNavOpen, theme = "system", setTheme = () => {},
+  moduleFlags = db?.moduleFlags ?? DEFAULT_MODULE_FLAGS,
+  onExitApp
 }) {
-  const isAdmin = session.role === "admin";
+  const isAdmin = session?.role === "admin";
+  const isSuperAdmin = isAdmin && (session?.post === "President" || session?.post === "General Secretary");
   const nav = isAdmin ? ADMIN_NAV : RESIDENT_NAV;
-  const bottomNav = isAdmin ? ADMIN_BOTTOM_NAV : RESIDENT_BOTTOM_NAV;
+  const rawBottomNav = isAdmin ? ADMIN_BOTTOM_NAV : RESIDENT_BOTTOM_NAV;
+  const bottomNav = rawBottomNav.filter(item => isNavKeyEnabled(moduleFlags, item.key));
 
   const isDarkMode = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
@@ -185,6 +192,15 @@ export default function Shell({
             const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
             const hasActiveItem = group.items.some(item => item.key === view);
 
+            // Filter items: superAdminOnly items only shown to super-admin;
+            // disabled modules hidden from navigation
+            const visibleItems = group.items.filter(item => {
+              if (item.superAdminOnly && !isSuperAdmin) return false;
+              if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
+              return true;
+            });
+            if (visibleItems.length === 0) return null;
+
             return (
               <div key={gi} className="rounded-xl mb-1">
                 <button
@@ -203,20 +219,20 @@ export default function Shell({
 
                 {isOpen && (
                   <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                    {group.items.filter(item => !item.superAdminOnly || (session.role === "admin" && (session.post === "President" || session.post === "General Secretary"))).map(item => {
+                    {visibleItems.map(item => {
                       const Icon = item.icon;
                       const active = view === item.key;
-                      const labelText = t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label);
+                      const labelText = t[item.label] || item.label;
                       return (
                         <button
                           key={item.key}
                           onClick={() => setView(item.key)}
                           aria-current={active ? "page" : undefined}
-                          className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full min-h-[38px]"
                           style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                         >
-                          <Icon size={16} strokeWidth={active ? 2.4 : 2} />
-                          <span className="truncate">{labelText}</span>
+                          <Icon size={16} strokeWidth={active ? 2.4 : 2} className="shrink-0" />
+                          <span className="truncate flex-1 leading-normal py-0.5">{labelText}</span>
                         </button>
                       );
                     })}
@@ -278,7 +294,7 @@ export default function Shell({
               {lang === "bn" ? "অ্যাপ সেটিংস" : "App Settings"}
             </span>
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>
-              v1.8
+              v{APP_VERSION}
             </span>
           </button>
 
@@ -292,15 +308,29 @@ export default function Shell({
             <Globe size={14} /> {lang === "en" ? "বাংলা" : "English"}
           </button>
 
-          <button
-            type="button"
-            onClick={logout}
-            aria-label={t.logout}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 focus-visible:ring-2 focus-visible:ring-red-500 outline-none transition-colors"
-            style={{ color: C.error }}
-          >
-            <LogOut size={14} /> {t.logout}
-          </button>
+          <div className="flex items-center gap-1.5 pt-1">
+            <button
+              type="button"
+              onClick={logout}
+              aria-label={t.logout}
+              className="flex-1 flex items-center justify-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950/20 focus-visible:ring-2 focus-visible:ring-red-500 outline-none transition-colors"
+              style={{ color: C.error }}
+            >
+              <LogOut size={14} /> {t.logout}
+            </button>
+            {onExitApp && (
+              <button
+                type="button"
+                onClick={onExitApp}
+                title={lang === "bn" ? "অ্যাপ বন্ধ করুন" : "Exit App"}
+                aria-label={lang === "bn" ? "অ্যাপ বন্ধ করুন" : "Exit App"}
+                className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors border"
+                style={{ borderColor: `${C.error}40`, color: C.error }}
+              >
+                <Power size={13} /> {lang === "bn" ? "প্রস্থান" : "Exit"}
+              </button>
+            )}
+          </div>
         </footer>
       </aside>
 
@@ -406,11 +436,22 @@ export default function Shell({
               </button>
 
               {/* Scrollable Navigation List (Collapsible) */}
-              <nav className="flex flex-col flex-1 overflow-y-auto pr-1 my-1 space-y-1" aria-label="Main navigation">
+              <nav
+                className="flex flex-col flex-1 min-h-0 overflow-y-auto pr-1 my-1 space-y-1 pb-12 overscroll-contain"
+                aria-label="Main navigation"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
                 {navGroups.map((group, gi) => {
                   const isOpen = !!openGroups[gi];
                   const groupName = lang === "bn" ? group.groupLabel.bn : group.groupLabel.en;
                   const hasActiveItem = group.items.some(item => item.key === view);
+
+                  const visibleItems = group.items.filter(item => {
+                    if (item.superAdminOnly && !isSuperAdmin) return false;
+                    if (!isNavKeyEnabled(moduleFlags, item.key)) return false;
+                    return true;
+                  });
+                  if (visibleItems.length === 0) return null;
 
                   return (
                     <div key={gi} className="rounded-xl mb-1">
@@ -430,18 +471,19 @@ export default function Shell({
 
                       {isOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 pl-1">
-                          {group.items.filter(item => !item.superAdminOnly || (session.role === "admin" && (session.post === "President" || session.post === "General Secretary"))).map(item => {
+                          {visibleItems.map(item => {
                             const Icon = item.icon;
                             const active = view === item.key;
+                            const labelText = t[item.label] || item.label;
                             return (
                               <button
                                 key={item.key}
                                 onClick={() => { setView(item.key); setNavOpen(false); }}
-                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full"
+                                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full min-h-[38px]"
                                 style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                               >
-                                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                                <span className="truncate">{t[item.label] || (item.label === "letters" ? (lang === "bn" ? "অফিসিয়াল পত্র ও স্মারক" : "Official Letters") : item.label)}</span>
+                                <Icon size={16} strokeWidth={active ? 2.5 : 2} className="shrink-0" />
+                                <span className="truncate flex-1 leading-normal py-0.5">{labelText}</span>
                               </button>
                             );
                           })}
@@ -452,8 +494,8 @@ export default function Shell({
                 })}
               </nav>
 
-              {/* Drawer Footer Theme and Language Controls */}
-              <div className="pt-3 mt-1 border-t space-y-2" style={{ borderColor: C.outlineVariant }}>
+              {/* Drawer Footer Theme, Language, and Exit/Logout Controls */}
+              <div className="pt-3 mt-1 border-t space-y-2 shrink-0" style={{ borderColor: C.outlineVariant }}>
                 {/* 3-Option Theme Segmented Bar */}
                 <div className="p-1 rounded-xl flex items-center gap-1 border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
                   <button
@@ -485,13 +527,27 @@ export default function Shell({
                   <span className="font-bold text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}>{lang === "en" ? "বাংলা" : "English"}</span>
                 </button>
 
-                <button
-                  onClick={logout}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
-                  style={{ color: C.error }}
-                >
-                  <LogOut size={15} /> {t.logout}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={logout}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-red-50 dark:hover:bg-red-950/20"
+                    style={{ color: C.error }}
+                  >
+                    <LogOut size={14} /> {t.logout}
+                  </button>
+                  {onExitApp && (
+                    <button
+                      onClick={() => {
+                        setNavOpen(false);
+                        onExitApp();
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors border"
+                      style={{ borderColor: `${C.error}40`, color: C.error, backgroundColor: `${C.error}0d` }}
+                    >
+                      <Power size={14} /> {lang === "bn" ? "প্রস্থান (Exit)" : "Exit App"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
