@@ -1277,7 +1277,7 @@ export function InviteMemberModal({ onClose, persist, logActivity, session, db, 
               {isBn ? "লিংক কপি করুন" : "Copy Link"}
             </Btn>
             <a
-              href={`https://wa.me/${cleanPhone(createdInvite.phone)}?text=${encodeURIComponent(`কুঞ্জছায়া ক্লাব-এর সদস্যপদ গ্রহণের জন্য অফিশিয়াল আমন্ত্রণ লিংক: ${createdInvite.link}`)}`}
+              href={`https://wa.me/${cleanPhone(createdInvite.phone)}?text=${encodeURIComponent(`কুঞ্জছায়া ক্লাব-এর সদস্যপদ গ্রহণের জন্য অফিশিয়াল আমন্ত্রণ লিংক: ${sanitizeUrl(createdInvite.link)}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-semibold text-xs text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
