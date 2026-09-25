@@ -18,7 +18,7 @@ export function Btn({ children, variant = "primary", size = "md", icon: Icon, on
     <button type={type} onClick={onClick} disabled={disabled} style={styles[variant]}
       className={`${base} ${sizes[size]} ${full ? "w-full" : ""} ${className}`}
       {...props}>
-      {Icon && <Icon size={size === "sm" ? 14 : 16} strokeWidth={2.3} />}
+      {Icon && <Icon size={size === "sm" ? 14 : 16} strokeWidth={2.3} aria-hidden="true" />}
       {children}
     </button>
   );
@@ -110,7 +110,7 @@ export function Empty({ icon: Icon, title, subtitle }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-6">
       <div style={{ backgroundColor: C.surfaceContainer }} className="w-14 h-14 rounded-full flex items-center justify-center mb-3">
-        <Icon size={24} style={{ color: C.outline }} />
+        <Icon size={24} style={{ color: C.outline }} aria-hidden="true" />
       </div>
       <p className="font-semibold text-sm" style={{ color: C.onSurface }}>{title}</p>
       {subtitle && <p className="text-xs mt-1 max-w-xs" style={{ color: C.onSurfaceVariant }}>{subtitle}</p>}
@@ -162,11 +162,20 @@ export function SectionTitle({ children, action }) {
 
 export function Toasts({ toasts }) {
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 items-end pointer-events-none">
+    <div
+      aria-live="polite"
+      aria-atomic="true"
+      className="fixed top-4 right-4 z-[100] flex flex-col gap-2 items-end pointer-events-none"
+    >
       {toasts.map(t => (
-        <div key={t.id} style={{ backgroundColor: t.type === "error" ? C.error : C.primary, color: t.type === "error" ? "#fff" : C.onPrimary }}
-          className="px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xl flex items-center gap-2 animate-[fadeIn_0.2s_ease]">
-          {t.type === "error" ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+        <div
+          key={t.id}
+          role={t.type === "error" ? "alert" : "status"}
+          aria-live={t.type === "error" ? "assertive" : "polite"}
+          style={{ backgroundColor: t.type === "error" ? C.error : C.primary, color: t.type === "error" ? "#fff" : C.onPrimary }}
+          className="px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xl flex items-center gap-2 animate-[fadeIn_0.2s_ease]"
+        >
+          {t.type === "error" ? <AlertCircle size={15} aria-hidden="true" /> : <CheckCircle2 size={15} aria-hidden="true" />}
           {t.msg}
         </div>
       ))}
