@@ -229,7 +229,8 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
   });
   const [form, setForm] = useState(blank());
 
-  const filtered = useMemo(() => {
+  // Memoize list filtering, sorting, and filtered total calculation to avoid re-sorting date objects on input/modal renders
+  const { filtered, totalFiltered } = useMemo(() => {
     let list = expenses;
     if (catFilter !== "all") list = list.filter(e => e.category === catFilter);
     if (search.trim()) {
@@ -240,17 +241,23 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
         (e.payee || "").toLowerCase().includes(q)
       );
     }
-    return [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sortedList = [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const total = sortedList.reduce((s, e) => s + Number(e.amount), 0);
+    return { filtered: sortedList, totalFiltered: total };
   }, [expenses, catFilter, search]);
 
-  const totalAll = expenses.reduce((s, e) => s + Number(e.amount), 0);
-  const totalFiltered = filtered.reduce((s, e) => s + Number(e.amount), 0);
-  const catTotals = useMemo(() => {
-    const map = {};
-    expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + Number(e.amount); });
-    return map;
+  // Single-pass memoization for overall expenditure KPIs and category breakdown
+  const { totalAll, topCat } = useMemo(() => {
+    let total = 0;
+    const catMap = {};
+    for (let i = 0; i < expenses.length; i++) {
+      const amt = Number(expenses[i].amount) || 0;
+      total += amt;
+      catMap[expenses[i].category] = (catMap[expenses[i].category] || 0) + amt;
+    }
+    const top = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0];
+    return { totalAll: total, topCat: top };
   }, [expenses]);
-  const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
 
   function openAdd() { setEditId(null); setForm(blank()); setShowForm(true); }
   function openEdit(exp) {

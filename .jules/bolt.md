@@ -21,3 +21,7 @@
 ## 2026-09-13 - Memoizing Support Tickets & Notice Sorting in Admin & Member Screens
 **Learning:** `src/screens/Tickets.jsx`, `src/screens/admin/Tickets.jsx`, and `src/screens/admin/Notices.jsx` re-sorted tickets and notices using `new Date()` construction on every render. Toggling response modals, attachment file upload/preview, typing comments, or toggling bulletin states caused redundant array allocation and sorting.
 **Action:** Wrap sorted/filtered ticket arrays and notice arrays in `useMemo` blocks with `[db.tickets, session.id]`, `[db.tickets]`, and `[db?.notices]` dependencies.
+
+## 2026-09-14 - Consolidating Expense Filtering & KPI Reductions in Admin Expenses Screen
+**Learning:** `src/screens/admin/Expenses.jsx` calculated `totalAll` and `topCat` via separate unmemoized `reduce` and `sort` calls on every render, while `totalFiltered` re-scanned the filtered expense array. Typing into expense input forms or opening view/delete dialogs triggered unnecessary Date parsing and array iteration.
+**Action:** Consolidate `filtered` sorting and `totalFiltered` calculation in a single `useMemo`, and combine total expense calculation with category aggregation in a single-pass `useMemo` keyed on `[expenses]`.
