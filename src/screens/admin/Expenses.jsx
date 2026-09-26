@@ -61,7 +61,8 @@ function printVoucher(exp) {
   const payeeSafe = escapeHtml(exp.payee);
   const approvedBySafe = escapeHtml(exp.approvedBy);
   const catLabelSafe = escapeHtml(cat.labelEn);
-  const dateSafe = exp.date ? new Date(exp.date).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "—";
+  const catIconSafe = escapeHtml(cat.icon);
+  const dateSafe = escapeHtml(exp.date ? new Date(exp.date).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "—");
   const amountSafe = Number(exp.amount).toLocaleString("en-BD");
 
   const html = `<!DOCTYPE html><html><head><title>Expense Voucher — ${voucherNoSafe}</title>
@@ -70,7 +71,7 @@ function printVoucher(exp) {
 <div class="title">${titleSafe}</div>
 <table>
 <tr><td>Voucher No</td><td>${voucherNoSafe}</td></tr>
-<tr><td>Category</td><td>${cat.icon} ${catLabelSafe}</td></tr>
+<tr><td>Category</td><td>${catIconSafe} ${catLabelSafe}</td></tr>
 <tr><td>Payee</td><td>${payeeSafe}</td></tr>
 <tr><td>Date</td><td>${dateSafe}</td></tr>
 <tr><td>Approved By</td><td>${approvedBySafe}</td></tr>
