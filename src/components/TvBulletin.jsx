@@ -220,10 +220,19 @@ export default function TvBulletin({
 
           {/* Scrolling Marquee Ticker — right to left, all bulletins */}
           <div
-            className="flex-1 min-w-0 overflow-hidden cursor-pointer relative"
+            role="button"
+            tabIndex={0}
+            aria-label={isBn ? "বুলেটিনের বিবরণ দেখুন" : "View bulletin details"}
+            className="flex-1 min-w-0 overflow-hidden cursor-pointer relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-md"
             style={{ maskImage: "linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%)" }}
             title={isBn ? "বিস্তারিত পড়তে ক্লিক করুন" : "Click to read full bulletin"}
             onClick={() => handleOpenNotice(current)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleOpenNotice(current);
+              }
+            }}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             onTouchStart={() => setIsPaused(true)}
@@ -251,7 +260,7 @@ export default function TvBulletin({
             <button
               type="button"
               onClick={() => setIsPaused(p => !p)}
-              className="h-8 w-8 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center transition-colors opacity-75 hover:opacity-100"
+              className="h-8 w-8 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center transition-colors opacity-75 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               title={isPaused ? (isBn ? "চলমান করুন" : "Resume Ticker") : (isBn ? "থামান" : "Pause Ticker")}
               aria-label={isPaused ? "Resume news ticker animation" : "Pause news ticker animation"}
             >
@@ -260,7 +269,7 @@ export default function TvBulletin({
             <button
               type="button"
               onClick={() => handleOpenNotice(activeBulletins[0])}
-              className="h-8 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-emerald-900/90 text-emerald-900 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100/70 dark:hover:bg-emerald-800 transition-colors hidden sm:inline-flex items-center gap-1.5 shadow-xs focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-white dark:bg-emerald-900/90 text-emerald-900 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100/70 dark:hover:bg-emerald-800 transition-colors hidden sm:inline-flex items-center gap-1.5 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               aria-label={isBn ? "বুলেটিনের সম্পূর্ণ বিবরণ দেখুন" : "Read full bulletin details"}
             >
               <Eye size={13} aria-hidden="true" />
@@ -270,7 +279,7 @@ export default function TvBulletin({
             <button
               type="button"
               onClick={() => setIsCollapsed(true)}
-              className="h-8 w-8 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
+              className="h-8 w-8 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               title={isBn ? "মিনিমাইজ করুন" : "Collapse Banner"}
               aria-label={isBn ? "ব্যানার বন্ধ করুন" : "Collapse banner"}
             >
