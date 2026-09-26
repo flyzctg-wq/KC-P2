@@ -229,6 +229,7 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
   });
   const [form, setForm] = useState(blank());
 
+  // Memoized expense list filtering & date sorting to prevent redundant array allocation and date parsing on UI updates
   const filtered = useMemo(() => {
     let list = expenses;
     if (catFilter !== "all") list = list.filter(e => e.category === catFilter);
@@ -240,17 +241,18 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
         (e.payee || "").toLowerCase().includes(q)
       );
     }
-    return [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+    return [...list].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [expenses, catFilter, search]);
 
-  const totalAll = expenses.reduce((s, e) => s + Number(e.amount), 0);
-  const totalFiltered = filtered.reduce((s, e) => s + Number(e.amount), 0);
-  const catTotals = useMemo(() => {
+  // Memoize ledger financial metrics and category totals to avoid recomputing on unrelated state changes (modals, search, view)
+  const totalAll = useMemo(() => expenses.reduce((s, e) => s + Number(e.amount), 0), [expenses]);
+  const totalFiltered = useMemo(() => filtered.reduce((s, e) => s + Number(e.amount), 0), [filtered]);
+  const { catTotals, topCat } = useMemo(() => {
     const map = {};
     expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + Number(e.amount); });
-    return map;
+    const top = Object.entries(map).sort((a, b) => b[1] - a[1])[0];
+    return { catTotals: map, topCat: top };
   }, [expenses]);
-  const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
 
   function openAdd() { setEditId(null); setForm(blank()); setShowForm(true); }
   function openEdit(exp) {
