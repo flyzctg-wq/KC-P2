@@ -318,7 +318,7 @@ export default function AdminMapLandmarks({ session, lang, toast }) {
                 <div className="flex items-center gap-1 shrink-0">
                   {/* Google Maps preview link */}
                   <a
-                    href={`https://www.google.com/maps?q=${lm.lat},${lm.lng}`}
+                    href={`https://www.google.com/maps?q=${encodeURIComponent(`${lm.lat},${lm.lng}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
