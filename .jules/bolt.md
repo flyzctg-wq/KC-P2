@@ -21,3 +21,7 @@
 ## 2026-09-13 - Memoizing Support Tickets & Notice Sorting in Admin & Member Screens
 **Learning:** `src/screens/Tickets.jsx`, `src/screens/admin/Tickets.jsx`, and `src/screens/admin/Notices.jsx` re-sorted tickets and notices using `new Date()` construction on every render. Toggling response modals, attachment file upload/preview, typing comments, or toggling bulletin states caused redundant array allocation and sorting.
 **Action:** Wrap sorted/filtered ticket arrays and notice arrays in `useMemo` blocks with `[db.tickets, session.id]`, `[db.tickets]`, and `[db?.notices]` dependencies.
+
+## 2026-09-14 - Lazy Initial State & Expense Ledger Aggregations Memoization in Admin Expenses
+**Learning:** `AdminExpenses` evaluated `useState(blank())` on every render, executing `nextVoucher(expenses)` (a regex scan across all expense vouchers). In addition, totals (`totalAll`, `totalFiltered`) and `topCat` sorting ran unmemoized on every render pass.
+**Action:** Use lazy state initializer (`useState(blank)`) and consolidate total sum reductions and category sorting into a `useMemo` block with dependencies `[expenses, filtered]`.
