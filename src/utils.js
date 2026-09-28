@@ -142,3 +142,13 @@ export const isSafeUrl = (url = "") => {
 export const sanitizeUrl = (url = "", fallback = "#") => {
   return isSafeUrl(url) ? url.trim() : fallback;
 };
+
+/** Escapes special HTML characters to prevent XSS in dynamic HTML string templates */
+export const escapeHtml = (str = "") => {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};

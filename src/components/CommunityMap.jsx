@@ -10,6 +10,7 @@ import {
 import { Card, Badge, Btn, Modal } from "./primitives";
 import { C } from "../theme";
 import { supabase } from "../lib/supabase";
+import { escapeHtml, sanitizeUrl } from "../utils";
 
 export const KUNJACHAYA_MAP_URL = "https://www.google.com/maps/place/Kunjachaya+Residential+Area,+Chattogram/@22.3810056,91.8165975,18z/data=!4m10!1m2!2m1!1skunjochaya+R%2FA+detailed+map!3m6!1s0x30acd8667bccf937:0xc04874cf10161475!8m2!3d22.3810056!4d91.8165975!15sChtrdW5qb2NoYXlhIFIvQSBkZXRhaWxlZCBtYXCSAQxuZWlnaGJvcmhvb2TgAQA!16s%2Fg%2F1tf0b8p6";
 export const KUNJACHAYA_COORDS = { lat: 22.3810056, lng: 91.8165975 };
@@ -212,16 +213,18 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
     if (filterMode === "members") return; // Hidden if filtered to only members
 
     landmarks.forEach((item) => {
-      const name = isBn ? item.nameBn : item.nameEn;
+      const name = escapeHtml(isBn ? item.nameBn : item.nameEn);
+      const icon = escapeHtml(item.icon);
+      const color = escapeHtml(item.color);
 
       // Custom SVG / HTML divIcon
       const html = `
         <div style="display:flex; flex-direction:column; align-items:center; transform: translate(-50%, -100%);">
-          <div style="background-color:${item.color}; color:#fff; padding:3px 7px; border-radius:12px; font-weight:800; font-size:11px; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; display:flex; align-items:center; gap:4px; white-space:nowrap;">
-            <span>${item.icon}</span>
+          <div style="background-color:${color}; color:#fff; padding:3px 7px; border-radius:12px; font-weight:800; font-size:11px; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+            <span>${icon}</span>
             <span>${name}</span>
           </div>
-          <div style="width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid ${item.color};"></div>
+          <div style="width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid ${color};"></div>
         </div>
       `;
 
@@ -236,7 +239,7 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       const popupHtml = `
         <div style="font-family:Inter,sans-serif; min-width:180px; padding:4px;">
           <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-            <span style="font-size:18px;">${item.icon}</span>
+            <span style="font-size:18px;">${icon}</span>
             <strong style="font-size:13px; color:#111827;">${name}</strong>
           </div>
           <div style="font-size:11px; color:#6b7280; margin-bottom:8px;">
@@ -329,8 +332,8 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
 
       // Color coding: Guard = Amber (#f59e0b), Admin = Purple (#8b5cf6), Resident = Emerald (#10b981)
       const pinColor = isGuard ? "#f59e0b" : isAdmin ? "#8b5cf6" : "#10b981";
-      const roleLabel = user.post || (isAdmin ? "Admin" : "Resident");
-      const activityLabel =
+      const roleLabel = escapeHtml(user.post || (isAdmin ? "Admin" : "Resident"));
+      const rawActivity =
         user.activityText ||
         (user.activity === "patrol"
           ? (isBn ? "ডিউটি / টহলে" : "On Patrol")
@@ -339,6 +342,11 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
           : user.activity === "event"
           ? (isBn ? "অনুষ্ঠানে" : "At Community Event")
           : (isBn ? "সক্রিয় সদস্য" : "Active Resident"));
+      const activityLabel = escapeHtml(rawActivity);
+      const userName = escapeHtml(user.name || "User");
+      const userFirstName = escapeHtml(user.name?.split(" ")?.[0] || "User");
+      const userInitial = escapeHtml((user.name || "U").slice(0, 1).toUpperCase());
+      const safePhotoUrl = user.photoUrl ? sanitizeUrl(user.photoUrl) : "";
 
       const distanceToCenter = calculateDistanceKm(
         user.lat,
@@ -355,15 +363,15 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
           <!-- Avatar / Marker Disc -->
           <div style="position:relative; width:34px; height:34px; border-radius:50%; background-color:#fff; border:3px solid ${pinColor}; box-shadow:0 3px 10px rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; overflow:hidden; z-index:2;">
             ${
-              user.photoUrl
-                ? `<img src="${user.photoUrl}" style="width:100%; height:100%; object-fit:cover;" />`
-                : `<span style="font-weight:900; font-size:13px; color:${pinColor};">${(user.name || "U").slice(0, 1).toUpperCase()}</span>`
+              safePhotoUrl
+                ? `<img src="${safePhotoUrl}" style="width:100%; height:100%; object-fit:cover;" />`
+                : `<span style="font-weight:900; font-size:13px; color:${pinColor};">${userInitial}</span>`
             }
           </div>
 
           <!-- Name pill floating below -->
           <div style="position:relative; margin-top:3px; background-color:#111827; color:#fff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:10px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); z-index:3;">
-            ${isMe ? (isBn ? "আপনি (আমি)" : "You") : user.name?.split(" ")?.[0] || "User"}
+            ${isMe ? (isBn ? "আপনি (আমি)" : "You") : userFirstName}
           </div>
         </div>
       `;
@@ -380,10 +388,10 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
         <div style="font-family:Inter,sans-serif; min-width:210px; padding:6px;">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
             <div style="width:36px; height:36px; border-radius:50%; background-color:${pinColor}20; border:2px solid ${pinColor}; display:flex; align-items:center; justify-content:center; font-weight:900; color:${pinColor};">
-              ${user.photoUrl ? `<img src="${user.photoUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />` : (user.name?.[0] || "U")}
+              ${safePhotoUrl ? `<img src="${safePhotoUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />` : userInitial}
             </div>
             <div>
-              <div style="font-size:13px; font-weight:800; color:#111827;">${user.name}</div>
+              <div style="font-size:13px; font-weight:800; color:#111827;">${userName}</div>
               <div style="font-size:10px; font-weight:700; color:${pinColor}; text-transform:uppercase;">${roleLabel}</div>
             </div>
           </div>
