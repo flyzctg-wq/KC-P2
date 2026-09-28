@@ -211,7 +211,7 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
     session?.permissions?.canManageFinancials
   );
 
-  const expenses = db.expenses || [];
+  const expenses = useMemo(() => db.expenses || [], [db.expenses]);
 
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
@@ -221,9 +221,12 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  // Memoize default voucher generator so it only recalculates when the expenses list changes
+  const defaultVoucherNo = useMemo(() => nextVoucher(expenses), [expenses]);
+
   const blank = () => ({
     title: "", category: "maintenance", amount: "",
-    voucherNo: nextVoucher(expenses),
+    voucherNo: defaultVoucherNo,
     payee: "", approvedBy: session?.name || "",
     date: new Date().toISOString().split("T")[0],
   });
@@ -243,14 +246,25 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
     return [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [expenses, catFilter, search]);
 
-  const totalAll = expenses.reduce((s, e) => s + Number(e.amount), 0);
-  const totalFiltered = filtered.reduce((s, e) => s + Number(e.amount), 0);
-  const catTotals = useMemo(() => {
-    const map = {};
-    expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + Number(e.amount); });
-    return map;
-  }, [expenses]);
-  const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
+  // Bolt Optimization: Memoize all expense KPI sums & category distributions in single pass to prevent redundant array loops
+  const { totalAll, totalFiltered, topCat } = useMemo(() => {
+    let sumAll = 0;
+    const catMap = {};
+    for (let i = 0; i < expenses.length; i++) {
+      const amt = Number(expenses[i].amount) || 0;
+      sumAll += amt;
+      catMap[expenses[i].category] = (catMap[expenses[i].category] || 0) + amt;
+    }
+
+    let sumFiltered = 0;
+    for (let i = 0; i < filtered.length; i++) {
+      sumFiltered += Number(filtered[i].amount) || 0;
+    }
+
+    const topCategory = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0];
+
+    return { totalAll: sumAll, totalFiltered: sumFiltered, topCat: topCategory };
+  }, [expenses, filtered]);
 
   function openAdd() { setEditId(null); setForm(blank()); setShowForm(true); }
   function openEdit(exp) {

@@ -21,3 +21,7 @@
 ## 2026-09-13 - Memoizing Support Tickets & Notice Sorting in Admin & Member Screens
 **Learning:** `src/screens/Tickets.jsx`, `src/screens/admin/Tickets.jsx`, and `src/screens/admin/Notices.jsx` re-sorted tickets and notices using `new Date()` construction on every render. Toggling response modals, attachment file upload/preview, typing comments, or toggling bulletin states caused redundant array allocation and sorting.
 **Action:** Wrap sorted/filtered ticket arrays and notice arrays in `useMemo` blocks with `[db.tickets, session.id]`, `[db.tickets]`, and `[db?.notices]` dependencies.
+
+## 2026-09-14 - Pre-computing Voucher Defaults & Single-Pass Expense Aggregation in Admin Expenses
+**Learning:** In `src/screens/admin/Expenses.jsx`, `nextVoucher(expenses)` was re-evaluating regex patterns across all expense records inside initial form state initialization on every component render. Additionally, `totalAll`, `totalFiltered`, and `catTotals` executed multiple unmemoized array passes whenever local form inputs or modal states changed.
+**Action:** Memoize `defaultVoucherNo` with `[expenses]` dependency and consolidate total expense calculations into a single-pass `useMemo` hook.
