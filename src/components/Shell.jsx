@@ -383,7 +383,7 @@ export default function Shell({
               aria-label={lang === "en" ? "Switch language to Bengali" : "Switch language to English"}
               className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
               style={{ color: C.onSurfaceVariant }}
-              title="Change Language"
+              title={lang === "en" ? "Switch language to Bengali" : "Switch language to English"}
             >
               <Globe size={17} />
             </button>
@@ -394,7 +394,7 @@ export default function Shell({
               aria-label="Open navigation menu"
               className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
               style={{ color: C.onSurfaceVariant }}
-              title="Open Menu"
+              title="Open navigation menu"
             >
               <Menu size={20} />
             </button>
@@ -422,7 +422,13 @@ export default function Shell({
                     </span>
                   </div>
                 </div>
-                <button onClick={() => setNavOpen(false)} aria-label="Close navigation menu" className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5" style={{ color: C.onSurfaceVariant }}>
+                <button
+                  onClick={() => setNavOpen(false)}
+                  aria-label="Close navigation menu"
+                  title="Close navigation menu"
+                  className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{ color: C.onSurfaceVariant }}
+                >
                   <X size={20} />
                 </button>
               </div>
