@@ -69,8 +69,15 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
                     </a>
                   </div>
                   {canManage && (
-                    <button onClick={() => remove(c)} className="p-1.5 rounded-full shrink-0 hover:bg-red-50" style={{ color: C.error }}>
-                      <Trash2 size={14} />
+                    <button
+                      type="button"
+                      onClick={() => remove(c)}
+                      aria-label={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
+                      title={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
+                      className="p-1.5 rounded-full shrink-0 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
+                      style={{ color: C.error }}
+                    >
+                      <Trash2 size={14} aria-hidden="true" />
                     </button>
                   )}
                 </Card>
