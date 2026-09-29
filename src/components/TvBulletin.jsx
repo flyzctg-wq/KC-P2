@@ -173,7 +173,9 @@ export default function TvBulletin({
       <div className="w-full px-3 py-1 flex items-center justify-between text-xs border-b transition-all duration-300" style={{ backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }}>
         <button
           onClick={() => setIsCollapsed(false)}
-          className="flex items-center gap-1.5 font-bold hover:underline"
+          aria-expanded="false"
+          aria-label={isBn ? "টিভি বুলেটিন ব্যানার প্রদর্শন করুন" : "Expand TV bulletin banner"}
+          className="flex items-center gap-1.5 font-bold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded px-1"
           style={{ color: style.accentColor }}
         >
           <span className="w-2 h-2 rounded-full animate-pulse-live" style={{ backgroundColor: style.accentColor }} />
@@ -182,7 +184,9 @@ export default function TvBulletin({
         </button>
         <button
           onClick={() => setIsCollapsed(false)}
-          className="text-[11px] font-bold px-2 py-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10"
+          aria-expanded="false"
+          aria-label={isBn ? "টিভি বুলেটিন ব্যানার প্রদর্শন করুন" : "Expand TV bulletin banner"}
+          className="text-[11px] font-bold px-2 py-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
           {isBn ? "প্রদর্শন করুন" : "Show Banner"}
         </button>
@@ -279,6 +283,7 @@ export default function TvBulletin({
             <button
               type="button"
               onClick={() => setIsCollapsed(true)}
+              aria-expanded="true"
               className="h-8 w-8 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               title={isBn ? "মিনিমাইজ করুন" : "Collapse Banner"}
               aria-label={isBn ? "টিভি বুলেটিন ব্যানার সংকুচিত করুন" : "Collapse TV bulletin banner"}
