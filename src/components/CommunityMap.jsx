@@ -11,6 +11,8 @@ import { Card, Badge, Btn, Modal } from "./primitives";
 import { C } from "../theme";
 import { supabase } from "../lib/supabase";
 import { escapeHtml, sanitizeUrl } from "../utils";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 
 export const KUNJACHAYA_MAP_URL = "https://www.google.com/maps/place/Kunjachaya+Residential+Area,+Chattogram/@22.3810056,91.8165975,18z/data=!4m10!1m2!2m1!1skunjochaya+R%2FA+detailed+map!3m6!1s0x30acd8667bccf937:0xc04874cf10161475!8m2!3d22.3810056!4d91.8165975!15sChtrdW5qb2NoYXlhIFIvQSBkZXRhaWxlZCBtYXCSAQxuZWlnaGJvcmhvb2TgAQA!16s%2Fg%2F1tf0b8p6";
 export const KUNJACHAYA_COORDS = { lat: 22.3810056, lng: 91.8165975 };
@@ -449,29 +451,102 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   // --------------------------------------------------------------------------
   // 7. Start / Stop Live Location Sharing via GPS Watch & Presence
   // --------------------------------------------------------------------------
-  const startSharingLiveLocation = () => {
-    if (!navigator.geolocation) {
-      toast(isBn ? "আপনার ব্রাউজার বা ডিভাইসে GPS সমর্থিত নয়।" : "Geolocation is not supported by your device.", "error");
+  const startSharingLiveLocation = async () => {
+    if (!session) {
+      toast(isBn ? "লাইভ অবস্থান শেয়ার করতে লগইন করুন।" : "Please log in to share live location.", "error");
       return;
     }
 
-    if (!session) {
-      toast(isBn ? "লাইভ অবস্থান শেয়ার করতে লগইন করুন।" : "Please log in to share live location.", "error");
+    const isNative = Capacitor.isNativePlatform();
+
+    // On native Android/iOS — use @capacitor/geolocation (triggers OS permission dialog)
+    if (isNative) {
+      try {
+        // Request permission first
+        const permStatus = await Geolocation.requestPermissions();
+        if (permStatus.location !== "granted") {
+          toast(
+            isBn
+              ? "GPS পারমিশন দেওয়া হয়নি। সেটিংস থেকে অনুমতি দিন।"
+              : "Location permission denied. Please enable it in Settings.",
+            "error"
+          );
+          return;
+        }
+      } catch (e) {
+        console.warn("Permission request error:", e);
+      }
+
+      const durationMinutes = parseInt(shareDuration, 10);
+      const expiresAt = isNaN(durationMinutes) ? null : new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
+      setShareExpiresAt(expiresAt);
+      toast(isBn ? "লাইভ লোকেশন চালু হচ্ছে..." : "Starting live location broadcast...", "info");
+
+      const trackPosition = (pos) => {
+        const { latitude, longitude, accuracy, heading, speed } = pos.coords;
+        setMyLocation({ lat: latitude, lng: longitude, accuracy });
+        if (channelRef.current) {
+          channelRef.current.track({
+            userId: session.id,
+            name: session.name,
+            role: session.role,
+            post: session.post || session.memberClass,
+            photoUrl: session.photoUrl,
+            lat: latitude,
+            lng: longitude,
+            accuracy,
+            heading: heading || 0,
+            speed: speed || 0,
+            activity: activityTag,
+            activityText: customActivity.trim() || undefined,
+            updatedAt: new Date().toISOString(),
+            expiresAt,
+          });
+        }
+        setIsSharing(true);
+        setShareModalOpen(false);
+      };
+
+      try {
+        const watchId = await Geolocation.watchPosition(
+          { enableHighAccuracy: true, timeout: 15000 },
+          (pos, err) => {
+            if (err) {
+              console.warn("Capacitor watchPosition error:", err);
+              toast(
+                isBn
+                  ? "GPS এক্সেস পাওয়া যায়নি। লোকেশন পারমিশন দিন।"
+                  : "Could not access GPS. Please enable location permissions.",
+                "error"
+              );
+              stopSharingLiveLocation();
+              return;
+            }
+            trackPosition(pos);
+          }
+        );
+        watchIdRef.current = watchId;
+      } catch (e) {
+        console.warn("Geolocation watchPosition failed:", e);
+        toast(isBn ? "GPS চালু করতে সমস্যা হয়েছে।" : "Failed to start GPS.", "error");
+      }
+      return;
+    }
+
+    // Web fallback — navigator.geolocation
+    if (!navigator.geolocation) {
+      toast(isBn ? "আপনার ব্রাউজার বা ডিভাইসে GPS সমর্থিত নয়।" : "Geolocation is not supported by your device.", "error");
       return;
     }
 
     const durationMinutes = parseInt(shareDuration, 10);
     const expiresAt = isNaN(durationMinutes) ? null : new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
     setShareExpiresAt(expiresAt);
-
     toast(isBn ? "লাইভ লোকেশন চালু হচ্ছে..." : "Starting live location broadcast...", "info");
 
     const onPosSuccess = (pos) => {
       const { latitude, longitude, accuracy, heading, speed } = pos.coords;
-      const posObj = { lat: latitude, lng: longitude, accuracy };
-      setMyLocation(posObj);
-
-      // Track in Supabase Presence
+      setMyLocation({ lat: latitude, lng: longitude, accuracy });
       if (channelRef.current) {
         channelRef.current.track({
           userId: session.id,
@@ -490,7 +565,6 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
           expiresAt,
         });
       }
-
       setIsSharing(true);
       setShareModalOpen(false);
     };
@@ -511,13 +585,16 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       maximumAge: 3000,
       timeout: 15000,
     });
-
     watchIdRef.current = watchId;
   };
 
   const stopSharingLiveLocation = () => {
     if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
+      if (Capacitor.isNativePlatform()) {
+        Geolocation.clearWatch({ id: watchIdRef.current });
+      } else {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
       watchIdRef.current = null;
     }
 
@@ -548,7 +625,11 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   useEffect(() => {
     return () => {
       if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+        if (Capacitor.isNativePlatform()) {
+          Geolocation.clearWatch({ id: watchIdRef.current });
+        } else {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+        }
       }
     };
   }, []);
@@ -556,13 +637,43 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   // --------------------------------------------------------------------------
   // 8. Locate Me (Private GPS without public broadcast)
   // --------------------------------------------------------------------------
-  const handleLocateMe = () => {
-    if (!navigator.geolocation) {
-      toast(isBn ? "GPS সমর্থিত নয়।" : "GPS not supported.", "error");
+  const handleLocateMe = async () => {
+    setLocating(true);
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const permStatus = await Geolocation.requestPermissions();
+        if (permStatus.location !== "granted") {
+          toast(isBn ? "GPS পারমিশন দেওয়া হয়নি।" : "Location permission denied.", "error");
+          setLocating(false);
+          return;
+        }
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+        const { latitude, longitude, accuracy } = pos.coords;
+        setMyLocation({ lat: latitude, lng: longitude, accuracy });
+        setLocating(false);
+        const map = mapInstanceRef.current;
+        if (map) map.setView([latitude, longitude], 17);
+        const dist = calculateDistanceKm(latitude, longitude, KUNJACHAYA_COORDS.lat, KUNJACHAYA_COORDS.lng);
+        toast(
+          isBn
+            ? `আপনার অবস্থান পাওয়া গেছে! কুঞ্জছায়া থেকে দূরত্ব: ${formatDistance(dist, true)}`
+            : `Location found! ${formatDistance(dist, false)} from Kunjachaya`,
+          "success"
+        );
+      } catch (e) {
+        console.warn("Capacitor getCurrentPosition error:", e);
+        toast(isBn ? "GPS তথ্য পাওয়া যায়নি।" : "Could not get GPS location.", "error");
+        setLocating(false);
+      }
       return;
     }
 
-    setLocating(true);
+    if (!navigator.geolocation) {
+      toast(isBn ? "GPS সমর্থিত নয়।" : "GPS not supported.", "error");
+      setLocating(false);
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
