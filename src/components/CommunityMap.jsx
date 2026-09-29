@@ -374,7 +374,7 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       const userName = escapeHtml(user.name || "User");
       const userFirstName = escapeHtml(user.name?.split(" ")?.[0] || "User");
       const userInitial = escapeHtml((user.name || "U").slice(0, 1).toUpperCase());
-      const safePhotoUrl = user.photoUrl ? sanitizeUrl(user.photoUrl) : "";
+      const safePhotoUrl = user.photoUrl ? escapeHtml(sanitizeUrl(user.photoUrl)) : "";
 
       const distanceToCenter = calculateDistanceKm(
         user.lat,
