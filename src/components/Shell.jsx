@@ -106,7 +106,6 @@ const ADMIN_NAV_GROUPS = [
       { key: "a-tickets", label: "tickets", icon: LifeBuoy },
       { key: "settings", label: "settings", icon: Settings },
       { key: "r-profile", label: "profile", icon: User },
-      { key: "a-modules", label: "modules", icon: LayoutGrid, superAdminOnly: true },
     ],
   },
 ];
