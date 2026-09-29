@@ -25,3 +25,8 @@
 ## 2026-09-14 - Pre-computing Voucher Defaults & Single-Pass Expense Aggregation in Admin Expenses
 **Learning:** In `src/screens/admin/Expenses.jsx`, `nextVoucher(expenses)` was re-evaluating regex patterns across all expense records inside initial form state initialization on every component render. Additionally, `totalAll`, `totalFiltered`, and `catTotals` executed multiple unmemoized array passes whenever local form inputs or modal states changed.
 **Action:** Memoize `defaultVoucherNo` with `[expenses]` dependency and consolidate total expense calculations into a single-pass `useMemo` hook.
+
+## 2026-09-14 - Pre-indexing Active Residents Lookup Map in Admin Dues
+**Learning:** `AdminDues` in `src/screens/admin/Dues.jsx` called `activeResidents.find(u => u.id === d.residentId)` repeatedly inside `allDues.filter`, table `.map` rendering, `handleExportCSV`, and modal handlers, creating an $O(N \times M)$ linear search overhead on every search query character or filter change.
+**Action:** Pre-index `activeResidents` into an $O(1)$ `Map` (`activeResidentsMap`) wrapped in `useMemo([activeResidents])` to reduce filtering and table lookup operations to $O(N + M)$.
+
