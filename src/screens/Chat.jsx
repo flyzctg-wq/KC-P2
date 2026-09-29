@@ -94,29 +94,36 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
     return { replyInfo, topicTag, cleanBody };
   };
 
-  // Filter messages by channel, topic, and search query
+  // Pre-parse message text and look up member details for active channel once per database update to prevent regex/string parsing on keystrokes
+  const enrichedMessages = useMemo(() => {
+    return (db.chatMessages || [])
+      .filter(m => m.channel === channel)
+      .map(m => {
+        const { replyInfo, topicTag, cleanBody } = parseMessageText(m.text || "");
+        const sender = getMemberDetails(m.userId, m.userName);
+        return { ...m, replyInfo, topicTag, cleanBody, sender };
+      });
+  }, [db.chatMessages, channel, userMap]);
+
+  // Filter pre-parsed messages by topic and search query
   const messages = useMemo(() => {
-    const allChannelMessages = (db.chatMessages || []).filter(m => m.channel === channel);
-
-    return allChannelMessages.filter(m => {
-      const { topicTag, cleanBody } = parseMessageText(m.text || "");
-
+    const q = searchQuery.toLowerCase().trim();
+    return enrichedMessages.filter(m => {
       // Topic filter
-      if (topicFilter !== "all" && topicTag !== topicFilter) {
+      if (topicFilter !== "all" && m.topicTag !== topicFilter) {
         return false;
       }
 
       // Search query filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesBody = (cleanBody || "").toLowerCase().includes(q);
+      if (q) {
+        const matchesBody = (m.cleanBody || "").toLowerCase().includes(q);
         const matchesAuthor = (m.userName || "").toLowerCase().includes(q);
         return matchesBody || matchesAuthor;
       }
 
       return true;
     });
-  }, [db.chatMessages, channel, topicFilter, searchQuery]);
+  }, [enrichedMessages, topicFilter, searchQuery]);
 
   const prevCountRef = useRef(messages.length);
 
@@ -439,8 +446,8 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
           const m = item.msg;
           const mine = m.userId === session?.id;
-          const sender = getMemberDetails(m.userId, m.userName);
-          const { replyInfo, topicTag, cleanBody } = parseMessageText(m.text || "");
+          const sender = m.sender || { name: m.userName };
+          const { replyInfo, topicTag, cleanBody } = m;
           const isEC = sender.post && sender.post !== "Resident";
           const rawPhone = cleanPhone(sender.phone || "");
 

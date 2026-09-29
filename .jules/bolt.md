@@ -30,3 +30,6 @@
 **Learning:** `AdminDues` in `src/screens/admin/Dues.jsx` called `activeResidents.find(u => u.id === d.residentId)` repeatedly inside `allDues.filter`, table `.map` rendering, `handleExportCSV`, and modal handlers, creating an $O(N \times M)$ linear search overhead on every search query character or filter change.
 **Action:** Pre-index `activeResidents` into an $O(1)$ `Map` (`activeResidentsMap`) wrapped in `useMemo([activeResidents])` to reduce filtering and table lookup operations to $O(N + M)$.
 
+## 2026-09-15 - Pre-parsing Chat Message Text & Pre-indexing Member Lookups in Community Chat
+**Learning:** In `src/screens/Chat.jsx`, `parseMessageText` (regex header/tag parsing) and `getMemberDetails` (`userMap.get`) were called twice per message on every render cycle and typing keystroke.
+**Action:** Pre-parse and enrich messages in an `enrichedMessages` `useMemo` dependent on `[db.chatMessages, channel, userMap]` so filtering and rendering consume already pre-parsed properties directly without regex re-parsing.
