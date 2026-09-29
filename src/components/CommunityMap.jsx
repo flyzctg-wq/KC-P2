@@ -100,6 +100,12 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   const watchIdRef = useRef(null);
   const channelReadyRef = useRef(false); // true only after Supabase confirms SUBSCRIBED
   const pendingTrackRef = useRef(null);  // queued track payload if channel not ready yet
+  const lastPayloadRef = useRef(null);   // last tracked payload for auto-retrack
+  const isSharingRef = useRef(false);
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+  const isBnRef = useRef(isBn);
+  isBnRef.current = isBn;
 
   const isSecurityOrAdmin = session?.role === "admin" || session?.post === "Security Guard" || session?.post === "Security";
 
@@ -267,10 +273,12 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
     channelReadyRef.current = false;
     pendingTrackRef.current = null;
 
+    const presenceKey = session?.id ? String(session.id) : `anon_${Date.now()}`;
+
     // Listen to real-time presence on community_live_locations channel
     const channel = supabase.channel("community_live_locations", {
       config: {
-        presence: { key: session?.id || `anon_${Date.now()}` },
+        presence: { key: presenceKey },
       },
     });
 
@@ -283,8 +291,8 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
           const presences = state[userId];
           if (presences && presences.length > 0) {
             const latest = presences[presences.length - 1];
-            // Filter out expired locations
-            if (latest.expiresAt && new Date(latest.expiresAt).getTime() < Date.now()) {
+            // Filter out expired locations (with 2-minute grace buffer for clock skew across devices)
+            if (latest.expiresAt && new Date(latest.expiresAt).getTime() + 120000 < Date.now()) {
               return;
             }
             activeMap[userId] = latest;
@@ -295,9 +303,9 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       })
       .on("presence", { event: "join" }, ({ key, newPresences }) => {
         const joinedUser = newPresences?.[0]?.name;
-        if (joinedUser && key !== session?.id) {
-          toast(
-            isBn
+        if (joinedUser && key !== presenceKey) {
+          toastRef.current(
+            isBnRef.current
               ? `${joinedUser} লাইভ অবস্থান শেয়ার শুরু করেছেন।`
               : `${joinedUser} started sharing live location.`,
             "info"
@@ -305,18 +313,20 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
         }
       })
       .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-        const leftUser = leftPresences?.[0]?.name;
-        if (leftUser && key !== session?.id) {
-          // Clean update
-        }
+        // Presence state sync automatically handles user leaves
       })
-      .subscribe((status) => {
+      .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           channelReadyRef.current = true;
-          // Flush any track that was queued before subscription completed
-          if (pendingTrackRef.current) {
-            channel.track(pendingTrackRef.current);
-            pendingTrackRef.current = null;
+          // Flush any track that was queued or re-track if actively sharing
+          const toTrack = pendingTrackRef.current || (isSharingRef.current ? lastPayloadRef.current : null);
+          if (toTrack) {
+            try {
+              await channel.track(toTrack);
+              pendingTrackRef.current = null;
+            } catch (err) {
+              console.warn("Supabase presence track error:", err);
+            }
           }
         }
       });
@@ -326,9 +336,9 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
     return () => {
       channelReadyRef.current = false;
       pendingTrackRef.current = null;
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
-  }, [session?.id, isBn, toast]);
+  }, [session?.id]);
 
   // --------------------------------------------------------------------------
   // 5. Render Live Member / Guard Pins on the Map
@@ -473,14 +483,56 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       return;
     }
 
+    const durationMinutes = parseInt(shareDuration, 10);
+    const expiresAt = isNaN(durationMinutes) ? null : new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
+    setShareExpiresAt(expiresAt);
+
+    const trackPosition = (pos) => {
+      if (!pos?.coords) return;
+      const { latitude, longitude, accuracy, heading, speed } = pos.coords;
+      setMyLocation({ lat: latitude, lng: longitude, accuracy });
+
+      const payload = {
+        userId: String(session.id),
+        name: session.name || "User",
+        role: session.role || "resident",
+        post: session.post || session.memberClass || "Member",
+        photoUrl: session.photoUrl,
+        lat: latitude,
+        lng: longitude,
+        accuracy: accuracy || 10,
+        heading: heading || 0,
+        speed: speed || 0,
+        activity: activityTag,
+        activityText: customActivity.trim() || undefined,
+        updatedAt: new Date().toISOString(),
+        expiresAt,
+      };
+
+      lastPayloadRef.current = payload;
+      isSharingRef.current = true;
+      setIsSharing(true);
+      setShareModalOpen(false);
+
+      if (channelRef.current && channelReadyRef.current) {
+        channelRef.current.track(payload).catch((err) => console.warn("Supabase track error:", err));
+      } else {
+        pendingTrackRef.current = payload;
+      }
+
+      const map = mapInstanceRef.current;
+      if (map) {
+        map.setView([latitude, longitude], 17);
+      }
+    };
+
     const isNative = Capacitor.isNativePlatform();
 
     // On native Android/iOS — use @capacitor/geolocation (triggers OS permission dialog)
     if (isNative) {
       try {
-        // Request permission first
         const permStatus = await Geolocation.requestPermissions();
-        if (permStatus.location !== "granted") {
+        if (permStatus.location !== "granted" && permStatus.coarseLocation !== "granted") {
           toast(
             isBn
               ? "GPS পারমিশন দেওয়া হয়নি। সেটিংস থেকে অনুমতি দিন।"
@@ -493,65 +545,38 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
         console.warn("Permission request error:", e);
       }
 
-      const durationMinutes = parseInt(shareDuration, 10);
-      const expiresAt = isNaN(durationMinutes) ? null : new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
-      setShareExpiresAt(expiresAt);
       toast(isBn ? "লাইভ লোকেশন চালু হচ্ছে..." : "Starting live location broadcast...", "info");
 
-      const trackPosition = (pos) => {
-        const { latitude, longitude, accuracy, heading, speed } = pos.coords;
-        setMyLocation({ lat: latitude, lng: longitude, accuracy });
-
-        const payload = {
-          userId: session.id,
-          name: session.name,
-          role: session.role,
-          post: session.post || session.memberClass,
-          photoUrl: session.photoUrl,
-          lat: latitude,
-          lng: longitude,
-          accuracy,
-          heading: heading || 0,
-          speed: speed || 0,
-          activity: activityTag,
-          activityText: customActivity.trim() || undefined,
-          updatedAt: new Date().toISOString(),
-          expiresAt,
-        };
-
-        if (channelRef.current && channelReadyRef.current) {
-          channelRef.current.track(payload);
-        } else {
-          // Channel not subscribed yet — queue it, the subscribe callback will flush it
-          pendingTrackRef.current = payload;
+      // 1. Immediately request current position for instant map pin & presence
+      try {
+        const instantPos = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+        if (instantPos?.coords) {
+          trackPosition(instantPos);
         }
+      } catch (err) {
+        console.warn("Immediate getCurrentPosition notice:", err);
+      }
 
-        setIsSharing(true);
-        setShareModalOpen(false);
-      };
-
+      // 2. Set up continuous watch
       try {
         const watchId = await Geolocation.watchPosition(
           { enableHighAccuracy: true, timeout: 15000 },
           (pos, err) => {
             if (err) {
               console.warn("Capacitor watchPosition error:", err);
-              toast(
-                isBn
-                  ? "GPS এক্সেস পাওয়া যায়নি। লোকেশন পারমিশন দিন।"
-                  : "Could not access GPS. Please enable location permissions.",
-                "error"
-              );
-              stopSharingLiveLocation();
               return;
             }
-            trackPosition(pos);
+            if (pos) {
+              trackPosition(pos);
+            }
           }
         );
         watchIdRef.current = watchId;
       } catch (e) {
         console.warn("Geolocation watchPosition failed:", e);
-        toast(isBn ? "GPS চালু করতে সমস্যা হয়েছে।" : "Failed to start GPS.", "error");
       }
       return;
     }
@@ -562,42 +587,17 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       return;
     }
 
-    const durationMinutes = parseInt(shareDuration, 10);
-    const expiresAt = isNaN(durationMinutes) ? null : new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
-    setShareExpiresAt(expiresAt);
     toast(isBn ? "লাইভ লোকেশন চালু হচ্ছে..." : "Starting live location broadcast...", "info");
 
-    const onPosSuccess = (pos) => {
-      const { latitude, longitude, accuracy, heading, speed } = pos.coords;
-      setMyLocation({ lat: latitude, lng: longitude, accuracy });
+    // 1. Immediate position for instant feedback
+    navigator.geolocation.getCurrentPosition(
+      (pos) => trackPosition(pos),
+      (err) => console.warn("Initial web getCurrentPosition notice:", err),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
 
-      const payload = {
-        userId: session.id,
-        name: session.name,
-        role: session.role,
-        post: session.post || session.memberClass,
-        photoUrl: session.photoUrl,
-        lat: latitude,
-        lng: longitude,
-        accuracy,
-        heading: heading || 0,
-        speed: speed || 0,
-        activity: activityTag,
-        activityText: customActivity.trim() || undefined,
-        updatedAt: new Date().toISOString(),
-        expiresAt,
-      };
-
-      if (channelRef.current && channelReadyRef.current) {
-        channelRef.current.track(payload);
-      } else {
-        pendingTrackRef.current = payload;
-      }
-
-      setIsSharing(true);
-      setShareModalOpen(false);
-    };
-
+    // 2. Continuous watch
+    const onPosSuccess = (pos) => trackPosition(pos);
     const onPosError = (err) => {
       console.warn("GPS watchPosition error:", err);
       toast(
@@ -618,6 +618,10 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   };
 
   const stopSharingLiveLocation = () => {
+    isSharingRef.current = false;
+    lastPayloadRef.current = null;
+    pendingTrackRef.current = null;
+
     if (watchIdRef.current !== null) {
       if (Capacitor.isNativePlatform()) {
         Geolocation.clearWatch({ id: watchIdRef.current });
@@ -628,7 +632,7 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
     }
 
     if (channelRef.current) {
-      channelRef.current.untrack();
+      channelRef.current.untrack().catch(() => {});
     }
 
     setIsSharing(false);

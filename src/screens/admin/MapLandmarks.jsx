@@ -10,16 +10,16 @@ import { supabase } from "../../lib/supabase";
 
 // Default fallback landmarks (same as CommunityMap hardcoded defaults)
 const DEFAULT_LANDMARKS = [
-  { id: "office",  nameEn: "Society Office & Clubhouse",           nameBn: "সোসাইটি অফিস ও ক্লাব ভবন",                      lat: 22.3810056, lng: 91.8165975, icon: "🏢", color: "#059669", type: "office" },
-  { id: "gate1",   nameEn: "Gate 1 (Main Entrance - Bayezid Road)", nameBn: "১নং গেট (প্রধান প্রবেশদ্বার - বায়েজীদ রোড)",   lat: 22.38138,   lng: 91.81615,   icon: "🚪", color: "#d97706", type: "gate" },
-  { id: "gate2",   nameEn: "Gate 2 (West Exit / Ring Road access)", nameBn: "২নং গেট (পশ্চিম নির্গমন / রিং রোড)",             lat: 22.38068,   lng: 91.81592,   icon: "🚪", color: "#d97706", type: "gate" },
-  { id: "mosque",  nameEn: "Kunjachaya Jamia Mosque",               nameBn: "কুঞ্জছায়া জামে মসজিদ",                           lat: 22.38125,   lng: 91.81682,   icon: "🕌", color: "#0284c7", type: "mosque" },
-  { id: "park",    nameEn: "Community Park & Children Playground",  nameBn: "কমিউনিটি পার্ক ও শিশু খেলার মাঠ",               lat: 22.38148,   lng: 91.81710,   icon: "🌳", color: "#16a34a", type: "park" },
-  { id: "blockA",  nameEn: "Block A", nameBn: "ব্লক এ", lat: 22.38155, lng: 91.81640, icon: "🅰️", color: "#6366f1", type: "block" },
-  { id: "blockB",  nameEn: "Block B", nameBn: "ব্লক বি", lat: 22.38118, lng: 91.81605, icon: "🅱️", color: "#6366f1", type: "block" },
-  { id: "blockC",  nameEn: "Block C", nameBn: "ব্লক সি", lat: 22.38078, lng: 91.81665, icon: "🅲",  color: "#6366f1", type: "block" },
-  { id: "blockD",  nameEn: "Block D", nameBn: "ব্লক ডি", lat: 22.38058, lng: 91.81715, icon: "🅳",  color: "#6366f1", type: "block" },
-  { id: "blockE",  nameEn: "Block E", nameBn: "ব্লক ই", lat: 22.38115, lng: 91.81740, icon: "🅴",  color: "#6366f1", type: "block" },
+  { id: "office", nameEn: "Society Office & Clubhouse", nameBn: "সোসাইটি অফিস ও ক্লাব ভবন", lat: 22.3810056, lng: 91.8165975, icon: "🏢", color: "#059669", type: "office" },
+  { id: "gate1", nameEn: "Gate 1 (Main Entrance - Bayezid Road)", nameBn: "১নং গেট (প্রধান প্রবেশদ্বার - বায়েজীদ রোড)", lat: 22.38138, lng: 91.81615, icon: "🚪", color: "#d97706", type: "gate" },
+  { id: "gate2", nameEn: "Gate 2 (West Exit / Ring Road access)", nameBn: "২নং গেট (পশ্চিম নির্গমন / রিং রোড)", lat: 22.38068, lng: 91.81592, icon: "🚪", color: "#d97706", type: "gate" },
+  { id: "mosque", nameEn: "Kunjachaya Jamia Mosque", nameBn: "কুঞ্জছায়া জামে মসজিদ", lat: 22.38125, lng: 91.81682, icon: "🕌", color: "#0284c7", type: "mosque" },
+  { id: "park", nameEn: "Community Park & Children Playground", nameBn: "কমিউনিটি পার্ক ও শিশু খেলার মাঠ", lat: 22.38148, lng: 91.81710, icon: "🌳", color: "#16a34a", type: "park" },
+  { id: "blockA", nameEn: "Block A", nameBn: "ব্লক এ", lat: 22.38155, lng: 91.81640, icon: "🅰️", color: "#6366f1", type: "block" },
+  { id: "blockB", nameEn: "Block B", nameBn: "ব্লক বি", lat: 22.38118, lng: 91.81605, icon: "🅱️", color: "#6366f1", type: "block" },
+  { id: "blockC", nameEn: "Block C", nameBn: "ব্লক সি", lat: 22.38078, lng: 91.81665, icon: "🅲", color: "#6366f1", type: "block" },
+  { id: "blockD", nameEn: "Block D", nameBn: "ব্লক ডি", lat: 22.38058, lng: 91.81715, icon: "🅳", color: "#6366f1", type: "block" },
+  { id: "blockE", nameEn: "Block E", nameBn: "ব্লক ই", lat: 22.38115, lng: 91.81740, icon: "🅴", color: "#6366f1", type: "block" },
 ];
 
 const PRESET_ICONS = ["🏢", "🚪", "🕌", "🌳", "🏠", "🏥", "🏫", "🏪", "⛽", "🅰️", "🅱️", "🅲", "🅳", "🅴", "📍", "🔴", "🟢", "🔵", "⭐", "🚑", "🛡️", "🏋️", "🎪", "🌿", "💧", "🔒", "🚗", "🎯"];
@@ -52,7 +52,7 @@ export default function AdminMapLandmarks({ session, lang, toast }) {
     (session?.post === "President" || session?.post === "General Secretary");
   const isOIC = session?.role === "admin" &&
     (session?.post === "Officer-in-Charge" || session?.post === "General Secretary" ||
-     session?.post === "President" || session?.post === "Joint Secretary");
+      session?.post === "President" || session?.post === "Joint Secretary");
 
   const canEdit = isSuperAdmin || isOIC;
 
@@ -566,9 +566,9 @@ export default function AdminMapLandmarks({ session, lang, toast }) {
           <p className="text-sm" style={{ color: C.onSurfaceVariant }}>
             {deleteConfirm === "reset"
               ? f("This will replace all current landmarks with the original 10 default pins. This cannot be undone.",
-                  "এটি সকল বর্তমান ল্যান্ডমার্ক মুছে ডিফল্ট ১০টি পিন পুনরুদ্ধার করবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।")
+                "এটি সকল বর্তমান ল্যান্ডমার্ক মুছে ডিফল্ট ১০টি পিন পুনরুদ্ধার করবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।")
               : f("Are you sure you want to permanently delete this landmark from the community map?",
-                  "আপনি কি নিশ্চিতভাবে এই ল্যান্ডমার্কটি মুছতে চান?")}
+                "আপনি কি নিশ্চিতভাবে এই ল্যান্ডমার্কটি মুছতে চান?")}
           </p>
           <div className="flex gap-2">
             <button
