@@ -98,6 +98,8 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   // Supabase channel & GPS watch refs
   const channelRef = useRef(null);
   const watchIdRef = useRef(null);
+  const channelReadyRef = useRef(false); // true only after Supabase confirms SUBSCRIBED
+  const pendingTrackRef = useRef(null);  // queued track payload if channel not ready yet
 
   const isSecurityOrAdmin = session?.role === "admin" || session?.post === "Security Guard" || session?.post === "Security";
 
@@ -262,6 +264,9 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
   // 4. Supabase Realtime Presence Channel for Community Live Location
   // --------------------------------------------------------------------------
   useEffect(() => {
+    channelReadyRef.current = false;
+    pendingTrackRef.current = null;
+
     // Listen to real-time presence on community_live_locations channel
     const channel = supabase.channel("community_live_locations", {
       config: {
@@ -305,11 +310,22 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
           // Clean update
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          channelReadyRef.current = true;
+          // Flush any track that was queued before subscription completed
+          if (pendingTrackRef.current) {
+            channel.track(pendingTrackRef.current);
+            pendingTrackRef.current = null;
+          }
+        }
+      });
 
     channelRef.current = channel;
 
     return () => {
+      channelReadyRef.current = false;
+      pendingTrackRef.current = null;
       channel.unsubscribe();
     };
   }, [session?.id, isBn, toast]);
@@ -485,24 +501,31 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
       const trackPosition = (pos) => {
         const { latitude, longitude, accuracy, heading, speed } = pos.coords;
         setMyLocation({ lat: latitude, lng: longitude, accuracy });
-        if (channelRef.current) {
-          channelRef.current.track({
-            userId: session.id,
-            name: session.name,
-            role: session.role,
-            post: session.post || session.memberClass,
-            photoUrl: session.photoUrl,
-            lat: latitude,
-            lng: longitude,
-            accuracy,
-            heading: heading || 0,
-            speed: speed || 0,
-            activity: activityTag,
-            activityText: customActivity.trim() || undefined,
-            updatedAt: new Date().toISOString(),
-            expiresAt,
-          });
+
+        const payload = {
+          userId: session.id,
+          name: session.name,
+          role: session.role,
+          post: session.post || session.memberClass,
+          photoUrl: session.photoUrl,
+          lat: latitude,
+          lng: longitude,
+          accuracy,
+          heading: heading || 0,
+          speed: speed || 0,
+          activity: activityTag,
+          activityText: customActivity.trim() || undefined,
+          updatedAt: new Date().toISOString(),
+          expiresAt,
+        };
+
+        if (channelRef.current && channelReadyRef.current) {
+          channelRef.current.track(payload);
+        } else {
+          // Channel not subscribed yet — queue it, the subscribe callback will flush it
+          pendingTrackRef.current = payload;
         }
+
         setIsSharing(true);
         setShareModalOpen(false);
       };
@@ -547,24 +570,30 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
     const onPosSuccess = (pos) => {
       const { latitude, longitude, accuracy, heading, speed } = pos.coords;
       setMyLocation({ lat: latitude, lng: longitude, accuracy });
-      if (channelRef.current) {
-        channelRef.current.track({
-          userId: session.id,
-          name: session.name,
-          role: session.role,
-          post: session.post || session.memberClass,
-          photoUrl: session.photoUrl,
-          lat: latitude,
-          lng: longitude,
-          accuracy,
-          heading: heading || 0,
-          speed: speed || 0,
-          activity: activityTag,
-          activityText: customActivity.trim() || undefined,
-          updatedAt: new Date().toISOString(),
-          expiresAt,
-        });
+
+      const payload = {
+        userId: session.id,
+        name: session.name,
+        role: session.role,
+        post: session.post || session.memberClass,
+        photoUrl: session.photoUrl,
+        lat: latitude,
+        lng: longitude,
+        accuracy,
+        heading: heading || 0,
+        speed: speed || 0,
+        activity: activityTag,
+        activityText: customActivity.trim() || undefined,
+        updatedAt: new Date().toISOString(),
+        expiresAt,
+      };
+
+      if (channelRef.current && channelReadyRef.current) {
+        channelRef.current.track(payload);
+      } else {
+        pendingTrackRef.current = payload;
       }
+
       setIsSharing(true);
       setShareModalOpen(false);
     };
