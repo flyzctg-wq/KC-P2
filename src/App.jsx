@@ -797,10 +797,13 @@ export default function App() {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
                 onClick={() => setShowNewPw(!showNewPw)}
+                aria-label={showNewPw ? (lang === "bn" ? "পাসওয়ার্ড লুকান" : "Hide password") : (lang === "bn" ? "পাসওয়ার্ড দেখান" : "Show password")}
+                title={showNewPw ? (lang === "bn" ? "পাসওয়ার্ড লুকান" : "Hide password") : (lang === "bn" ? "পাসওয়ার্ড দেখান" : "Show password")}
+                aria-pressed={showNewPw}
               >
-                {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showNewPw ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
             </div>
           </Field>
