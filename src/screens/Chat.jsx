@@ -26,6 +26,38 @@ const QUICK_PHRASES = [
 
 const EMOJIS = ["👍", "❤️", "👏", "🙏", "💡", "🔥", "🏠", "🤝", "😊", "✨"];
 
+// Parse message text for reply quote and topic tag outside render cycle
+function parseMessageText(rawText = "") {
+  let replyInfo = null;
+  let topicTag = null;
+  let cleanBody = rawText;
+
+  // Check for quote format: "> Author: Snippet...\n\nBody"
+  if (cleanBody.startsWith("> ")) {
+    const parts = cleanBody.split("\n\n");
+    if (parts.length > 1) {
+      const quoteHeader = parts[0].slice(2);
+      const colonIdx = quoteHeader.indexOf(":");
+      if (colonIdx !== -1) {
+        replyInfo = {
+          author: quoteHeader.slice(0, colonIdx).trim(),
+          snippet: quoteHeader.slice(colonIdx + 1).trim(),
+        };
+        cleanBody = parts.slice(1).join("\n\n");
+      }
+    }
+  }
+
+  // Check for topic tag prefix: "[#Helpdesk] ..."
+  const topicMatch = cleanBody.match(/^\[#([A-Za-z]+)\]\s*/);
+  if (topicMatch) {
+    topicTag = topicMatch[1].toLowerCase();
+    cleanBody = cleanBody.slice(topicMatch[0].length);
+  }
+
+  return { replyInfo, topicTag, cleanBody };
+}
+
 export default function Chat({ session, db = {}, persist, toast, logActivity, go, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const isAdmin = session?.role === "admin";
@@ -62,61 +94,37 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
     return map;
   }, [db.users]);
 
-  // Parse message text for reply quote and topic tag
-  const parseMessageText = (rawText = "") => {
-    let replyInfo = null;
-    let topicTag = null;
-    let cleanBody = rawText;
-
-    // Check for quote format: "> Author: Snippet...\n\nBody"
-    if (cleanBody.startsWith("> ")) {
-      const parts = cleanBody.split("\n\n");
-      if (parts.length > 1) {
-        const quoteHeader = parts[0].slice(2);
-        const colonIdx = quoteHeader.indexOf(":");
-        if (colonIdx !== -1) {
-          replyInfo = {
-            author: quoteHeader.slice(0, colonIdx).trim(),
-            snippet: quoteHeader.slice(colonIdx + 1).trim(),
-          };
-          cleanBody = parts.slice(1).join("\n\n");
-        }
-      }
-    }
-
-    // Check for topic tag prefix: "[#Helpdesk] ..."
-    const topicMatch = cleanBody.match(/^\[#([A-Za-z]+)\]\s*/);
-    if (topicMatch) {
-      topicTag = topicMatch[1].toLowerCase();
-      cleanBody = cleanBody.slice(topicMatch[0].length);
-    }
-
-    return { replyInfo, topicTag, cleanBody };
-  };
-
-  // Filter messages by channel, topic, and search query
+  // Filter messages by channel, topic, and search query & pre-parse message metadata
   const messages = useMemo(() => {
     const allChannelMessages = (db.chatMessages || []).filter(m => m.channel === channel);
+    const result = [];
 
-    return allChannelMessages.filter(m => {
-      const { topicTag, cleanBody } = parseMessageText(m.text || "");
+    for (let i = 0; i < allChannelMessages.length; i++) {
+      const m = allChannelMessages[i];
+      const parsed = parseMessageText(m.text || "");
 
       // Topic filter
-      if (topicFilter !== "all" && topicTag !== topicFilter) {
-        return false;
+      if (topicFilter !== "all" && parsed.topicTag !== topicFilter) {
+        continue;
       }
 
       // Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchesBody = (cleanBody || "").toLowerCase().includes(q);
+        const matchesBody = (parsed.cleanBody || "").toLowerCase().includes(q);
         const matchesAuthor = (m.userName || "").toLowerCase().includes(q);
-        return matchesBody || matchesAuthor;
+        if (!matchesBody && !matchesAuthor) {
+          continue;
+        }
       }
 
-      return true;
-    });
-  }, [db.chatMessages, channel, topicFilter, searchQuery]);
+      // Pre-lookup sender details and attach parsed info to eliminate render-loop overhead
+      const sender = userMap.get(m.userId) || userMap.get((m.userName || "").toLowerCase().trim()) || { name: m.userName };
+      result.push({ ...m, sender, parsed });
+    }
+
+    return result;
+  }, [db.chatMessages, channel, topicFilter, searchQuery, userMap]);
 
   const prevCountRef = useRef(messages.length);
 
@@ -239,11 +247,6 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
     try {
       localStorage.setItem("kc_chat_guidelines_hidden", "true");
     } catch (_) {}
-  };
-
-  // Lookup member details from userMap
-  const getMemberDetails = (userId, userName) => {
-    return userMap.get(userId) || userMap.get((userName || "").toLowerCase().trim()) || { name: userName };
   };
 
   // Group messages by date
@@ -439,8 +442,8 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
           const m = item.msg;
           const mine = m.userId === session?.id;
-          const sender = getMemberDetails(m.userId, m.userName);
-          const { replyInfo, topicTag, cleanBody } = parseMessageText(m.text || "");
+          const sender = m.sender;
+          const { replyInfo, topicTag, cleanBody } = m.parsed;
           const isEC = sender.post && sender.post !== "Resident";
           const rawPhone = cleanPhone(sender.phone || "");
 

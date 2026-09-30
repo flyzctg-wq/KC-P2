@@ -30,3 +30,6 @@
 **Learning:** `AdminDues` in `src/screens/admin/Dues.jsx` called `activeResidents.find(u => u.id === d.residentId)` repeatedly inside `allDues.filter`, table `.map` rendering, `handleExportCSV`, and modal handlers, creating an $O(N \times M)$ linear search overhead on every search query character or filter change.
 **Action:** Pre-index `activeResidents` into an $O(1)$ `Map` (`activeResidentsMap`) wrapped in `useMemo([activeResidents])` to reduce filtering and table lookup operations to $O(N + M)$.
 
+## 2026-09-15 - Pre-parsing Message Text & Pre-resolving Sender Lookups in Community Chat Stream
+**Learning:** `src/screens/Chat.jsx` ran `parseMessageText` (regex topic matching and string quote splitting) and `getMemberDetails` (lowercasing strings and Map lookups) inside the message list `.map()` JSX render loop on every message. Whenever the user typed a character in the composer or toggled emoji/search menus, every message in the stream was re-parsed and re-resolved.
+**Action:** Extract `parseMessageText` to top-level and pre-attach `sender` and `parsed` properties directly in the `messages` `useMemo` block to eliminate per-render parsing and lookup overhead.
