@@ -255,7 +255,7 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
           <div style="font-size:11px; color:#6b7280; margin-bottom:8px;">
             GPS: ${item.lat.toFixed(5)}, ${item.lng.toFixed(5)}
           </div>
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:bold; color:#059669; text-decoration:none;">
+          <a href="${sanitizeUrl(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${Number(item.lat)},${Number(item.lng)}`)}`)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:bold; color:#059669; text-decoration:none;">
             ${isBn ? "এখানে যাওয়ার দিকনির্দেশনা" : "Navigate to this landmark"} →
           </a>
         </div>
@@ -439,7 +439,7 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
             </div>
           </div>
 
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${user.lat},${user.lng}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:800; color:#059669; text-decoration:none;">
+          <a href="${sanitizeUrl(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${Number(user.lat)},${Number(user.lng)}`)}`)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:800; color:#059669; text-decoration:none;">
             ${isBn ? "এই সদস্যের কাছে যাওয়ার দিকনির্দেশনা" : "Navigate to Member"} →
           </a>
         </div>
