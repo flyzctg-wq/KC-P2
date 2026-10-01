@@ -3,7 +3,7 @@ import {
   Settings, Bell, Type, Moon, Sun, Laptop, Globe, Volume2, VolumeX,
   Smartphone, Trash2, RefreshCw, ShieldCheck, CheckCircle2, Sliders,
   Info, HardDrive, Wifi, Lock, Zap, Sparkles, SmartphoneCharging, BellRing,
-  BookOpen, FileDown
+  BookOpen, FileDown, Download, ExternalLink, Share2, Eye, Printer, FileText
 } from "lucide-react";
 import { Btn, Card, Badge, Field, SectionTitle, Modal } from "../components/primitives";
 import { C, APP_VERSION } from "../theme";
@@ -27,6 +27,158 @@ export default function SettingsScreen({
   const [notificationPermission, setNotificationPermission] = useState("prompt");
   const [cacheSize, setCacheSize] = useState("1.4 MB");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [readingDoc, setReadingDoc] = useState(null);
+  const [docLoading, setDocLoading] = useState(false);
+  const iframeRef = React.useRef(null);
+
+  const MANUALS = [
+    {
+      id: "bn",
+      titleBn: "বাংলা নির্দেশিকা",
+      titleEn: "Bengali Manual",
+      descBn: "কুঞ্জছায়া ক্লাবের সকল মডিউল, হিসাব, কমিউনিটি ম্যাপ ও সাধারণ নির্দেশিকা",
+      descEn: "Complete Bengali guide for all club modules, map & dues",
+      pdfFile: "Kunjachaya_Club_User_Manual_Bengali.pdf",
+      htmlFile: "kunjachaya_user_manual_bn.html",
+      size: "312 KB",
+      accent: "emerald",
+      badgeBn: "বাংলা সংস্করণ",
+      badgeEn: "Bengali Edition",
+      colorClass: "emerald",
+    },
+    {
+      id: "en",
+      titleBn: "ইংরেজি নির্দেশিকা",
+      titleEn: "English Manual",
+      descBn: "Official user manual, system modules, permissions and admin workflows",
+      descEn: "Official user manual, system modules, permissions and admin workflows",
+      pdfFile: "Kunjachaya_Club_User_Manual_English.pdf",
+      htmlFile: "kunjachaya_user_manual_en.html",
+      size: "489 KB",
+      accent: "blue",
+      badgeBn: "ইংরেজি সংস্করণ",
+      badgeEn: "English Edition",
+      colorClass: "blue",
+    },
+    {
+      id: "bilingual",
+      titleBn: "দ্বিভাষিক পূর্ণাঙ্গ",
+      titleEn: "Full Bilingual Guide",
+      descBn: "বাংলা ও ইংরেজি উভয় ভাষায় সংকলিত পূর্ণাঙ্গ কনস্টিটিউশনাল ও ইউজার গাইড",
+      descEn: "Complete comprehensive bilingual user & constitutional manual",
+      pdfFile: "Kunjachaya_Club_User_Manual_Bilingual.pdf",
+      htmlFile: "kunjachaya_user_manual_bilingual.html",
+      size: "665 KB",
+      accent: "purple",
+      badgeBn: "সর্বাধিক পূর্ণাঙ্গ",
+      badgeEn: "Comprehensive",
+      colorClass: "purple",
+    },
+  ];
+
+  const handleReadManual = (manual) => {
+    setReadingDoc(manual);
+  };
+
+  const handleDownloadPdf = async (manual) => {
+    const filename = manual.pdfFile;
+    const displayName = isBn ? `${manual.titleBn}.pdf` : `${manual.titleEn}.pdf`;
+
+    setDocLoading(true);
+    // 1. Native Android Bridge
+    if (window.AndroidDocs?.downloadPdf) {
+      try {
+        window.AndroidDocs.downloadPdf(filename, displayName);
+        toast(isBn ? "ম্যানুয়াল ডাউনলোড হচ্ছে..." : "Downloading manual...");
+        setDocLoading(false);
+        return;
+      } catch (e) {
+        console.warn("AndroidDocs.downloadPdf error:", e);
+      }
+    }
+
+    // 2. Web / Browser Blob Download
+    try {
+      const res = await fetch(`/docs/${filename}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = displayName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+      toast(isBn ? "ম্যানুয়াল ডাউনলোড সম্পন্ন হয়েছে!" : "Manual downloaded successfully!");
+    } catch (err) {
+      console.error("PDF download fallback error:", err);
+      window.open(`/docs/${filename}`, "_blank");
+      toast(isBn ? "নথিটি নতুন উইন্ডোতে খোলা হয়েছে।" : "Opening document in new tab.");
+    } finally {
+      setDocLoading(false);
+    }
+  };
+
+  const handleOpenPdf = (manual) => {
+    const filename = manual.pdfFile;
+    const title = isBn ? manual.titleBn : manual.titleEn;
+
+    // 1. Native Android Bridge
+    if (window.AndroidDocs?.openPdf) {
+      try {
+        window.AndroidDocs.openPdf(filename, title);
+        return;
+      } catch (e) {
+        console.warn("AndroidDocs.openPdf error:", e);
+      }
+    }
+
+    // 2. Web fallback: open in browser or fallback to reader
+    try {
+      const w = window.open(`/docs/${filename}`, "_blank");
+      if (!w) {
+        setReadingDoc(manual);
+      }
+    } catch {
+      setReadingDoc(manual);
+    }
+  };
+
+  const handleSharePdf = async (manual) => {
+    const filename = manual.pdfFile;
+    const title = isBn ? manual.titleBn : manual.titleEn;
+
+    // 1. Native Android Bridge
+    if (window.AndroidDocs?.sharePdf) {
+      try {
+        window.AndroidDocs.sharePdf(filename, title);
+        return;
+      } catch (e) {
+        console.warn("AndroidDocs.sharePdf error:", e);
+      }
+    }
+
+    // 2. Web Share API with File
+    try {
+      const res = await fetch(`/docs/${filename}`);
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title,
+          text: isBn ? "কুঞ্জছায়া ক্লাব ব্যবহার নির্দেশিকা (PDF)" : "Kunjachaya Club User Manual (PDF)",
+        });
+        return;
+      }
+    } catch (e) {
+      console.warn("Web Share API error:", e);
+    }
+
+    // Fallback: download
+    handleDownloadPdf(manual);
+  };
 
   useEffect(() => {
     checkNotificationPermission().then(status => {
@@ -459,56 +611,200 @@ export default function SettingsScreen({
         </Card>
       </div>
 
-      {/* ── SECTION 5: USER MANUAL (BILINGUAL PDF) ───────────── */}
+      {/* ── SECTION 5: USER MANUAL (BILINGUAL PDF & IN-APP GUIDE) ───────────── */}
       <div className="space-y-3">
-        <h4 className="text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5" style={{ color: C.primary }}>
-          <BookOpen size={14} />
-          <span>{isBn ? "ব্যবহার নির্দেশিকা ও গাইড (PDF)" : "User Manual & Documentation (PDF)"}</span>
-        </h4>
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5" style={{ color: C.primary }}>
+            <BookOpen size={14} />
+            <span>{isBn ? "ব্যবহার নির্দেশিকা ও গাইড (PDF ও ভিউয়ার)" : "User Manual & Documentation (PDF & Viewer)"}</span>
+          </h4>
+          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+            {isBn ? "অফিসিয়াল সংস্করণ" : "Official Release"}
+          </span>
+        </div>
 
         <Card className="p-4 space-y-3 border" style={{ borderColor: C.outlineVariant }}>
-          <p className="text-xs" style={{ color: C.onSurfaceVariant }}>
+          <p className="text-xs leading-relaxed" style={{ color: C.onSurfaceVariant }}>
             {isBn
-              ? "কুঞ্জছায়া ক্লাবের সকল মডিউল, চাঁদার রসিদ, কমিউনিটি ম্যাপ, ল্যান্ডমার্ক ও অ্যাডমিন পরিচালনার পূর্ণাঙ্গ ব্যবহার নির্দেশিকা ডাউনলোড করুন:"
-              : "Download the complete official user guide for Kunjachaya Club modules, community map, dues, and admin controls:"}
+              ? "কুঞ্জছায়া ক্লাবের সকল মডিউল, চাঁদার রসিদ, কমিউনিটি ম্যাপ, ল্যান্ডমার্ক ও অ্যাডমিন পরিচালনার পূর্ণাঙ্গ ব্যবহার নির্দেশিকা অ্যাপে সরাসরি পড়ুন অথবা পিডিএফ হিসেবে ডাউনলোড ও শেয়ার করুন:"
+              : "Read the official user guide directly in the app or download, open and share high-resolution PDF manuals for all club modules, dues receipts, maps, and admin workflows:"}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <a
-              href="/docs/Kunjachaya_Club_User_Manual_Bengali.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              download="Kunjachaya_Club_User_Manual_Bengali.pdf"
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-colors bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-300 shadow-sm"
-            >
-              <FileDown size={15} />
-              <span>{isBn ? "বাংলা নির্দেশিকা (PDF)" : "Bengali Manual (PDF)"}</span>
-            </a>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {MANUALS.map((manual) => {
+              const title = isBn ? manual.titleBn : manual.titleEn;
+              const desc = isBn ? manual.descBn : manual.descEn;
+              const badge = isBn ? manual.badgeBn : manual.badgeEn;
 
-            <a
-              href="/docs/Kunjachaya_Club_User_Manual_English.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              download="Kunjachaya_Club_User_Manual_English.pdf"
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-colors bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300 shadow-sm"
-            >
-              <FileDown size={15} />
-              <span>{isBn ? "ইংরেজি নির্দেশিকা (PDF)" : "English Manual (PDF)"}</span>
-            </a>
+              const isEmerald = manual.colorClass === "emerald";
+              const isBlue = manual.colorClass === "blue";
 
-            <a
-              href="/docs/Kunjachaya_Club_User_Manual_Bilingual.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              download="Kunjachaya_Club_User_Manual_Bilingual.pdf"
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-colors bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-800 dark:bg-purple-950/40 dark:border-purple-700 dark:text-purple-300 shadow-sm"
-            >
-              <FileDown size={15} />
-              <span>{isBn ? "দ্বিভাষিক পূর্ণাঙ্গ (PDF)" : "Full Bilingual (PDF)"}</span>
-            </a>
+              const borderCls = isEmerald
+                ? "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20"
+                : isBlue
+                ? "border-blue-200 dark:border-blue-800/60 bg-blue-50/40 dark:bg-blue-950/20"
+                : "border-purple-200 dark:border-purple-800/60 bg-purple-50/40 dark:bg-purple-950/20";
+
+              const iconCls = isEmerald
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                : isBlue
+                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                : "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300";
+
+              const btnPrimaryCls = isEmerald
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : isBlue
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-purple-600 hover:bg-purple-700 text-white";
+
+              return (
+                <div
+                  key={manual.id}
+                  className={`flex flex-col justify-between p-3.5 rounded-2xl border transition-all hover:shadow-sm ${borderCls}`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${iconCls}`}>
+                          <BookOpen size={16} />
+                        </div>
+                        <div>
+                          <h5 className="font-bold text-xs" style={{ color: C.onSurface }}>{title}</h5>
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">{badge}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 shadow-2xs">
+                        {manual.size}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: C.onSurfaceVariant }}>
+                      {desc}
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="pt-3 mt-1 border-t border-black/5 dark:border-white/5 space-y-1.5">
+                    {/* Primary Button: Read in App */}
+                    <button
+                      type="button"
+                      onClick={() => handleReadManual(manual)}
+                      className={`w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-transform active:scale-[0.98] shadow-xs ${btnPrimaryCls}`}
+                    >
+                      <Eye size={14} />
+                      <span>{isBn ? "অ্যাপে পড়ুন (View)" : "Read Guide"}</span>
+                    </button>
+
+                    {/* Secondary Actions: Download, Open, Share */}
+                    <div className="grid grid-cols-3 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPdf(manual)}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-white hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-200 dark:border-gray-700 transition-colors"
+                        title={isBn ? "পিডিএফ ডাউনলোড" : "Download PDF"}
+                      >
+                        <FileDown size={13} className="text-emerald-600 dark:text-emerald-400" />
+                        <span className="truncate">{isBn ? "ডাউনলোড" : "Save"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPdf(manual)}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-white hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-200 dark:border-gray-700 transition-colors"
+                        title={isBn ? "পিডিএফ অ্যাপে খুলুন" : "Open in PDF App"}
+                      >
+                        <ExternalLink size={13} className="text-blue-600 dark:text-blue-400" />
+                        <span className="truncate">{isBn ? "ওপেন" : "Open"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSharePdf(manual)}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-white hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-200 dark:border-gray-700 transition-colors"
+                        title={isBn ? "শেয়ার করুন" : "Share"}
+                      >
+                        <Share2 size={13} className="text-purple-600 dark:text-purple-400" />
+                        <span className="truncate">{isBn ? "শেয়ার" : "Share"}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Card>
       </div>
+
+      {/* ── IN-APP USER MANUAL VIEWER MODAL ───────────── */}
+      {readingDoc && (
+        <Modal
+          open={!!readingDoc}
+          onClose={() => setReadingDoc(null)}
+          title={isBn ? readingDoc.titleBn : readingDoc.titleEn}
+          width="max-w-4xl"
+        >
+          <div className="space-y-3">
+            {/* Top Toolbar */}
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b" style={{ borderColor: C.outlineVariant }}>
+              <div className="flex items-center gap-2">
+                <Badge tone="success">
+                  {isBn ? readingDoc.badgeBn : readingDoc.badgeEn}
+                </Badge>
+                <span className="text-xs text-gray-500 font-medium">{readingDoc.size}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      iframeRef.current?.contentWindow?.print();
+                    } catch (e) {
+                      window.print();
+                    }
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-200 transition-colors"
+                  title={isBn ? "প্রিন্ট করুন" : "Print"}
+                >
+                  <Printer size={13} />
+                  <span>{isBn ? "প্রিন্ট" : "Print"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDownloadPdf(readingDoc)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-xs"
+                  title={isBn ? "পিডিএফ ডাউনলোড" : "Download PDF"}
+                >
+                  <FileDown size={13} />
+                  <span>{isBn ? "ডাউনলোড" : "Download"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSharePdf(readingDoc)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-xs"
+                  title={isBn ? "শেয়ার করুন" : "Share"}
+                >
+                  <Share2 size={13} />
+                  <span>{isBn ? "শেয়ার" : "Share"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* In-App Interactive HTML Viewer */}
+            <div className="w-full bg-white rounded-xl overflow-hidden shadow-inner border border-gray-200 dark:border-gray-700">
+              <iframe
+                ref={iframeRef}
+                src={`/docs/${readingDoc.htmlFile}`}
+                title={isBn ? readingDoc.titleBn : readingDoc.titleEn}
+                className="w-full h-[68vh] sm:h-[72vh] border-0"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
