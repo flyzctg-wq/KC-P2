@@ -1,9 +1,9 @@
 import React from "react";
-import { X, AlertCircle, CheckCircle2 } from "lucide-react";
+import { X, AlertCircle, CheckCircle2, Loader2, Inbox } from "lucide-react";
 import { C } from "../theme";
 import { initials, avatarHue, sanitizeUrl } from "../utils";
 
-export function Btn({ children, variant = "primary", size = "md", icon: Icon, onClick, disabled, type = "button", full, className = "", ...props }) {
+export function Btn({ children, variant = "primary", size = "md", icon: Icon, onClick, disabled, loading = false, type = "button", full, className = "", ...props }) {
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-4 py-2.5 text-sm", lg: "px-6 py-3 text-base" };
   const base = "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2";
   const styles = {
@@ -14,11 +14,24 @@ export function Btn({ children, variant = "primary", size = "md", icon: Icon, on
     danger:    { backgroundColor: C.error, color: "#fff" },
     ghost:     { backgroundColor: "transparent", color: C.onSurfaceVariant },
   };
+  const isDisabled = disabled || loading;
+  const iconSize = size === "sm" ? 14 : size === "lg" ? 18 : 16;
+
   return (
-    <button type={type} onClick={onClick} disabled={disabled} style={styles[variant]}
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={isDisabled}
+      aria-busy={loading ? "true" : undefined}
+      style={styles[variant]}
       className={`${base} ${sizes[size]} ${full ? "w-full" : ""} ${className}`}
-      {...props}>
-      {Icon && <Icon size={size === "sm" ? 14 : 16} strokeWidth={2.3} aria-hidden="true" />}
+      {...props}
+    >
+      {loading ? (
+        <Loader2 size={iconSize} className="animate-spin shrink-0" aria-hidden="true" />
+      ) : (
+        Icon && <Icon size={iconSize} strokeWidth={2.3} aria-hidden="true" />
+      )}
       {children}
     </button>
   );
@@ -106,14 +119,16 @@ export function Avatar({ name = "User", photoUrl, size = 36, className = "" }) {
   );
 }
 
-export function Empty({ icon: Icon, title, subtitle }) {
+export function Empty({ icon: Icon, title, subtitle, action, children }) {
+  const DefaultIcon = Icon || Inbox;
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-6">
-      <div style={{ backgroundColor: C.surfaceContainer }} className="w-14 h-14 rounded-full flex items-center justify-center mb-3">
-        <Icon size={24} style={{ color: C.outline }} aria-hidden="true" />
+      <div style={{ backgroundColor: C.surfaceContainer }} className="w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner">
+        <DefaultIcon size={24} style={{ color: C.outline }} aria-hidden="true" />
       </div>
       <p className="font-semibold text-sm" style={{ color: C.onSurface }}>{title}</p>
       {subtitle && <p className="text-xs mt-1 max-w-xs" style={{ color: C.onSurfaceVariant }}>{subtitle}</p>}
+      {(action || children) && <div className="mt-4">{action || children}</div>}
     </div>
   );
 }
