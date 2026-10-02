@@ -3,7 +3,7 @@ import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
 import { C } from "../theme";
-import { uid } from "../utils";
+import { cleanPhone, sanitizeUrl, uid } from "../utils";
 
 export default function Hotlines({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -64,7 +64,7 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-sm truncate">{c.name}</p>
                     {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
-                    <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="text-xs font-semibold" style={{ color: C.primary }}>
+                    <a href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)} className="text-xs font-semibold" style={{ color: C.primary }}>
                       {c.phone}
                     </a>
                   </div>
