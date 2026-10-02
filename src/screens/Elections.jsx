@@ -63,9 +63,42 @@ export default function Elections({ session, db, persist, toast, logActivity, la
 }
 
 export function BallotView({ election, session, db, persist, toast, logActivity, canVote, lang = "en", isBn = false }) {
-  const myVotes = (db?.votes || []).filter(v => v.electionId === election.id && v.voterId === session?.id);
+  // Bolt Optimization: Memoize user votes for this election
+  const myVotes = useMemo(() => {
+    return (db?.votes || []).filter(v => v.electionId === election.id && v.voterId === session?.id);
+  }, [db?.votes, election.id, session?.id]);
+
   const [choice, setChoice] = useState({});
   const [voting, setVoting] = useState({}); // { [position]: true } while RPC is in-flight
+
+  // Bolt Optimization: Pre-index candidates and votes by position to prevent redundant array loops on render
+  const positionBallots = useMemo(() => {
+    const votesByPos = {};
+    const candVotes = {};
+
+    for (const v of db?.votes || []) {
+      if (v.electionId === election.id && v.position) {
+        votesByPos[v.position] = (votesByPos[v.position] || 0) + 1;
+        if (v.candidateId) {
+          candVotes[v.candidateId] = (candVotes[v.candidateId] || 0) + 1;
+        }
+      }
+    }
+
+    return (election.positions || []).map(pos => {
+      const cands = (election.candidates || []).filter(c => c.position === pos);
+      const posTotalVotes = votesByPos[pos] || 0;
+      const divisor = posTotalVotes || 1;
+
+      const candsWithStats = cands.map(c => {
+        const count = candVotes[c.id] || 0;
+        const pct = Math.round((count / divisor) * 100);
+        return { ...c, count, pct };
+      });
+
+      return { pos, candsWithStats };
+    });
+  }, [election.id, election.positions, election.candidates, db?.votes]);
 
   const submitVote = async (position) => {
     const candId = choice[position];
@@ -85,23 +118,16 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
     }
   };
 
-  const results = (position) => {
-    const cands = election.candidates.filter(c => c.position === position);
-    const votes = (db?.votes || []).filter(v => v.electionId === election.id && v.position === position);
-    const total = votes.length || 1;
-    return cands.map(c => ({ ...c, count: votes.filter(v => v.candidateId === c.id).length, pct: Math.round((votes.filter(v => v.candidateId === c.id).length / total) * 100) }));
-  };
-
   return (
     <div className="flex flex-col gap-6">
-      {election.positions.map(pos => {
+      {positionBallots.map(({ pos, candsWithStats }) => {
         const already = myVotes.find(v => v.position === pos);
         const showResults = election.status === "closed";
         return (
           <div key={pos}>
             <h4 className="font-bold text-sm mb-2.5">{pos}</h4>
             <div className="flex flex-col gap-2">
-              {(showResults ? results(pos) : election.candidates.filter(c => c.position === pos)).map(c => (
+              {candsWithStats.map(c => (
                 <div key={c.id}>
                   <label className="flex items-start gap-3 p-3 rounded-xl cursor-pointer" style={{ backgroundColor: choice[pos] === c.id ? C.secondaryContainer : C.surfaceContainerLow, border: `1.5px solid ${choice[pos] === c.id ? C.primary : "transparent"}` }}>
                     {!showResults && !already && election.status === "active" && (

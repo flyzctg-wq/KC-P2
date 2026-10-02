@@ -33,3 +33,7 @@
 ## 2026-09-15 - Pre-parsing Message Text & Pre-resolving Sender Lookups in Community Chat Stream
 **Learning:** `src/screens/Chat.jsx` ran `parseMessageText` (regex topic matching and string quote splitting) and `getMemberDetails` (lowercasing strings and Map lookups) inside the message list `.map()` JSX render loop on every message. Whenever the user typed a character in the composer or toggled emoji/search menus, every message in the stream was re-parsed and re-resolved.
 **Action:** Extract `parseMessageText` to top-level and pre-attach `sender` and `parsed` properties directly in the `messages` `useMemo` block to eliminate per-render parsing and lookup overhead.
+
+## 2026-09-16 - Pre-indexing Vote Tallies & Single-Pass Candidate Calculations in Election Views
+**Learning:** `src/screens/Elections.jsx`, `src/screens/admin/Elections.jsx`, and `src/screens/electionsShared.jsx` performed nested $O(P \times C \times V)$ array filtering over `db.votes` per candidate and position on every render cycle. Selecting candidate radio options or opening election detail modals triggered redundant full-array scans.
+**Action:** Pre-index candidate votes into single-pass lookup maps via `useMemo` to reduce position candidate tallying from $O(P \times C \times V)$ to $O(V + C)$.

@@ -1,5 +1,5 @@
 import { NominationView, ElectionOversight } from "../electionsShared";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Modal, SectionTitle } from "../../components/primitives";
 import { C } from "../../theme";
@@ -21,6 +21,17 @@ export default function AdminElections({ session, db, persist, toast, logActivit
     setForm(false);
   };
 
+  // Bolt Optimization: Pre-compute vote counts per election ID to avoid O(E * V) array filtering on render
+  const voteCounts = useMemo(() => {
+    const map = {};
+    for (const v of db.votes || []) {
+      if (v.electionId) {
+        map[v.electionId] = (map[v.electionId] || 0) + 1;
+      }
+    }
+    return map;
+  }, [db.votes]);
+
   const statusMap = {
     active: isBn ? "চলমান ভোটগ্রহণ" : "Live election",
     closed: isBn ? "সমাপ্ত" : "Closed",
@@ -34,7 +45,7 @@ export default function AdminElections({ session, db, persist, toast, logActivit
       </SectionTitle>
       <div className="flex flex-col gap-3">
         {db.elections.map(el => {
-          const votes = db.votes.filter(v => v.electionId === el.id);
+          const voteCount = voteCounts[el.id] || 0;
           return (
             <Card key={el.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
@@ -44,7 +55,7 @@ export default function AdminElections({ session, db, persist, toast, logActivit
                   </Badge>
                   <h3 className="font-bold text-sm mt-2">{el.title}</h3>
                   <p className="text-xs mt-1" style={{ color: C.onSurfaceVariant }}>
-                    {el.candidates.length} {isBn ? "জন প্রার্থী" : "candidates"} · {votes.length} {isBn ? "টি ভোট সংগৃহীত" : "votes cast"} · {isBn ? `শেষ: ${fmtDate(el.endDate)}` : `closes ${fmtDate(el.endDate)}`}
+                    {el.candidates.length} {isBn ? "জন প্রার্থী" : "candidates"} · {voteCount} {isBn ? "টি ভোট সংগৃহীত" : "votes cast"} · {isBn ? `শেষ: ${fmtDate(el.endDate)}` : `closes ${fmtDate(el.endDate)}`}
                   </p>
                 </div>
                 {el.status === "active" && (
@@ -70,35 +81,59 @@ export default function AdminElections({ session, db, persist, toast, logActivit
 }
 
 export function AdminElectionResults({ election, db, lang = "en", isBn = false }) {
+  // Bolt Optimization: Pre-compute candidate vote tallies grouped by position in single pass
+  const positionData = useMemo(() => {
+    const candidateVotes = {};
+    const positionTotalVotes = {};
+
+    for (const v of db.votes || []) {
+      if (v.electionId === election.id && v.position) {
+        positionTotalVotes[v.position] = (positionTotalVotes[v.position] || 0) + 1;
+        if (v.candidateId) {
+          candidateVotes[v.candidateId] = (candidateVotes[v.candidateId] || 0) + 1;
+        }
+      }
+    }
+
+    return (election.positions || []).map(pos => {
+      const cands = (election.candidates || []).filter(c => c.position === pos);
+      const total = positionTotalVotes[pos] || 0;
+      const divisor = total || 1;
+
+      const candidatesWithStats = cands.map(c => {
+        const count = candidateVotes[c.id] || 0;
+        const pct = Math.round((count / divisor) * 100);
+        return { ...c, count, pct };
+      });
+
+      return {
+        pos,
+        totalVotes: total,
+        candidates: candidatesWithStats
+      };
+    });
+  }, [election.id, election.positions, election.candidates, db.votes]);
+
   return (
     <div className="flex flex-col gap-5">
-      {election.positions.map(pos => {
-        const cands = election.candidates.filter(c => c.position === pos);
-        const votes = db.votes.filter(v => v.electionId === election.id && v.position === pos);
-        const total = votes.length || 1;
-        return (
-          <div key={pos}>
-            <h4 className="font-bold text-sm mb-2">
-              {pos} <span className="font-normal text-xs" style={{ color: C.outline }}>({votes.length} {isBn ? "ভোট" : "votes"})</span>
-            </h4>
-            {cands.map(c => {
-              const count = votes.filter(v => v.candidateId === c.id).length;
-              const pct = Math.round((count / total) * 100);
-              return (
-                <div key={c.id} className="mb-2">
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span>{c.name}</span>
-                    <span>{count} ({pct}%)</span>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: C.surfaceContainerHigh }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: C.primary }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+      {positionData.map(({ pos, totalVotes, candidates }) => (
+        <div key={pos}>
+          <h4 className="font-bold text-sm mb-2">
+            {pos} <span className="font-normal text-xs" style={{ color: C.outline }}>({totalVotes} {isBn ? "ভোট" : "votes"})</span>
+          </h4>
+          {candidates.map(c => (
+            <div key={c.id} className="mb-2">
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span>{c.name}</span>
+                <span>{c.count} ({c.pct}%)</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: C.surfaceContainerHigh }}>
+                <div className="h-full rounded-full" style={{ width: `${c.pct}%`, backgroundColor: C.primary }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
