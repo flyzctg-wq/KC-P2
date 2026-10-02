@@ -58,11 +58,26 @@ export default function Notices({ session, db, persist, toast, logActivity, lang
               <h3 className="font-bold text-sm mb-1">{n.title}</h3>
               <p className="text-sm mb-3" style={{ color: C.onSurfaceVariant }}>{n.body}</p>
               <div className="flex items-center gap-4 text-xs font-semibold" style={{ color: C.onSurfaceVariant }}>
-                <button onClick={() => react(n.id)} className="flex items-center gap-1.5 cursor-pointer" style={liked ? { color: C.primary } : {}}>
-                  <ThumbsUp size={14} fill={liked ? C.primary : "none"} /> {n.reactions.like.length} {isBn ? "পছন্দ" : "Likes"}
+                <button
+                  type="button"
+                  onClick={() => react(n.id)}
+                  aria-label={liked ? (isBn ? "পছন্দ থেকে সরান" : "Unlike notice") : (isBn ? "পছন্দ করুন" : "Like notice")}
+                  aria-pressed={liked}
+                  className="flex items-center gap-1.5 cursor-pointer rounded px-1.5 py-1 transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                  style={liked ? { color: C.primary } : {}}
+                >
+                  <ThumbsUp size={14} fill={liked ? C.primary : "none"} aria-hidden="true" />
+                  <span>{n.reactions.like.length} {isBn ? "পছন্দ" : "Likes"}</span>
                 </button>
-                <button onClick={() => setOpen(open === n.id ? null : n.id)} className="flex items-center gap-1.5 cursor-pointer">
-                  <MessageSquare size={14} /> {n.comments.length} {isBn ? "মন্তব্য" : "Comments"}
+                <button
+                  type="button"
+                  onClick={() => setOpen(open === n.id ? null : n.id)}
+                  aria-label={open === n.id ? (isBn ? "মন্তব্য বন্ধ করুন" : "Hide comments") : (isBn ? "মন্তব্য দেখুন" : "Show comments")}
+                  aria-expanded={open === n.id}
+                  className="flex items-center gap-1.5 cursor-pointer rounded px-1.5 py-1 transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                >
+                  <MessageSquare size={14} aria-hidden="true" />
+                  <span>{n.comments.length} {isBn ? "মন্তব্য" : "Comments"}</span>
                 </button>
                 <span className="ml-auto text-[11px]" style={{ color: C.outline }}>— {n.authorName}</span>
               </div>
@@ -92,6 +107,7 @@ export function CommentBox({ notice, onSend, lang = "en", isBn = false }) {
           style={inputStyle()}
           className={inputCls}
           placeholder={isBn ? "একটি মন্তব্য লিখুন..." : "Write a comment..."}
+          aria-label={isBn ? "মন্তব্য লিখুন" : "Write a comment"}
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") { onSend(text); setText(""); } }}
