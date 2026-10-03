@@ -2,3 +2,8 @@
 **Vulnerability:** User-controlled document/image URLs (e.g. `formScanUrl`) placed directly into `<a href>` or `<img src>` can trigger DOM-based XSS if assigned `javascript:` or `data:text/html` schemes.
 **Learning:** Checking for protocol prefixes with an allowlist (`http:`, `https:`, `mailto:`, `tel:`, `blob:`, `data:image/`) prevents URI scheme execution when rendering dynamic links.
 **Prevention:** Use `sanitizeUrl(url)` from `src/utils.js` whenever rendering user-supplied or external URLs in link attributes or media sources.
+
+## 2026-03-30 - HTML Injection in Printable Document Generators
+**Vulnerability:** Dynamic user input (e.g. member names, addresses, notes, letter body) interpolated directly into printable HTML strings passed to `doc.write()` or exported as HTML files can trigger DOM-based XSS.
+**Learning:** Standard React JSX escapes string children automatically, but template literals evaluated for iframe/window `doc.write()` bypass React's XSS protections.
+**Prevention:** Wrap all dynamic user variables in `escapeHtml(str)` before string interpolation in printable document HTML generators.
