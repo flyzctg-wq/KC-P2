@@ -903,8 +903,9 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
           <button
             type="button"
             onClick={centerKunjachaya}
-            className="p-2 rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 shadow-md backdrop-blur-xs border border-black/5 dark:border-white/10 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-transform active:scale-95"
+            className="p-2 rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 shadow-md backdrop-blur-xs border border-black/5 dark:border-white/10 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             title={isBn ? "কুঞ্জছায়া সেন্টারে ফিরে যান" : "Center on Kunjachaya"}
+            aria-label={isBn ? "কুঞ্জছায়া সেন্টারে ফিরে যান" : "Center map on Kunjachaya"}
           >
             <Compass size={17} className="text-emerald-600" />
           </button>
@@ -914,8 +915,9 @@ export default function CommunityMap({ session, lang = "en", toast = () => {}, c
             type="button"
             onClick={handleLocateMe}
             disabled={locating}
-            className="p-2 rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 shadow-md backdrop-blur-xs border border-black/5 dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-transform active:scale-95 disabled:opacity-60"
+            className="p-2 rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 shadow-md backdrop-blur-xs border border-black/5 dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-transform active:scale-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             title={isBn ? "আমার বর্তমান GPS অবস্থান খুঁজুন" : "Find My GPS Location"}
+            aria-label={isBn ? "আমার বর্তমান GPS অবস্থান খুঁজুন" : "Find my GPS location"}
           >
             <Crosshair size={17} className={locating ? "animate-spin text-blue-600" : "text-blue-600"} />
           </button>

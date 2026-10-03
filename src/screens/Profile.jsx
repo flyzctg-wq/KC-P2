@@ -1463,9 +1463,10 @@ export default function Profile({
                     <button
                       type="button"
                       onClick={toggleCameraFacing}
-                      className="p-3 rounded-full border hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="p-3 rounded-full border hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       style={{ borderColor: C.outlineVariant, color: C.onSurface }}
                       title={isBn ? "ক্যামেরা পরিবর্তন করুন" : "Switch Camera"}
+                      aria-label={isBn ? "ক্যামেরা পরিবর্তন করুন" : "Switch camera facing direction"}
                     >
                       <RefreshCw size={17} />
                     </button>
