@@ -33,3 +33,7 @@
 ## 2026-09-15 - Pre-parsing Message Text & Pre-resolving Sender Lookups in Community Chat Stream
 **Learning:** `src/screens/Chat.jsx` ran `parseMessageText` (regex topic matching and string quote splitting) and `getMemberDetails` (lowercasing strings and Map lookups) inside the message list `.map()` JSX render loop on every message. Whenever the user typed a character in the composer or toggled emoji/search menus, every message in the stream was re-parsed and re-resolved.
 **Action:** Extract `parseMessageText` to top-level and pre-attach `sender` and `parsed` properties directly in the `messages` `useMemo` block to eliminate per-render parsing and lookup overhead.
+
+## 2026-09-16 - Pre-indexing Constitutional Officers Roster & Memoizing Inductions History
+**Learning:** `src/screens/Officers.jsx` evaluated `activeOfficers.filter(...)` inside a `.map()` loop over all 15 constitutional roster items (`EC_CONSTITUTIONAL_STRUCTURE`) on every component render. Opening/closing the induction modal or changing inputs triggered 15 linear array scans and unmemoized `new Date()` sorting on `db.inductions`.
+**Action:** Wrap `list`, `closedElections`, and `activeOfficers` in `useMemo` hooks, and pre-index constitutional post holders into a `rosterHoldersMap` `Map` to replace 15 per-render linear array scans with $O(1)$ lookups.
