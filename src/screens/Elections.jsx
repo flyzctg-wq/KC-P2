@@ -63,7 +63,38 @@ export default function Elections({ session, db, persist, toast, logActivity, la
 }
 
 export function BallotView({ election, session, db, persist, toast, logActivity, canVote, lang = "en", isBn = false }) {
-  const myVotes = (db?.votes || []).filter(v => v.electionId === election.id && v.voterId === session?.id);
+  // Bolt Optimization: Memoize user votes and election candidate/results breakdown by position.
+  // This prevents re-filtering and re-calculating vote percentages on every radio choice change.
+  const myVotes = useMemo(() => {
+    return (db?.votes || []).filter(v => v.electionId === election?.id && v.voterId === session?.id);
+  }, [db?.votes, election?.id, session?.id]);
+
+  const { candidatesByPosition, resultsByPosition } = useMemo(() => {
+    const votes = (db?.votes || []).filter(v => v.electionId === election?.id);
+    const candMap = {};
+    const resMap = {};
+
+    for (const pos of (election?.positions || [])) {
+      const cands = (election?.candidates || []).filter(c => c.position === pos);
+      candMap[pos] = cands;
+
+      const posVotes = votes.filter(v => v.position === pos);
+      const total = posVotes.length || 1;
+      const candCounts = {};
+      for (const v of posVotes) {
+        if (v.candidateId) candCounts[v.candidateId] = (candCounts[v.candidateId] || 0) + 1;
+      }
+
+      resMap[pos] = cands.map(c => {
+        const count = candCounts[c.id] || 0;
+        const pct = Math.round((count / total) * 100);
+        return { ...c, count, pct };
+      });
+    }
+
+    return { candidatesByPosition: candMap, resultsByPosition: resMap };
+  }, [election, db?.votes]);
+
   const [choice, setChoice] = useState({});
   const [voting, setVoting] = useState({}); // { [position]: true } while RPC is in-flight
 
@@ -85,26 +116,21 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
     }
   };
 
-  const results = (position) => {
-    const cands = election.candidates.filter(c => c.position === position);
-    const votes = (db?.votes || []).filter(v => v.electionId === election.id && v.position === position);
-    const total = votes.length || 1;
-    return cands.map(c => ({ ...c, count: votes.filter(v => v.candidateId === c.id).length, pct: Math.round((votes.filter(v => v.candidateId === c.id).length / total) * 100) }));
-  };
-
   return (
     <div className="flex flex-col gap-6">
-      {election.positions.map(pos => {
+      {(election?.positions || []).map(pos => {
         const already = myVotes.find(v => v.position === pos);
-        const showResults = election.status === "closed";
+        const showResults = election?.status === "closed";
+        const candsToDisplay = showResults ? (resultsByPosition[pos] || []) : (candidatesByPosition[pos] || []);
+
         return (
           <div key={pos}>
             <h4 className="font-bold text-sm mb-2.5">{pos}</h4>
             <div className="flex flex-col gap-2">
-              {(showResults ? results(pos) : election.candidates.filter(c => c.position === pos)).map(c => (
+              {candsToDisplay.map(c => (
                 <div key={c.id}>
                   <label className="flex items-start gap-3 p-3 rounded-xl cursor-pointer" style={{ backgroundColor: choice[pos] === c.id ? C.secondaryContainer : C.surfaceContainerLow, border: `1.5px solid ${choice[pos] === c.id ? C.primary : "transparent"}` }}>
-                    {!showResults && !already && election.status === "active" && (
+                    {!showResults && !already && election?.status === "active" && (
                       <input type="radio" name={pos} className="mt-1" checked={choice[pos] === c.id} onChange={() => setChoice({ ...choice, [pos]: c.id })} />
                     )}
                     <Avatar name={c.name} size={32} />
@@ -130,7 +156,7 @@ export function BallotView({ election, session, db, persist, toast, logActivity,
               <p className="text-xs font-semibold mt-2 flex items-center gap-1.5" style={{ color: C.primary }}>
                 <CheckCircle2 size={13} /> {isBn ? `${pos} পদের জন্য ভোট প্রদান সম্পন্ন হয়েছে` : `Vote submitted for ${pos}`}
               </p>
-            ) : canVote && election.status === "active" && (
+            ) : canVote && election?.status === "active" && (
               <Btn size="sm" className="mt-2.5" onClick={() => submitVote(pos)} disabled={!choice[pos] || !!voting[pos]}>
                 {voting[pos]
                   ? <>{isBn ? "ভোট হচ্ছে…" : "Submitting…"}</>
