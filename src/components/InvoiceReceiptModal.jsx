@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { Modal, Btn, Badge } from "./primitives";
 import { C, LOGO_MARK } from "../theme";
-import { currency, monthLabel, fmtDate, cleanPhone } from "../utils";
+import { currency, monthLabel, fmtDate, cleanPhone, escapeHtml } from "../utils";
 
 export default function InvoiceReceiptModal({
   open,
@@ -39,6 +39,26 @@ export default function InvoiceReceiptModal({
   // HTML generator for A4/Voucher Letter Pad Print
   const generatePrintableHTML = () => {
     const originUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const safeReceiptNo = escapeHtml(receiptNo);
+    const safeIssueDate = escapeHtml(issueDate);
+    const safePaymentDate = escapeHtml(paymentDate);
+    const safeDueDate = escapeHtml(dueDate);
+    const safeUserName = escapeHtml(user.name || "Member Name");
+    const safeUserNameBn = user.nameBn ? escapeHtml(user.nameBn) : "";
+    const safeMemberCode = escapeHtml(user.memberCode || "000");
+    const safeMemberClass = escapeHtml(user.memberClass || "General");
+    const safeBlock = escapeHtml(user.block || "A");
+    const safeUnit = escapeHtml(user.unit || "—");
+    const safePhone = escapeHtml(user.phone || "—");
+    const safeMethod = escapeHtml(invoice.method || "Cash / Online");
+    const safeRef = escapeHtml(invoice.ref || "N/A");
+    const safeChargeTitle = escapeHtml(invoice.chargeTitle || "মাসিক সাবস্ক্রিপশন ও রক্ষণাবেক্ষণ চাঁদা");
+    const safeNote = invoice.note ? escapeHtml(invoice.note) : "";
+    const safeCollectedBy = escapeHtml(invoice.collectedBy || treasurer.name);
+    const safeTreasurerName = escapeHtml(treasurer.nameBn || treasurer.name);
+    const safeGsName = escapeHtml(gs.nameBn || gs.name);
+    const safePresidentName = escapeHtml(president.nameBn || president.name);
+
     return `<!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -195,11 +215,11 @@ export default function InvoiceReceiptModal({
     <img src="${originUrl}/letterhead.png" class="letterhead-bg" alt="Kunjachaya Letterhead" />
 
     <div class="date-meta">
-      তারিখঃ ${paymentDate !== "—" ? paymentDate : issueDate}
+      তারিখঃ ${safePaymentDate !== "—" ? safePaymentDate : safeIssueDate}
     </div>
 
     <div class="receipt-meta">
-      রসিদ নংঃ <span style="font-family: monospace;">${receiptNo}</span>
+      রসিদ নংঃ <span style="font-family: monospace;">${safeReceiptNo}</span>
     </div>
 
     <div class="content-area">
@@ -215,18 +235,18 @@ export default function InvoiceReceiptModal({
           <div class="info-box">
             <span class="label-muted">সদস্যের বিবরণ (Billed To):</span>
             <p class="val-bold" style="font-size: 14px; color: #14532d;">
-              ${user.name || "Member Name"} ${user.nameBn ? `(${user.nameBn})` : ""}
+              ${safeUserName} ${safeUserNameBn ? `(${safeUserNameBn})` : ""}
             </p>
-            <p><strong>মেম্বার কোড:</strong> #${user.memberCode || "000"} · <strong>শ্রেণি:</strong> ${user.memberClass || "General"}</p>
-            <p><strong>ঠিকানা:</strong> ব্লক ${user.block || "A"}, ইউনিট ${user.unit || "—"}, কুঞ্জছায়া আ/এ</p>
-            <p><strong>মোবাইল:</strong> ${user.phone || "—"}</p>
+            <p><strong>মেম্বার কোড:</strong> #${safeMemberCode} · <strong>শ্রেণি:</strong> ${safeMemberClass}</p>
+            <p><strong>ঠিকানা:</strong> ব্লক ${safeBlock}, ইউনিট ${safeUnit}, কুঞ্জছায়া আ/এ</p>
+            <p><strong>মোবাইল:</strong> ${safePhone}</p>
           </div>
           <div class="info-box" style="text-align: right;">
             <span class="label-muted">বিল ও পেমেন্ট বিবরণ (Billing Info):</span>
             <p><strong>বিলিং মাস:</strong> ${monthLabel(invoice.month)}</p>
-            <p><strong>পরিশোধের শেষ তারিখ:</strong> ${dueDate}</p>
-            <p><strong>পেমেন্ট মাধ্যম:</strong> ${invoice.method || "Cash / Online"}</p>
-            <p><strong>ট্রানজেকশন আইডি:</strong> <span style="font-family: monospace;">${invoice.ref || "N/A"}</span></p>
+            <p><strong>পরিশোধের শেষ তারিখ:</strong> ${safeDueDate}</p>
+            <p><strong>পেমেন্ট মাধ্যম:</strong> ${safeMethod}</p>
+            <p><strong>ট্রানজেকশন আইডি:</strong> <span style="font-family: monospace;">${safeRef}</span></p>
           </div>
         </div>
 
@@ -241,7 +261,7 @@ export default function InvoiceReceiptModal({
           <tbody>
             <tr>
               <td>
-                <strong>${invoice.chargeTitle || "মাসিক সাবস্ক্রিপশন ও রক্ষণাবেক্ষণ চাঁদা"}</strong>
+                <strong>${safeChargeTitle}</strong>
                 <div style="font-size: 10.5px; color: #64748b;">(Monthly Club Subscription & Maintenance Levy)</div>
               </td>
               <td>${monthLabel(invoice.month)}</td>
@@ -268,9 +288,9 @@ export default function InvoiceReceiptModal({
           </tbody>
         </table>
 
-        ${invoice.note ? `
+        ${safeNote ? `
         <div style="font-size: 11px; color: #475569; background: #f8fafc; padding: 6px 10px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid #14532d;">
-          <strong>মন্তব্য / নোট:</strong> ${invoice.note}
+          <strong>মন্তব্য / নোট:</strong> ${safeNote}
         </div>` : ""}
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
@@ -278,8 +298,8 @@ export default function InvoiceReceiptModal({
             ${isPaid ? "PAID / পরিশোধিত" : "DUE / বকেয়া"}
           </div>
           <div style="font-size: 11px; color: #64748b; text-align: right;">
-            <div><strong>আদায়কারী:</strong> ${invoice.collectedBy || treasurer.name}</div>
-            <div><strong>ইস্যু তারিখ:</strong> ${paymentDate !== "—" ? paymentDate : issueDate}</div>
+            <div><strong>আদায়কারী:</strong> ${safeCollectedBy}</div>
+            <div><strong>ইস্যু তারিখ:</strong> ${safePaymentDate !== "—" ? safePaymentDate : safeIssueDate}</div>
           </div>
         </div>
       </div>
@@ -289,21 +309,21 @@ export default function InvoiceReceiptModal({
           <div class="sign-box">
             <div class="sign-line"></div>
             <div class="sign-title">কোষাধ্যক্ষ</div>
-            <div class="sign-name">${treasurer.nameBn || treasurer.name}</div>
+            <div class="sign-name">${safeTreasurerName}</div>
             <div style="font-size: 9.5px; color: #64748b;">(Treasurer)</div>
           </div>
 
           <div class="sign-box">
             <div class="sign-line"></div>
             <div class="sign-title">সাধারণ সম্পাদক</div>
-            <div class="sign-name">${gs.nameBn || gs.name}</div>
+            <div class="sign-name">${safeGsName}</div>
             <div style="font-size: 9.5px; color: #64748b;">(General Secretary)</div>
           </div>
 
           <div class="sign-box">
             <div class="sign-line"></div>
             <div class="sign-title">সভাপতি</div>
-            <div class="sign-name">${president.nameBn || president.name}</div>
+            <div class="sign-name">${safePresidentName}</div>
             <div style="font-size: 9.5px; color: #64748b;">(President)</div>
           </div>
         </div>
