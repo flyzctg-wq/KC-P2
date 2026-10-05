@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, ChevronRight, Calendar, CalendarCheck } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -9,7 +9,8 @@ export default function AGM({ session, db, persist, toast, logActivity, lang = "
   const [form, setForm] = useState(false);
   const [openEvent, setOpenEvent] = useState(null);
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
-  const sorted = [...(db.agmEvents || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Bolt Optimization: Memoize AGM events sorting by date to prevent redundant array allocations and date parsing on modal/input updates
+  const sorted = useMemo(() => [...(db.agmEvents || [])].sort((a, b) => new Date(b.date) - new Date(a.date)), [db.agmEvents]);
 
   const createEvent = (title, date, agendaText) => {
     const agenda = agendaText.split("\n").filter(Boolean);
@@ -97,7 +98,8 @@ export function AGMDetail({ event, session, db, persist, toast, logActivity, isT
 
   const myProxy = (event.proxies || []).find(p => p.granterId === session.id);
   const proxiedToMe = (event.proxies || []).filter(p => p.granteeId === session.id).map(p => p.granterId);
-  const otherAttendees = db.users.filter(u => event.attendees.includes(u.id) && u.id !== session.id);
+  // Bolt Optimization: Memoize other attendees filter to avoid redundant user lookups on render
+  const otherAttendees = useMemo(() => (db.users || []).filter(u => event.attendees.includes(u.id) && u.id !== session.id), [db.users, event.attendees, session.id]);
   const setProxy = (granteeId) => {
     persist(d => logActivity({
       ...d, agmEvents: d.agmEvents.map(e => e.id !== event.id ? e : { ...e, proxies: [...(e.proxies || []).filter(p => p.granterId !== session.id), ...(granteeId ? [{ granterId: session.id, granteeId }] : [])] }),

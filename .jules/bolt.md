@@ -33,3 +33,7 @@
 ## 2026-09-15 - Pre-parsing Message Text & Pre-resolving Sender Lookups in Community Chat Stream
 **Learning:** `src/screens/Chat.jsx` ran `parseMessageText` (regex topic matching and string quote splitting) and `getMemberDetails` (lowercasing strings and Map lookups) inside the message list `.map()` JSX render loop on every message. Whenever the user typed a character in the composer or toggled emoji/search menus, every message in the stream was re-parsed and re-resolved.
 **Action:** Extract `parseMessageText` to top-level and pre-attach `sender` and `parsed` properties directly in the `messages` `useMemo` block to eliminate per-render parsing and lookup overhead.
+
+## 2026-09-16 - Memoizing AGM Events, Admin Activity Logs, and Officers Roster Array Operations
+**Learning:** `AGM.jsx`, `src/screens/admin/Activity.jsx`, and `Officers.jsx` performed unmemoized array sorting using `new Date()` date creation and user/election array filtering on every component render. Form input updates or modal open/close toggles forced full array cloning, date object instantiation, and re-sorting/filtering operations.
+**Action:** Wrap sorted event lists (`agmEvents`), activity logs (`activity`), induction records (`inductions`), and active officers/elections filters in `useMemo` hooks with database array references as dependencies.

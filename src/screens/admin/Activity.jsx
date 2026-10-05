@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { ClipboardList } from "lucide-react";
 import { Card, Empty, SectionTitle } from "../../components/primitives";
 import { C } from "../../theme";
@@ -7,7 +7,8 @@ import { fmtDateTime } from "../../utils";
 /* ============================== ADMIN: ACTIVITY LOG ============================== */
 export default function AdminActivity({ db, lang = "en", t = {} }) {
   const isBn = lang === "bn";
-  const sorted = [...db.activity].sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Bolt Optimization: Memoize activity log array sorting by date to prevent redundant date allocations on render
+  const sorted = useMemo(() => [...(db.activity || [])].sort((a, b) => new Date(b.date) - new Date(a.date)), [db.activity]);
   return (
     <div>
       <SectionTitle>{isBn ? "কার্যকলাপ ও অ্যাক্টিভিটি লগ" : "Activity log"}</SectionTitle>

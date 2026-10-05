@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BadgeCheck, FileCheck2, UserPlus, Users, CheckCircle2, Shield } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle, Avatar } from "../components/primitives";
 import { C, EC_CONSTITUTIONAL_STRUCTURE } from "../theme";
@@ -8,11 +8,10 @@ export default function Officers({ session, db, persist, toast, logActivity, lan
   const isBn = lang === "bn";
   const [inductForm, setInductForm] = useState(null);
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
-  const list = [...(db.inductions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const closedElections = db.elections.filter(e => e.status === "closed");
-
-  // Get active officers from db.users
-  const activeOfficers = db.users.filter(u => u.status === "active" && u.role === "admin" && u.post);
+  // Bolt Optimization: Memoize inductions sorting, closed elections, and active officers filtering to prevent redundant passes
+  const list = useMemo(() => [...(db.inductions || [])].sort((a, b) => new Date(b.date) - new Date(a.date)), [db.inductions]);
+  const closedElections = useMemo(() => (db.elections || []).filter(e => e.status === "closed"), [db.elections]);
+  const activeOfficers = useMemo(() => (db.users || []).filter(u => u.status === "active" && u.role === "admin" && u.post), [db.users]);
 
   const induct = (name, position, electionTitle) => {
     persist(d => logActivity({ ...d, inductions: [{ id: uid("ind"), name, position, date: nowISO(), electionTitle }, ...(d.inductions || [])] }, session.name, `Digitally inducted ${name} as ${position}`));
