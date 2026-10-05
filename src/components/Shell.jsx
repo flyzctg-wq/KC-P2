@@ -356,31 +356,34 @@ export default function Shell({
           <div className="flex items-center gap-1">
             {/* Mobile Fast Theme Toggle Button */}
             <button
+              type="button"
               onClick={() => setTheme(prev => prev === "dark" ? "light" : "dark")}
-              aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              aria-label={lang === "bn" ? (isDarkMode ? "লাইট মোডে পরিবর্তন করুন" : "ডার্ক মোডে পরিবর্তন করুন") : (isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode")}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
               style={{ color: C.onSurfaceVariant }}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              title={lang === "bn" ? (isDarkMode ? "লাইট মোডে পরিবর্তন করুন" : "ডার্ক মোডে পরিবর্তন করুন") : (isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode")}
             >
               {isDarkMode ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
             </button>
 
             {/* Mobile Settings Direct Button */}
             <button
+              type="button"
               onClick={() => setView("settings")}
-              aria-label="Settings"
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              aria-label={lang === "bn" ? "সেটিংস" : "Settings"}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
               style={{ color: view === "settings" ? C.primary : C.onSurfaceVariant }}
-              title="Settings"
+              title={lang === "bn" ? "সেটিংস" : "Settings"}
             >
               <Settings size={17} />
             </button>
 
             {/* Language Selector */}
             <button
+              type="button"
               onClick={() => setLang(l => l === "en" ? "bn" : "en")}
               aria-label={lang === "en" ? "Switch language to Bengali" : "Switch language to English"}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
               style={{ color: C.onSurfaceVariant }}
               title={lang === "en" ? "Switch language to Bengali" : "Switch language to English"}
             >
@@ -389,11 +392,12 @@ export default function Shell({
 
             {/* Drawer Menu Button */}
             <button
+              type="button"
               onClick={() => setNavOpen(true)}
-              aria-label="Open navigation menu"
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+              aria-label={lang === "bn" ? "মেনু খুলুন" : "Open navigation menu"}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
               style={{ color: C.onSurfaceVariant }}
-              title="Open navigation menu"
+              title={lang === "bn" ? "মেনু খুলুন" : "Open navigation menu"}
             >
               <Menu size={20} />
             </button>
@@ -422,10 +426,11 @@ export default function Shell({
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setNavOpen(false)}
-                  aria-label="Close navigation menu"
-                  title="Close navigation menu"
-                  className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+                  aria-label={lang === "bn" ? "মেনু বন্ধ করুন" : "Close navigation menu"}
+                  title={lang === "bn" ? "মেনু বন্ধ করুন" : "Close navigation menu"}
+                  className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
                   style={{ color: C.onSurfaceVariant }}
                 >
                   <X size={20} />
@@ -494,8 +499,10 @@ export default function Shell({
                             return (
                               <button
                                 key={item.key}
+                                type="button"
                                 onClick={() => { setView(item.key); setNavOpen(false); }}
-                                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full min-h-[38px]"
+                                aria-current={active ? "page" : undefined}
+                                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors w-full min-h-[38px] focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
                                 style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                               >
                                 <Icon size={16} strokeWidth={active ? 2.5 : 2} className="shrink-0" />
@@ -515,20 +522,29 @@ export default function Shell({
                 {/* 3-Option Theme Segmented Bar */}
                 <div className="p-1 rounded-xl flex items-center gap-1 border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
                   <button
+                    type="button"
                     onClick={() => setTheme("light")}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${theme === "light" ? "bg-white dark:bg-slate-800 text-amber-600 shadow-sm" : "opacity-60"}`}
+                    aria-pressed={theme === "light"}
+                    aria-label={lang === "bn" ? "লাইট থিম নির্বাচন করুন" : "Select light theme"}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none ${theme === "light" ? "bg-white dark:bg-slate-800 text-amber-600 shadow-sm" : "opacity-60"}`}
                   >
                     <Sun size={13} /> {lang === "bn" ? "লাইট" : "Light"}
                   </button>
                   <button
+                    type="button"
                     onClick={() => setTheme("dark")}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${theme === "dark" ? "bg-emerald-700 text-white shadow-sm" : "opacity-60"}`}
+                    aria-pressed={theme === "dark"}
+                    aria-label={lang === "bn" ? "ডার্ক থিম নির্বাচন করুন" : "Select dark theme"}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none ${theme === "dark" ? "bg-emerald-700 text-white shadow-sm" : "opacity-60"}`}
                   >
                     <Moon size={13} /> {lang === "bn" ? "ডার্ক" : "Dark"}
                   </button>
                   <button
+                    type="button"
                     onClick={() => setTheme("system")}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${theme === "system" ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm" : "opacity-60"}`}
+                    aria-pressed={theme === "system"}
+                    aria-label={lang === "bn" ? "অটো থিম নির্বাচন করুন" : "Select auto theme"}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none ${theme === "system" ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm" : "opacity-60"}`}
                   >
                     <Laptop size={13} /> {lang === "bn" ? "অটো" : "Auto"}
                   </button>
@@ -591,10 +607,11 @@ export default function Shell({
             return (
               <button
                 key={item.key}
+                type="button"
                 onClick={() => setView(item.key)}
                 aria-label={labelText}
                 aria-current={active ? "page" : undefined}
-                className="flex flex-col items-center gap-0.5 px-1 py-1 rounded-xl min-w-[56px] transition-transform active:scale-95"
+                className="flex flex-col items-center gap-0.5 px-1 py-1 rounded-xl min-w-[56px] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
                 style={{ color: active ? C.primary : C.outline }}
               >
                 <div
