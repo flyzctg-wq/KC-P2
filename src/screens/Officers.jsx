@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BadgeCheck, FileCheck2, UserPlus, Users, CheckCircle2, Shield } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle, Avatar } from "../components/primitives";
 import { C, EC_CONSTITUTIONAL_STRUCTURE } from "../theme";
@@ -8,11 +8,37 @@ export default function Officers({ session, db, persist, toast, logActivity, lan
   const isBn = lang === "bn";
   const [inductForm, setInductForm] = useState(null);
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
-  const list = [...(db.inductions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const closedElections = db.elections.filter(e => e.status === "closed");
 
-  // Get active officers from db.users
-  const activeOfficers = db.users.filter(u => u.status === "active" && u.role === "admin" && u.post);
+  // Bolt Optimization: Memoize sorted inductions list to prevent date creation & sorting on every render
+  const list = useMemo(
+    () => [...(db.inductions || [])].sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [db.inductions]
+  );
+
+  // Bolt Optimization: Memoize closed elections array
+  const closedElections = useMemo(
+    () => (db.elections || []).filter(e => e.status === "closed"),
+    [db.elections]
+  );
+
+  // Bolt Optimization: Memoize active officers array
+  const activeOfficers = useMemo(
+    () => (db.users || []).filter(u => u.status === "active" && u.role === "admin" && u.post),
+    [db.users]
+  );
+
+  // Bolt Optimization: Pre-index active officers by post key and titleBn into a lookup map (O(N) -> O(1))
+  const officersByPostMap = useMemo(() => {
+    const map = new Map();
+    activeOfficers.forEach(u => {
+      if (!u.post) return;
+      if (!map.has(u.post)) {
+        map.set(u.post, []);
+      }
+      map.get(u.post).push(u);
+    });
+    return map;
+  }, [activeOfficers]);
 
   const induct = (name, position, electionTitle) => {
     persist(d => logActivity({ ...d, inductions: [{ id: uid("ind"), name, position, date: nowISO(), electionTitle }, ...(d.inductions || [])] }, session.name, `Digitally inducted ${name} as ${position}`));
@@ -47,8 +73,12 @@ export default function Officers({ session, db, persist, toast, logActivity, lan
       {/* 15-Seat Constitutional Roster */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {EC_CONSTITUTIONAL_STRUCTURE.map((item, idx) => {
-          // Find all users who hold this post
-          const holders = activeOfficers.filter(u => u.post === item.key || u.post === item.titleBn);
+          // Bolt Optimization: Quick O(1) map lookups for seat holders by key and titleBn
+          const holdersByKey = officersByPostMap.get(item.key) || [];
+          const holdersByTitle = item.titleBn !== item.key ? (officersByPostMap.get(item.titleBn) || []) : [];
+          const holders = item.titleBn !== item.key && holdersByTitle.length > 0
+            ? [...new Set([...holdersByKey, ...holdersByTitle])]
+            : holdersByKey;
           const isFilled = holders.length > 0;
           return (
             <Card
