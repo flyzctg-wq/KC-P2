@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle } from "../../components/primitives";
 import { C } from "../../theme";
-import { uid, fmtDate, cleanPhone } from "../../utils";
+import { uid, fmtDate, cleanPhone, escapeHtml } from "../../utils";
 
 const LETTER_TEMPLATES = [
   {
@@ -208,9 +208,19 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
 
   // Generate full HTML string for Print / PDF Export
   const generateLetterHTML = () => {
-    const recipientFormatted = recipient.split("\n").map(l => `<p style="margin:2px 0;">${l}</p>`).join("");
-    const subjectFormatted = subject.startsWith("বিষয়") ? subject : `বিষয়: ${subject}`;
-    const bodyFormatted = body.split("\n\n").map(p => `<p style="margin-bottom:14px; text-indent:28px; text-align:justify; line-height:1.75;">${p}</p>`).join("");
+    const safeRecipient = escapeHtml(recipient);
+    const safeSubject = escapeHtml(subject);
+    const safeSalutation = escapeHtml(salutation);
+    const safeMemoNo = escapeHtml(memoNo);
+    const safeLetterDate = escapeHtml(letterDate);
+    const safeSignatoryLeftTitle = escapeHtml(signatoryLeftTitle);
+    const safeSignatoryLeftName = escapeHtml(signatoryLeftName);
+    const safeSignatoryRightTitle = escapeHtml(signatoryRightTitle);
+    const safeSignatoryRightName = escapeHtml(signatoryRightName);
+
+    const recipientFormatted = safeRecipient.split("\n").map(l => `<p style="margin:2px 0;">${l}</p>`).join("");
+    const subjectFormatted = safeSubject.startsWith("বিষয়") ? safeSubject : `বিষয়: ${safeSubject}`;
+    const bodyFormatted = escapeHtml(body).split("\n\n").map(p => `<p style="margin-bottom:14px; text-indent:28px; text-align:justify; line-height:1.75;">${p}</p>`).join("");
     const originUrl = typeof window !== "undefined" ? window.location.origin : "";
 
     return `<!DOCTYPE html>
@@ -218,7 +228,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${subject || "Official Letter - Kunjachaya Club"}</title>
+    <title>${safeSubject || "Official Letter - Kunjachaya Club"}</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Kalpurush&family=SolaimanLipi&display=swap');
       
@@ -314,11 +324,11 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
       <img src="${originUrl}/letterhead.png" class="letterhead-bg" alt="Letterhead" />
       
       <div class="date-block">
-        তারিখঃ ${letterDate}
+        তারিখঃ ${safeLetterDate}
       </div>
 
       <div class="memo-block">
-        স্মারক নংঃ <span style="font-family: monospace;">${memoNo}</span>
+        স্মারক নংঃ <span style="font-family: monospace;">${safeMemoNo}</span>
       </div>
 
       <div class="content-block">
@@ -328,9 +338,9 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
             ${recipientFormatted}
           </div>
 
-          ${subject ? `<div class="subject-line">${subjectFormatted}</div>` : ""}
+          ${safeSubject ? `<div class="subject-line">${subjectFormatted}</div>` : ""}
 
-          ${salutation ? `<p style="font-weight: 600; margin: 8px 0 6px 0;">${salutation}</p>` : ""}
+          ${safeSalutation ? `<p style="font-weight: 600; margin: 8px 0 6px 0;">${safeSalutation}</p>` : ""}
 
           <div style="margin-top: 6px;">
             ${bodyFormatted}
@@ -345,12 +355,12 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
 
           <div class="signatory-row">
             <div>
-              <span>${signatoryLeftTitle} </span>
-              <span>${signatoryLeftName}</span>
+              <span>${safeSignatoryLeftTitle} </span>
+              <span>${safeSignatoryLeftName}</span>
             </div>
             <div>
-              <span>${signatoryRightTitle} </span>
-              <span>${signatoryRightName}</span>
+              <span>${safeSignatoryRightTitle} </span>
+              <span>${safeSignatoryRightName}</span>
             </div>
           </div>
         </div>
