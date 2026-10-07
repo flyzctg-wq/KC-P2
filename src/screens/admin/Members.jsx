@@ -609,7 +609,7 @@ function MemberProfileInspector({ user, session, db, canManage, isTopTier, persi
             {rawPhone ? (
               <>
                 <a
-                  href={`tel:${user.phone}`}
+                  href={`tel:${cleanPhone(user.phone)}`}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
                 >
                   <Phone size={14} /> {isBn ? "কল করুন" : "Call Phone"}
