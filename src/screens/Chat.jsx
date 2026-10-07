@@ -560,29 +560,32 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
                   <div
                     className={`absolute -top-3 ${
                       mine ? "left-0 -translate-x-full mr-1" : "right-0 translate-x-full ml-1"
-                    } opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 p-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 shadow-md z-10`}
+                    } opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center gap-0.5 p-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 shadow-md z-10`}
                   >
                     <button
                       type="button"
                       onClick={() => startReply(m, cleanBody)}
-                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 hover:text-emerald-600"
+                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       title={isBn ? "উত্তর দিন" : "Reply"}
+                      aria-label={isBn ? "উত্তর দিন" : "Reply to message"}
                     >
                       <CornerDownRight size={13} />
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveEmojiMenuMsgId(activeEmojiMenuMsgId === m.id ? null : m.id)}
-                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 hover:text-amber-500"
+                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       title={isBn ? "প্রতিক্রিয়া জানান" : "React"}
+                      aria-label={isBn ? "প্রতিক্রিয়া জানান" : "React to message"}
                     >
                       <Smile size={13} />
                     </button>
                     <button
                       type="button"
                       onClick={() => copyMessageText(cleanBody)}
-                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500"
+                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       title={isBn ? "কপি করুন" : "Copy"}
+                      aria-label={isBn ? "বার্তার লেখা কপি করুন" : "Copy message text"}
                     >
                       <Copy size={13} />
                     </button>
@@ -590,8 +593,9 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
                       <button
                         type="button"
                         onClick={() => deleteMessage(m.id)}
-                        className="p-1 rounded hover:bg-rose-50 text-gray-400 hover:text-rose-600"
+                        className="p-1 rounded hover:bg-rose-50 text-gray-400 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                         title={isBn ? "মুছে ফেলুন" : "Delete"}
+                        aria-label={isBn ? "বার্তা মুছে ফেলুন" : "Delete message"}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -608,7 +612,8 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
                           key={emoji}
                           type="button"
                           onClick={() => toggleReaction(m.id, emoji)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-base transition-transform active:scale-125"
+                          aria-label={isBn ? `${emoji} প্রতিক্রিয়া বেছে নিন` : `React with ${emoji}`}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-base transition-transform active:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                         >
                           {emoji}
                         </button>
@@ -698,7 +703,8 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
                 key={emoji}
                 type="button"
                 onClick={() => { setText(prev => prev + emoji); setShowEmojiPicker(false); }}
-                className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-lg transition-transform active:scale-125"
+                aria-label={isBn ? `${emoji} ইমোজি যুক্ত করুন` : `Add ${emoji} emoji`}
+                className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-lg transition-transform active:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 {emoji}
               </button>
@@ -710,12 +716,12 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
           <button
             type="button"
             onClick={() => setShowEmojiPicker(prev => !prev)}
-            className={`p-2.5 rounded-xl border text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors ${
+            className={`p-2.5 rounded-xl border text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
               showEmojiPicker ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 border-amber-300" : ""
             }`}
             style={{ borderColor: showEmojiPicker ? undefined : C.outlineVariant }}
             title={isBn ? "ইমোজি ড্রয়ার" : "Emoji drawer"}
-            aria-label="Toggle emoji picker"
+            aria-label={isBn ? "ইমোজি নির্বাচন তালিকা খুলুন" : "Toggle emoji picker"}
           >
             <Smile size={18} />
           </button>
