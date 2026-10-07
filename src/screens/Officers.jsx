@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BadgeCheck, FileCheck2, UserPlus, Users, CheckCircle2, Shield } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle, Avatar } from "../components/primitives";
 import { C, EC_CONSTITUTIONAL_STRUCTURE } from "../theme";
@@ -8,11 +8,32 @@ export default function Officers({ session, db, persist, toast, logActivity, lan
   const isBn = lang === "bn";
   const [inductForm, setInductForm] = useState(null);
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
-  const list = [...(db.inductions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const closedElections = db.elections.filter(e => e.status === "closed");
 
-  // Get active officers from db.users
-  const activeOfficers = db.users.filter(u => u.status === "active" && u.role === "admin" && u.post);
+  // Bolt Optimization: Memoize date-sorting for inductions, election filtering, and
+  // pre-index active officers by post to avoid $O(N \times M)$ array searches and
+  // date object allocations on non-data renders (e.g., modal interactions, language toggle).
+  const { list, closedElections, officersByPost, occupiedSeats } = useMemo(() => {
+    const list = [...(db.inductions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const closedElections = (db.elections || []).filter(e => e.status === "closed");
+    const activeOfficers = (db.users || []).filter(u => u.status === "active" && u.role === "admin" && u.post);
+
+    const officersByPost = {};
+    for (const u of activeOfficers) {
+      if (u.post) {
+        if (!officersByPost[u.post]) {
+          officersByPost[u.post] = [];
+        }
+        officersByPost[u.post].push(u);
+      }
+    }
+
+    return {
+      list,
+      closedElections,
+      officersByPost,
+      occupiedSeats: activeOfficers.length,
+    };
+  }, [db.inductions, db.elections, db.users]);
 
   const induct = (name, position, electionTitle) => {
     persist(d => logActivity({ ...d, inductions: [{ id: uid("ind"), name, position, date: nowISO(), electionTitle }, ...(d.inductions || [])] }, session.name, `Digitally inducted ${name} as ${position}`));
@@ -21,7 +42,6 @@ export default function Officers({ session, db, persist, toast, logActivity, lan
   };
 
   const totalSeats = EC_CONSTITUTIONAL_STRUCTURE.reduce((acc, p) => acc + p.seats, 0); // 15
-  const occupiedSeats = activeOfficers.length;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
@@ -47,8 +67,11 @@ export default function Officers({ session, db, persist, toast, logActivity, lan
       {/* 15-Seat Constitutional Roster */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {EC_CONSTITUTIONAL_STRUCTURE.map((item, idx) => {
-          // Find all users who hold this post
-          const holders = activeOfficers.filter(u => u.post === item.key || u.post === item.titleBn);
+          // Find all users who hold this post using O(1) indexed lookup
+          const holders = [
+            ...(officersByPost[item.key] || []),
+            ...(item.titleBn !== item.key ? (officersByPost[item.titleBn] || []) : []),
+          ];
           const isFilled = holders.length > 0;
           return (
             <Card
