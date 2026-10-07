@@ -113,7 +113,8 @@ export default function SettingsScreen({
       toast(isBn ? "ম্যানুয়াল ডাউনলোড সম্পন্ন হয়েছে!" : "Manual downloaded successfully!");
     } catch (err) {
       console.error("PDF download fallback error:", err);
-      window.open(`/docs/${filename}`, "_blank");
+      // Security: Pass "noopener,noreferrer" to prevent reverse tabnabbing vulnerabilities
+      window.open(`/docs/${filename}`, "_blank", "noopener,noreferrer");
       toast(isBn ? "নথিটি নতুন উইন্ডোতে খোলা হয়েছে।" : "Opening document in new tab.");
     } finally {
       setDocLoading(false);
@@ -136,7 +137,8 @@ export default function SettingsScreen({
 
     // 2. Web fallback: open in browser or fallback to reader
     try {
-      const w = window.open(`/docs/${filename}`, "_blank");
+      // Security: Pass "noopener,noreferrer" to prevent reverse tabnabbing vulnerabilities
+      const w = window.open(`/docs/${filename}`, "_blank", "noopener,noreferrer");
       if (!w) {
         setReadingDoc(manual);
       }
