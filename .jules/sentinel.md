@@ -7,7 +7,6 @@
 **Vulnerability:** Dynamic HTML documents generated for print/download (e.g., official letterheads and invoice receipts written to iframes or windows via `doc.write`) did not escape user-supplied strings, enabling HTML/script injection.
 **Learning:** Printing engines and document exporters that build HTML strings manually must sanitize all interpolated parameters regardless of source.
 **Prevention:** Always wrap interpolated user strings in `escapeHtml()` from `src/utils.js` when building dynamic HTML document strings.
-=======
 ## 2025-05-19 - Protocol-Relative URL Bypass in Link Sanitization
 **Vulnerability:** `isSafeUrl()` previously allowed protocol-relative URLs (e.g., `//attacker.com`) because `.startsWith("/")` evaluated to `true`. This could allow attackers to bypass sanitization and redirect users off-site.
 **Learning:** Checking `trimmed.startsWith("//")` prior to single-slash relative path checks prevents protocol-relative URL bypasses.
