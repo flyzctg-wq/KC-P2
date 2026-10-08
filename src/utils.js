@@ -131,6 +131,8 @@ export const sortByMemberCode = (a, b) => {
 export const isSafeUrl = (url = "") => {
   if (!url || typeof url !== "string") return false;
   const trimmed = url.trim().toLowerCase();
+  // Prevent protocol-relative URL bypass (e.g., //attacker.com)
+  if (trimmed.startsWith("//")) return false;
   if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
   if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;
