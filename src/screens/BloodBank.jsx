@@ -50,44 +50,68 @@ export default function BloodBank({ session, db, persist, toast, lang = "en", t 
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <select style={inputStyle()} className={inputCls + " w-36"} value={myGroup} onChange={e => setMyGroup(e.target.value)}>
+          <select
+            id="my-blood-group-select"
+            aria-label={isBn ? "আপনার রক্তের গ্রুপ" : "Your blood group"}
+            style={inputStyle()}
+            className={inputCls + " w-36 focus-visible:ring-2 focus-visible:ring-emerald-600"}
+            value={myGroup}
+            onChange={e => setMyGroup(e.target.value)}
+          >
             <option value="">{t.notSet || (isBn ? "-- গ্রুপ নির্বাচন --" : "Not set")}</option>
             {groups.map(g => <option key={g} value={g}>{g}</option>)}
           </select>
-          <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer select-none">
-            <input type="checkbox" checked={myDonor} onChange={e => setMyDonor(e.target.checked)} className="rounded" />
+          <label htmlFor="my-donor-checkbox" className="flex items-center gap-2 text-xs font-semibold cursor-pointer select-none">
+            <input
+              id="my-donor-checkbox"
+              type="checkbox"
+              checked={myDonor}
+              onChange={e => setMyDonor(e.target.checked)}
+              className="rounded focus-visible:ring-2 focus-visible:ring-emerald-600"
+            />
             <span style={{ color: C.onSurface }}>
               {t.availableToDonate || (isBn ? "রক্তদানে প্রস্তুত ও আগ্রহী (Active Donor)" : "Available to donate")}
             </span>
           </label>
-          <Btn size="sm" onClick={saveMine}>{t.save || (isBn ? "সংরক্ষণ" : "Save")}</Btn>
+          <Btn size="sm" onClick={saveMine} aria-label={isBn ? "রক্তের গ্রুপ তথ্য সংরক্ষণ করুন" : "Save blood group profile"}>
+            {t.save || (isBn ? "সংরক্ষণ" : "Save")}
+          </Btn>
         </div>
       </Card>
 
       {/* Search & Filter pills */}
       <div className="space-y-3">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.outline }} />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.outline }} aria-hidden="true" />
           <input
+            id="blood-bank-search"
+            aria-label={isBn ? "রক্তের গ্রুপ, নাম বা ইউনিট দিয়ে খুঁজুন" : "Search blood group, name, or unit"}
             value={searchQ}
             onChange={e => setSearchQ(e.target.value)}
             placeholder={isBn ? "রক্তের গ্রুপ, নাম বা ইউনিট দিয়ে খুঁজুন…" : "Search blood group, name, or unit…"}
             style={inputStyle()}
-            className={inputCls + " pl-9"}
+            className={inputCls + " pl-9 focus-visible:ring-2 focus-visible:ring-emerald-600"}
           />
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto pb-1 flex-nowrap sm:flex-wrap">
-          {["All", ...groups].map(g => (
-            <button
-              key={g}
-              onClick={() => setFilter(g)}
-              className="px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-colors"
-              style={g === filter ? { backgroundColor: C.error, color: "#fff" } : { backgroundColor: C.surfaceContainer, color: C.onSurfaceVariant }}
-            >
-              {g === "All" ? (t.all || (isBn ? "সকল গ্রুপ" : "All")) : g}
-            </button>
-          ))}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 flex-nowrap sm:flex-wrap" role="group" aria-label={isBn ? "রক্তের গ্রুপ ফিল্টার" : "Blood group filter"}>
+          {["All", ...groups].map(g => {
+            const isSelected = g === filter;
+            const label = g === "All" ? (t.all || (isBn ? "সকল গ্রুপ" : "All")) : g;
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setFilter(g)}
+                aria-pressed={isSelected}
+                aria-label={g === "All" ? (isBn ? "সকল রক্তের গ্রুপ দেখান" : "Show all blood groups") : (isBn ? `রক্তের গ্রুপ ${g}` : `Blood group ${g}`)}
+                className="px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 focus-visible:ring-offset-1"
+                style={isSelected ? { backgroundColor: C.error, color: "#fff" } : { backgroundColor: C.surfaceContainer, color: C.onSurfaceVariant }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -141,29 +165,32 @@ export default function BloodBank({ session, db, persist, toast, lang = "en", t 
                   <>
                     <a
                       href={`tel:${phoneFormatted}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-colors"
+                      aria-label={isBn ? `${u.name}-কে সরাসরি ফোন কল করুন` : `Call ${u.name}`}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       style={{ backgroundColor: C.primary, color: "#fff" }}
                       title={isBn ? "সরাসরি ফোন কল করুন" : "Direct Phone Call"}
                     >
-                      <Phone size={14} /> {isBn ? "সরাসরি কল" : "Call"}
+                      <Phone size={14} aria-hidden="true" /> {isBn ? "সরাসরি কল" : "Call"}
                     </a>
 
                     <a
                       href={`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(waMessage)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                      aria-label={isBn ? `${u.name}-এর সাথে হোয়াটসঅ্যাপে চ্যাট করুন` : `Chat with ${u.name} on WhatsApp`}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       title={isBn ? "হোয়াটসঅ্যাপে চ্যাট করুন" : "WhatsApp Chat"}
                     >
-                      <MessageCircle size={14} /> WhatsApp
+                      <MessageCircle size={14} aria-hidden="true" /> WhatsApp
                     </a>
                   </>
                 ) : (
                   <a
                     href={`mailto:${u.email}?subject=${encodeURIComponent(`Kunjachaya Club - Blood Requirement (${u.bloodGroup})`)}&body=${encodeURIComponent(waMessage)}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-colors"
+                    aria-label={isBn ? `${u.name}-কে ইমেইল পাঠান` : `Send email to ${u.name}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                   >
-                    <Mail size={14} /> {isBn ? "ইমেইল পাঠান" : "Send Email"}
+                    <Mail size={14} aria-hidden="true" /> {isBn ? "ইমেইল পাঠান" : "Send Email"}
                   </a>
                 )}
               </div>
