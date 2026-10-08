@@ -82,8 +82,16 @@ export function Badge({ children, tone = "neutral", className = "" }) {
   );
 }
 
-export function Field({ label, children }) {
-  return <label className="block mb-4"><span className="block text-xs font-semibold mb-1.5" style={{ color: C.onSurfaceVariant }}>{label}</span>{children}</label>;
+export function Field({ label, children, required = false, htmlFor }) {
+  return (
+    <label htmlFor={htmlFor} className="block mb-4">
+      <span className="block text-xs font-semibold mb-1.5" style={{ color: C.onSurfaceVariant }}>
+        {label}
+        {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
+      </span>
+      {children}
+    </label>
+  );
 }
 export const inputCls = "w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors focus:ring-2 focus:ring-emerald-600/40";
 export function inputStyle(focusRing = C.primary) {
@@ -157,7 +165,7 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
       <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }} className={`w-full ${width} rounded-t-2xl sm:rounded-2xl max-h-[88vh] overflow-y-auto border shadow-2xl`}>
         <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b z-10 backdrop-blur-md" style={{ backgroundColor: C.surface, borderColor: C.outlineVariant }}>
           <h3 className="font-bold text-base" style={{ color: C.onSurface }}>{title}</h3>
-          <button onClick={onClose} aria-label="Close modal" className="p-1.5 rounded-full hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} /></button>
+          <button onClick={onClose} aria-label="Close modal" className="p-1.5 rounded-full hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600" style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}><X size={16} aria-hidden="true" /></button>
         </div>
         <div className="p-5">{children}</div>
       </div>
@@ -204,8 +212,8 @@ export function Toasts({ toasts }) {
 export function StatMini({ icon: Icon, label, value, tone = "neutral", onClick }) {
   const tones = { warning: C.gold, success: C.primary, info: C.onInfoContainer, neutral: C.onSurfaceVariant };
   return (
-    <Card className="p-4 cursor-pointer" onClick={onClick}>
-      <Icon size={18} style={{ color: tones[tone] }} />
+    <Card className={`p-4 ${onClick ? "cursor-pointer" : ""}`} onClick={onClick}>
+      {Icon && <Icon size={18} style={{ color: tones[tone] }} aria-hidden="true" />}
       <p className="text-2xl font-extrabold mt-2 heading" style={{ color: C.onSurface }}>{value}</p>
       <p className="text-xs font-medium" style={{ color: C.onSurfaceVariant }}>{label}</p>
     </Card>
