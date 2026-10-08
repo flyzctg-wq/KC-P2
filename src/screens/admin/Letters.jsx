@@ -412,6 +412,20 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
     window.print();
   };
 
+  // WhatsApp Shareable Link Handler (Secure with noopener,noreferrer)
+  const handleWhatsAppSend = (phone, letterObj) => {
+    const rawPhone = cleanPhone(phone || recipientPhone || "");
+    const targetMemo = letterObj?.memoNo || memoNo;
+    const targetSubject = letterObj?.subject || subject;
+    const targetDate = letterObj?.date || letterDate;
+    const text = isBn
+      ? `🏛️ *কুঞ্জছায়া ক্লাব — অফিসিয়াল পত্র / স্মারক*\n━━━━━━━━━━━━━━━━━━\n📄 *স্মারক নং:* ${targetMemo}\n📅 *তারিখ:* ${targetDate}\n📌 *বিষয়:* ${targetSubject}\n━━━━━━━━━━━━━━━━━━\n_কুঞ্জছায়া ক্লাব কার্যালয়, চট্টগ্রাম।_`
+      : `🏛️ *KUNJACHAYA CLUB — OFFICIAL LETTER*\n━━━━━━━━━━━━━━━━━━\n📄 *Memo No:* ${targetMemo}\n📅 *Date:* ${targetDate}\n📌 *Subject:* ${targetSubject}\n━━━━━━━━━━━━━━━━━━\n_Kunjachaya Club Office, Chattogram._`;
+
+    const url = rawPhone ? `https://wa.me/${rawPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   // Direct Download of Standalone Printable HTML / Document
   const handleDownloadDocument = () => {
     try {
