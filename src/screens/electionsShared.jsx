@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { CheckCircle2, ShieldCheck, BadgeCheck, FileCheck2, Printer, ListChecks } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Modal } from "../components/primitives";
 import { C } from "../theme";
@@ -105,10 +105,24 @@ export function NominationView({ election, session, db, persist, toast, logActiv
 }
 
 export function ElectionOversight({ election, db, lang = "en", isBn = false }) {
-  const eligible = db.users.filter(u => u.status === "active" && u.memberClass !== "New");
-  const votedIds = new Set(db.votes.filter(v => v.electionId === election.id).map(v => v.voterId));
-  const uniqueVoters = votedIds.size;
-  const turnout = eligible.length ? Math.round((uniqueVoters / eligible.length) * 100) : 0;
+  // Bolt Optimization: Memoize turnout calculations and voter ID set to avoid recalculations on modal toggles
+  const { eligible, votedIds, uniqueVoters, turnout } = useMemo(() => {
+    const users = db.users || [];
+    const votes = db.votes || [];
+
+    const eligibleUsers = users.filter(u => u.status === "active" && u.memberClass !== "New");
+    const vSet = new Set(votes.filter(v => v.electionId === election?.id).map(v => v.voterId));
+    const unique = vSet.size;
+    const pct = eligibleUsers.length ? Math.round((unique / eligibleUsers.length) * 100) : 0;
+
+    return {
+      eligible: eligibleUsers,
+      votedIds: vSet,
+      uniqueVoters: unique,
+      turnout: pct
+    };
+  }, [db.users, db.votes, election?.id]);
+
   const [showRoll, setShowRoll] = useState(false);
   const [showReport, setShowReport] = useState(false);
 
@@ -166,6 +180,31 @@ export function ElectionOversight({ election, db, lang = "en", isBn = false }) {
 }
 
 export function CertificationReport({ election, db, eligible, turnout, lang = "en", isBn = false }) {
+  // Bolt Optimization: Pre-rank candidates and tally vote totals per position in a single memo
+  const results = useMemo(() => {
+    const votes = (db.votes || []).filter(v => v.electionId === election?.id);
+
+    return (election?.positions || []).map(pos => {
+      const posVotes = votes.filter(v => v.position === pos);
+      const cands = (election?.candidates || []).filter(c => c.position === pos);
+
+      const candCounts = {};
+      for (const v of posVotes) {
+        if (v.candidateId) candCounts[v.candidateId] = (candCounts[v.candidateId] || 0) + 1;
+      }
+
+      const ranked = cands
+        .map(c => ({ ...c, count: candCounts[c.id] || 0 }))
+        .sort((a, b) => b.count - a.count);
+
+      return {
+        pos,
+        ranked,
+        winner: ranked[0]
+      };
+    });
+  }, [election, db.votes]);
+
   return (
     <div>
       <div id="cert-report-print">
@@ -186,33 +225,27 @@ export function CertificationReport({ election, db, eligible, turnout, lang = "e
             <p className="text-[11px]" style={{ color: C.outline }}>{isBn ? "ভোটের হার" : "Turnout"}</p>
           </div>
         </div>
-        {election.positions.map(pos => {
-          const cands = election.candidates.filter(c => c.position === pos);
-          const votes = db.votes.filter(v => v.electionId === election.id && v.position === pos);
-          const ranked = cands.map(c => ({ ...c, count: votes.filter(v => v.candidateId === c.id).length })).sort((a, b) => b.count - a.count);
-          const winner = ranked[0];
-          return (
-            <div key={pos} className="mb-4">
-              <p className="font-bold text-sm mb-1.5">{pos}</p>
-              {ranked.map((c, i) => (
-                <div key={c.id} className="flex items-center justify-between text-xs py-1">
-                  <span className={i === 0 ? "font-bold text-emerald-800" : ""}>
-                    {i === 0 && "🏆 "}
-                    {c.name}
-                  </span>
-                  <span className="font-semibold" style={{ color: C.onSurfaceVariant }}>
-                    {c.count} {isBn ? "ভোট" : "votes"}
-                  </span>
-                </div>
-              ))}
-              {winner && (
-                <p className="text-[11px] mt-1 font-semibold" style={{ color: C.primary }}>
-                  {isBn ? `বিজয়ী নির্বাচিত: ${winner.name}` : `Declared winner: ${winner.name}`}
-                </p>
-              )}
-            </div>
-          );
-        })}
+        {results.map(({ pos, ranked, winner }) => (
+          <div key={pos} className="mb-4">
+            <p className="font-bold text-sm mb-1.5">{pos}</p>
+            {ranked.map((c, i) => (
+              <div key={c.id} className="flex items-center justify-between text-xs py-1">
+                <span className={i === 0 ? "font-bold text-emerald-800" : ""}>
+                  {i === 0 && "🏆 "}
+                  {c.name}
+                </span>
+                <span className="font-semibold" style={{ color: C.onSurfaceVariant }}>
+                  {c.count} {isBn ? "ভোট" : "votes"}
+                </span>
+              </div>
+            ))}
+            {winner && (
+              <p className="text-[11px] mt-1 font-semibold" style={{ color: C.primary }}>
+                {isBn ? `বিজয়ী নির্বাচিত: ${winner.name}` : `Declared winner: ${winner.name}`}
+              </p>
+            )}
+          </div>
+        ))}
       </div>
       <Btn full icon={Printer} onClick={() => window.print()}>
         {isBn ? "প্রিন্ট / PDF সংরক্ষণ করুন" : "Print / save as PDF"}
