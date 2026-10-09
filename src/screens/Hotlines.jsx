@@ -59,12 +59,17 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
               {items.map(c => (
                 <Card key={c.id} className="p-4 flex items-center gap-3">
                   <div style={{ backgroundColor: C.errorContainer }} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                    <PhoneCall size={16} style={{ color: C.error }} />
+                    <PhoneCall size={16} style={{ color: C.error }} aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-sm truncate">{c.name}</p>
                     {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
-                    <a href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)} className="text-xs font-semibold" style={{ color: C.primary }}>
+                    <a
+                      href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)}
+                      aria-label={isBn ? `${c.name}-কে কল করুন: ${c.phone}` : `Call ${c.name}: ${c.phone}`}
+                      className="text-xs font-semibold inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded px-0.5 -mx-0.5 transition-colors"
+                      style={{ color: C.primary }}
+                    >
                       {c.phone}
                     </a>
                   </div>
