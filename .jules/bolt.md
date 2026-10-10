@@ -40,3 +40,7 @@
 ## 2026-09-16 - Pre-indexing Officers by Constitutional Post in Executive Committee Roster
 **Learning:** `src/screens/Officers.jsx` performed `activeOfficers.filter(...)` inside the 15-seat `EC_CONSTITUTIONAL_STRUCTURE.map()` loop on every render, resulting in $O(N \times M)$ linear searches across `db.users`. It also re-sorted `db.inductions` and filtered `db.elections` whenever local modal inputs changed or language was toggled.
 **Action:** Wrap date-sorting, election filtering, and officer indexing into a `useMemo` block with dependencies `[db.inductions, db.elections, db.users]`, indexing officers by post to reduce roster slot lookups to $O(1)$.
+
+## 2026-09-17 - Memoizing Constitutional Amendments List Sorting
+**Learning:** In `src/screens/Amendments.jsx`, `db.amendments` was cloned and sorted (`status === "voting"`) on every render pass. Local component state updates (such as opening/closing the "Propose amendment" modal or typing into proposal fields) triggered unnecessary array re-sorting.
+**Action:** Wrap `list` calculation in `useMemo` with `[db.amendments]` dependency to prevent redundant array allocation and sorting operations on state changes.
