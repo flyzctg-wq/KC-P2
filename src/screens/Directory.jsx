@@ -132,7 +132,8 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                   <>
                     <a
                       href={`tel:${phoneFormatted}`}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
+                      aria-label={isBn ? `${u.name}-কে কল করুন` : `Call ${u.name}`}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       style={{ backgroundColor: C.primaryContainer, color: "#fff" }}
                       title={isBn ? "কল করুন" : "Call Phone"}
                     >
@@ -142,7 +143,8 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                       href={`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${u.name}, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${u.name}, reaching out from Kunjachaya Club.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                      aria-label={isBn ? `${u.name}-কে হোয়াটসঅ্যাপ বার্তা পাঠান` : `WhatsApp message to ${u.name}`}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       title={isBn ? "হোয়াটসঅ্যাপ বার্তা পাঠান" : "WhatsApp Chat"}
                     >
                       <MessageCircle size={13} /> WhatsApp
@@ -151,7 +153,8 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                 ) : (
                   <a
                     href={`mailto:${u.email}?subject=${encodeURIComponent("Kunjachaya Club Message")}`}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
+                    aria-label={isBn ? `${u.name}-কে ইমেইল পাঠান` : `Send email to ${u.name}`}
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                     style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}
                   >
                     <Mail size={13} /> {isBn ? "ইমেইল" : "Email"}
@@ -160,7 +163,8 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
 
                 <button
                   onClick={() => setSelectedUser(u)}
-                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0"
+                  aria-label={isBn ? `${u.name}-এর সম্পূর্ণ প্রোফাইল দেখুন` : `View profile of ${u.name}`}
+                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                   style={{ borderColor: C.outlineVariant, color: C.onSurfaceVariant }}
                   title={isBn ? "প্রোফাইল দেখুন" : "View Profile"}
                 >

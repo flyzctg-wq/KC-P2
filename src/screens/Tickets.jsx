@@ -98,8 +98,17 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                   {tk.attachments.map((att, idx) => (
                     <div
                       key={att.id || idx}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setMediaPreviewModal(att)}
-                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setMediaPreviewModal(att);
+                        }
+                      }}
+                      aria-label={isBn ? `সংযুক্ত মিডিয়া প্রিভিউ দেখুন (${att.name || 'ফাইল'})` : `Preview attached media (${att.name || 'attachment'})`}
+                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
                       style={{ borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }}
                     >
                       {att.type === "video" ? (
@@ -427,8 +436,9 @@ export function TicketForm({ onSubmit, submitting = false, lang = "en", isBn = f
                 <button
                   type="button"
                   onClick={() => removeAttachment(att.id)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors"
-                  title="Remove"
+                  aria-label={isBn ? `সংযুক্ত ফাইল "${att.name}" মুছুন` : `Remove attachment "${att.name}"`}
+                  title={isBn ? "সংযুক্ত ফাইল মুছুন" : "Remove attachment"}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                 >
                   <X size={10} />
                 </button>

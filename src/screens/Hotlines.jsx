@@ -64,7 +64,12 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-sm truncate">{c.name}</p>
                     {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
-                    <a href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)} className="text-xs font-semibold" style={{ color: C.primary }}>
+                    <a
+                      href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)}
+                      aria-label={isBn ? `${c.name}-কে কল করুন: ${c.phone}` : `Call ${c.name} at ${c.phone}`}
+                      className="text-xs font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded px-1 -mx-1"
+                      style={{ color: C.primary }}
+                    >
                       {c.phone}
                     </a>
                   </div>
