@@ -40,3 +40,7 @@
 ## 2026-09-16 - Pre-indexing Officers by Constitutional Post in Executive Committee Roster
 **Learning:** `src/screens/Officers.jsx` performed `activeOfficers.filter(...)` inside the 15-seat `EC_CONSTITUTIONAL_STRUCTURE.map()` loop on every render, resulting in $O(N \times M)$ linear searches across `db.users`. It also re-sorted `db.inductions` and filtered `db.elections` whenever local modal inputs changed or language was toggled.
 **Action:** Wrap date-sorting, election filtering, and officer indexing into a `useMemo` block with dependencies `[db.inductions, db.elections, db.users]`, indexing officers by post to reduce roster slot lookups to $O(1)$.
+
+## 2026-09-17 - Pre-grouping Emergency Hotline Contacts by Category
+**Learning:** `src/screens/Hotlines.jsx` evaluated `list.filter(c => c.category === g.key)` inside a `.map()` loop across `groups` on every component render. Local state updates (e.g., opening/closing the "Add Contact" modal or toggling language) caused redundant array filtering across `db.emergencyContacts`.
+**Action:** Pre-group `db.emergencyContacts` into a dictionary mapping category names to array items inside `useMemo([db.emergencyContacts])` to convert per-group filtering scans from $O(G \times N)$ to $O(N)$.
