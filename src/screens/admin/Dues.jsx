@@ -9,7 +9,7 @@ import {
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import InvoiceReceiptModal from "../../components/InvoiceReceiptModal";
 import { C, BLOCKS, MEMBER_CLASSES } from "../../theme";
-import { uid, currency, monthLabel, currentMonthYM, fmtDate, cleanPhone, sortByMemberCode } from "../../utils";
+import { uid, currency, monthLabel, currentMonthYM, fmtDate, cleanPhone, sortByMemberCode, sanitizeCSVCell } from "../../utils";
 
 export default function AdminDues({ session, db = {}, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -327,25 +327,26 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
   // Export to CSV
   const handleExportCSV = () => {
     const headers = ["Invoice ID", "Member Name", "Unit", "Block", "Mobile Number", "Title", "Month", "Amount (BDT)", "Status", "Payment Date", "Payment Method", "Receipt Ref"];
+    const formatCSVCell = (val) => `"${sanitizeCSVCell(val).replace(/"/g, '""')}"`;
     const rows = filteredList.map(d => {
       const u = activeResidentsMap.get(d.residentId) || {};
       return [
-        d.id,
-        `"${u.name || "Unknown"}"`,
-        `"${u.unit || ""}"`,
-        `"${u.block || ""}"`,
-        `"${u.phone || ""}"`,
-        `"${d.chargeTitle || "Monthly Subscription"}"`,
-        d.month,
-        d.amount,
-        d.status,
-        d.paidDate || "",
-        d.method || "",
-        `"${d.ref || ""}"`
+        formatCSVCell(d.id),
+        formatCSVCell(u.name || "Unknown"),
+        formatCSVCell(u.unit || ""),
+        formatCSVCell(u.block || ""),
+        formatCSVCell(u.phone || ""),
+        formatCSVCell(d.chargeTitle || "Monthly Subscription"),
+        formatCSVCell(d.month),
+        formatCSVCell(d.amount),
+        formatCSVCell(d.status),
+        formatCSVCell(d.paidDate || ""),
+        formatCSVCell(d.method || ""),
+        formatCSVCell(d.ref || "")
       ];
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.map(formatCSVCell).join(","), ...rows.map(r => r.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
