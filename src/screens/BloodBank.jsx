@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Droplet, Phone, MessageCircle, Mail, HeartHandshake, Search } from "lucide-react";
+import { Droplet, Phone, MessageCircle, Mail, HeartHandshake, Search, X } from "lucide-react";
 import { Btn, Card, Badge, inputCls, inputStyle, Empty, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
 import { cleanPhone } from "../utils";
@@ -90,8 +90,20 @@ export default function BloodBank({ session, db, persist, toast, lang = "en", t 
             onChange={e => setSearchQ(e.target.value)}
             placeholder={isBn ? "রক্তের গ্রুপ, নাম বা ইউনিট দিয়ে খুঁজুন…" : "Search blood group, name, or unit…"}
             style={inputStyle()}
-            className={inputCls + " pl-9 focus-visible:ring-2 focus-visible:ring-emerald-600"}
+            className={inputCls + " pl-9 pr-9 focus-visible:ring-2 focus-visible:ring-emerald-600"}
           />
+          {searchQ && (
+            <button
+              type="button"
+              onClick={() => setSearchQ("")}
+              aria-label={isBn ? "অনুসন্ধান লিখা মুছুন" : "Clear search"}
+              title={isBn ? "অনুসন্ধান লিখা মুছুন" : "Clear search"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              style={{ color: C.outline }}
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-1 flex-nowrap sm:flex-wrap" role="group" aria-label={isBn ? "রক্তের গ্রুপ ফিল্টার" : "Blood group filter"}>
