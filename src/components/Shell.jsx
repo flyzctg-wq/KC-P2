@@ -551,8 +551,10 @@ export default function Shell({
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => setLang(l => l === "en" ? "bn" : "en")}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold"
+                  aria-label={lang === "en" ? "Switch language to Bangla" : "Switch language to English"}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors"
                   style={{ color: C.onSurfaceVariant, backgroundColor: C.surfaceContainerLow }}
                 >
                   <span className="flex items-center gap-2"><Globe size={14} /> {lang === "en" ? "ভাষা পরিবর্তন" : "Switch Language"}</span>
