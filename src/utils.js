@@ -154,3 +154,13 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/** Escapes special formula characters (=, +, -, @, \t, \r) at the start of a cell to prevent CSV Formula Injection */
+export const sanitizeCSVCell = (val = "") => {
+  if (val === null || val === undefined) return "";
+  const str = String(val);
+  if (/^[=+@\t\r-]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+};
