@@ -96,10 +96,12 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {tk.attachments.map((att, idx) => (
-                    <div
+                    <button
                       key={att.id || idx}
+                      type="button"
                       onClick={() => setMediaPreviewModal(att)}
-                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm"
+                      aria-label={isBn ? `মিডিয়া প্রিভিউ দেখুন: ${att.name || "সংযুক্তি"}` : `View attachment preview: ${att.name || "Attachment"}`}
+                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 w-full text-left"
                       style={{ borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }}
                     >
                       {att.type === "video" ? (
@@ -129,7 +131,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                           </div>
                         </div>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -187,7 +189,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                 <a
                   href={sanitizeUrl(mediaPreviewModal.url)}
                   download={mediaPreviewModal.name || "attachment"}
-                  className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-colors"
+                  className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
                   style={{ backgroundColor: C.primaryContainer, color: C.onPrimaryContainer }}
                 >
                   <Download size={13} /> {isBn ? "ডাউনলোড" : "Download"}
@@ -427,10 +429,11 @@ export function TicketForm({ onSubmit, submitting = false, lang = "en", isBn = f
                 <button
                   type="button"
                   onClick={() => removeAttachment(att.id)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors"
-                  title="Remove"
+                  aria-label={isBn ? `সংযুক্তি "${att.name || ""}" মুছে ফেলুন` : `Remove attachment "${att.name || ""}"`}
+                  title={isBn ? "সংযুক্তি মুছে ফেলুন" : "Remove attachment"}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-1"
                 >
-                  <X size={10} />
+                  <X size={10} aria-hidden="true" />
                 </button>
               </div>
             ))}
