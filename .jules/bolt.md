@@ -40,3 +40,7 @@
 ## 2026-09-16 - Pre-indexing Officers by Constitutional Post in Executive Committee Roster
 **Learning:** `src/screens/Officers.jsx` performed `activeOfficers.filter(...)` inside the 15-seat `EC_CONSTITUTIONAL_STRUCTURE.map()` loop on every render, resulting in $O(N \times M)$ linear searches across `db.users`. It also re-sorted `db.inductions` and filtered `db.elections` whenever local modal inputs changed or language was toggled.
 **Action:** Wrap date-sorting, election filtering, and officer indexing into a `useMemo` block with dependencies `[db.inductions, db.elections, db.users]`, indexing officers by post to reduce roster slot lookups to $O(1)$.
+
+## 2026-09-17 - Pre-aggregating Badge Holder Counts in Badges Screen
+**Learning:** `src/screens/Badges.jsx` ran `db.users.filter(...)` inside `BADGE_CATALOG.map()` on every component render, creating an $O(B \times N)$ array scan whenever modal visibility (`openBadge`) or local form state changed.
+**Action:** Pre-aggregate badge holder counts into an $O(1)$ lookup object (`badgeHolderCounts`) via a single $O(N)$ `useMemo` pass over `db.users`, and memoize `myBadges` and `BadgeDetail` member lists.
