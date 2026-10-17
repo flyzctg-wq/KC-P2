@@ -11,3 +11,8 @@
 **Vulnerability:** `isSafeUrl()` previously allowed protocol-relative URLs (e.g., `//attacker.com`) because `.startsWith("/")` evaluated to `true`. This could allow attackers to bypass sanitization and redirect users off-site.
 **Learning:** Checking `trimmed.startsWith("//")` prior to single-slash relative path checks prevents protocol-relative URL bypasses.
 **Prevention:** Ensure `isSafeUrl()` explicitly rejects `//` prefixes before validating single-slash `/` relative application paths.
+
+## 2026-04-01 - CSV Formula Injection Prevention for Spreadsheet Exports
+**Vulnerability:** Exported CSV spreadsheets (e.g., expense vouchers) containing untrusted user inputs (title, payee, voucher numbers) could execute arbitrary formulas (`=`, `+`, `-`, `@`, `\t`, `\r`) when opened in Excel/Calc.
+**Learning:** Prefixing values starting with formula trigger characters (`=`, `+`, `-`, `@`, `\t`, `\r`) with a single quote `'` forces spreadsheet applications to treat cell contents as plain text.
+**Prevention:** Always sanitize cell values using `sanitizeCSVCell()` from `src/utils.js` when generating downloadable CSV files.
