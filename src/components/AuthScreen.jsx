@@ -80,14 +80,28 @@ export default function AuthScreen({ db, lang, setLang, t, authMode, setAuthMode
       <div className="lg:w-1/2 flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-sm">
           <div className="flex justify-end mb-4">
-            <button onClick={() => setLang(l => l === "en" ? "bn" : "en")} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full" style={{ color: C.onSurfaceVariant, backgroundColor: C.surfaceContainer }}>
-              <Globe size={13} /> {lang === "en" ? "বাংলা" : "English"}
+            <button
+              type="button"
+              onClick={() => setLang(l => l === "en" ? "bn" : "en")}
+              aria-label={lang === "en" ? "Switch language to Bangla" : "Switch language to English"}
+              title={lang === "en" ? "Switch language to Bangla" : "Switch language to English"}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-all"
+              style={{ color: C.onSurfaceVariant, backgroundColor: C.surfaceContainer }}
+            >
+              <Globe size={13} aria-hidden="true" /> {lang === "en" ? "বাংলা" : "English"}
             </button>
           </div>
-          <div className="flex rounded-full p-1 mb-7" style={{ backgroundColor: C.surfaceContainer }}>
+          <div className="flex rounded-full p-1 mb-7" role="tablist" aria-label={isBn ? "লগইন ও নিবন্ধনের মোড" : "Authentication options"} style={{ backgroundColor: C.surfaceContainer }}>
             {["login", "register"].map(m => (
-              <button key={m} onClick={() => setAuthMode(m)} className="flex-1 py-2 rounded-full text-sm font-bold transition-colors"
-                style={m === authMode ? { backgroundColor: C.primary, color: "#fff" } : { color: C.onSurfaceVariant }}>
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={m === authMode}
+                onClick={() => setAuthMode(m)}
+                className="flex-1 py-2 rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                style={m === authMode ? { backgroundColor: C.primary, color: "#fff" } : { color: C.onSurfaceVariant }}
+              >
                 {m === "login" ? t.login : t.register}
               </button>
             ))}
