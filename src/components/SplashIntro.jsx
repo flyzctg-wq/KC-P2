@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { C, LOGO_MARK } from "../theme";
 
 export default function SplashIntro({ onFinish, lang = "en" }) {
   const [fading, setFading] = useState(false);
   const isBn = lang === "bn";
+
+  const handleSkip = useCallback(() => {
+    setFading(true);
+    setTimeout(() => {
+      if (onFinish) onFinish();
+    }, 200);
+  }, [onFinish]);
 
   useEffect(() => {
     // Smooth, rapid intro: completes automatically in ~1.5s
@@ -17,12 +24,15 @@ export default function SplashIntro({ onFinish, lang = "en" }) {
     return () => clearTimeout(timer);
   }, [onFinish]);
 
-  const handleSkip = () => {
-    setFading(true);
-    setTimeout(() => {
-      if (onFinish) onFinish();
-    }, 200);
-  };
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+        handleSkip();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSkip]);
 
   return (
     <div
@@ -97,7 +107,8 @@ export default function SplashIntro({ onFinish, lang = "en" }) {
           e.stopPropagation();
           handleSkip();
         }}
-        className="absolute bottom-6 right-6 px-4 py-1.5 rounded-full text-xs font-bold bg-black/40 hover:bg-black/60 text-white backdrop-blur border border-white/20 transition-colors"
+        aria-label={isBn ? "স্প্ল্যাশ এড়িয়ে যান" : "Skip splash intro"}
+        className="absolute bottom-6 right-6 px-4 py-1.5 rounded-full text-xs font-bold bg-black/40 hover:bg-black/60 text-white backdrop-blur border border-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
       >
         {isBn ? "এড়িয়ে যান ❯" : "Skip ❯"}
       </button>

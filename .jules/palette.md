@@ -9,3 +9,7 @@
 ## 2025-05-20 - Filter Pill Groups & Interactive Action Accessibility
 **Learning:** Category filter pill bars require `role="group"`, descriptive `aria-label`, and `aria-pressed` states so screen readers announce active filters. Search inputs and action links (e.g., Call/WhatsApp/Email) require explicit bilingual `aria-label`s and `focus-visible` ring indicators for seamless keyboard and screen reader accessibility.
 **Action:** Wrap filter pill lists in `role="group"`, supply `aria-pressed={isSelected}`, and ensure all search/action controls have `aria-label`s and `focus-visible` rings.
+
+## 2025-05-21 - Splash & Intro Screen Keyboard Skip & Screen Reader Accessibility
+**Learning:** Full-screen splash overlays without keyboard listener triggers (Escape/Enter/Space) and missing explicit `aria-label`s trap keyboard and screen reader users during application initialization. Adding global keyboard event listeners and bilingual `aria-label`s allows seamless skipping for screen readers and keyboard users alike.
+**Action:** Always pair splash/intro skip controls with global keyboard listeners (`Escape`, `Enter`, `Space`), explicit focus rings (`focus-visible:ring-2`), and localized `aria-label` attributes.
