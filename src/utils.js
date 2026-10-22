@@ -154,3 +154,13 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/** Prevents CSV formula injection by prepending a single quote to strings starting with formula trigger characters (=, +, -, @, tab, CR) */
+export const sanitizeCSVCell = (val) => {
+  if (val === null || val === undefined) return "";
+  const str = String(val);
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+};
