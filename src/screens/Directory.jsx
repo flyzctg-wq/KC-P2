@@ -40,8 +40,10 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.outline }} />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.outline }} aria-hidden="true" />
           <input
+            id="directory-search-input"
+            aria-label={isBn ? "সদস্য অনুসন্ধান করুন" : "Search members"}
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder={isBn ? "নাম, কোড, ইউনিট, মোবাইল নম্বর বা পদবী দিয়ে অনুসন্ধান…" : "Search by name, code, unit, phone or post…"}
@@ -50,6 +52,7 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
           />
           {q && (
             <button
+              type="button"
               onClick={() => setQ("")}
               aria-label={isBn ? "অনুসন্ধান মুছুন" : "Clear search"}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
@@ -59,6 +62,8 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
           )}
         </div>
         <select
+          id="directory-block-select"
+          aria-label={isBn ? "ব্লক নির্বাচন করুন" : "Filter by block"}
           value={block}
           onChange={e => setBlock(e.target.value)}
           style={inputStyle()}
@@ -132,39 +137,44 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                   <>
                     <a
                       href={`tel:${phoneFormatted}`}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
+                      aria-label={isBn ? `${u.name}-কে ফোন করুন` : `Call ${u.name}`}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       style={{ backgroundColor: C.primaryContainer, color: "#fff" }}
                       title={isBn ? "কল করুন" : "Call Phone"}
                     >
-                      <Phone size={13} /> {isBn ? "কল" : "Call"}
+                      <Phone size={13} aria-hidden="true" /> {isBn ? "কল" : "Call"}
                     </a>
                     <a
                       href={`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(isBn ? `আসসালামু আলাইকুম ${u.name}, কুঞ্জছায়া ক্লাব থেকে যোগাযোগ করছি।` : `Hello ${u.name}, reaching out from Kunjachaya Club.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                      aria-label={isBn ? `${u.name}-কে হোয়াটসঅ্যাপে বার্তা পাঠান` : `Chat with ${u.name} on WhatsApp`}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       title={isBn ? "হোয়াটসঅ্যাপ বার্তা পাঠান" : "WhatsApp Chat"}
                     >
-                      <MessageCircle size={13} /> WhatsApp
+                      <MessageCircle size={13} aria-hidden="true" /> WhatsApp
                     </a>
                   </>
                 ) : (
                   <a
                     href={`mailto:${u.email}?subject=${encodeURIComponent("Kunjachaya Club Message")}`}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors"
+                    aria-label={isBn ? `${u.name}-কে ইমেইল পাঠান` : `Send email to ${u.name}`}
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                     style={{ backgroundColor: C.surfaceContainer, color: C.onSurface }}
                   >
-                    <Mail size={13} /> {isBn ? "ইমেইল" : "Email"}
+                    <Mail size={13} aria-hidden="true" /> {isBn ? "ইমেইল" : "Email"}
                   </a>
                 )}
 
                 <button
+                  type="button"
                   onClick={() => setSelectedUser(u)}
-                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0"
+                  aria-label={isBn ? `${u.name}-এর প্রোফাইল দেখুন` : `View profile of ${u.name}`}
+                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                   style={{ borderColor: C.outlineVariant, color: C.onSurfaceVariant }}
                   title={isBn ? "প্রোফাইল দেখুন" : "View Profile"}
                 >
-                  <Eye size={15} />
+                  <Eye size={15} aria-hidden="true" />
                 </button>
               </div>
             </Card>
