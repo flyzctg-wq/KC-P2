@@ -64,16 +64,30 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-sm truncate">{c.name}</p>
                     {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
-                    <a href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)} className="text-xs font-semibold" style={{ color: C.primary }}>
+                    <a
+                      href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)}
+                      aria-label={isBn ? `${c.name}-কে ফোন করুন (${c.phone})` : `Call ${c.name} (${c.phone})`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded px-0.5"
+                      style={{ color: C.primary }}
+                    >
                       {c.phone}
                     </a>
                   </div>
+                  <a
+                    href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)}
+                    aria-label={isBn ? `${c.name}-কে সরাসরি ফোন করুন` : `Call ${c.name} directly`}
+                    title={isBn ? `${c.name}-কে সরাসরি ফোন করুন` : `Call ${c.name} directly`}
+                    className="p-2 rounded-full shrink-0 flex items-center justify-center transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                    style={{ backgroundColor: C.primary, color: "#fff" }}
+                  >
+                    <Phone size={14} aria-hidden="true" />
+                  </a>
                   {canManage && (
                     <button
                       type="button"
                       onClick={() => remove(c)}
-                      aria-label={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
-                      title={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
+                      aria-label={isBn ? `${c.name} নম্বর মুছে ফেলুন` : `Delete contact for ${c.name}`}
+                      title={isBn ? `${c.name} নম্বর মুছে ফেলুন` : `Delete contact for ${c.name}`}
                       className="p-1.5 rounded-full shrink-0 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
                       style={{ color: C.error }}
                     >
