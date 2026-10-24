@@ -154,3 +154,14 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/** Sanitizes cell value to prevent CSV Formula / Macro Injection in spreadsheet applications (e.g. Excel, Calc) */
+export const sanitizeCSVCell = (val) => {
+  if (val === null || val === undefined) return "";
+  const str = String(val);
+  // If string starts with characters that trigger formula execution in Excel/Spreadsheets, prefix with a single quote
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+};
