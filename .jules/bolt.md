@@ -37,6 +37,11 @@
 ## 2026-09-16 - Pre-aggregating Votes & Position Results in Election Screens
 **Learning:** `Elections.jsx`, `admin/Elections.jsx`, and `electionsShared.jsx` performed redundant array filtering and percentage calculations on every render cycle and interactive radio button toggle (e.g., selecting candidates in `BallotView` or toggling audit modals in `ElectionOversight`).
 **Action:** Wrap vote tallies, candidate results by position, and voter turnout calculations in `useMemo` blocks with `[db.votes, election]` dependencies.
+
 ## 2026-09-16 - Pre-indexing Officers by Constitutional Post in Executive Committee Roster
 **Learning:** `src/screens/Officers.jsx` performed `activeOfficers.filter(...)` inside the 15-seat `EC_CONSTITUTIONAL_STRUCTURE.map()` loop on every render, resulting in $O(N \times M)$ linear searches across `db.users`. It also re-sorted `db.inductions` and filtered `db.elections` whenever local modal inputs changed or language was toggled.
 **Action:** Wrap date-sorting, election filtering, and officer indexing into a `useMemo` block with dependencies `[db.inductions, db.elections, db.users]`, indexing officers by post to reduce roster slot lookups to $O(1)$.
+
+## 2026-09-17 - Pre-aggregating Badge Holders & Partitioning Active Users in Badges Screen
+**Learning:** In `src/screens/Badges.jsx`, mapping over `BADGE_CATALOG` executed `db.users.filter(...)` for each badge, leading to $O(K \times N)$ linear scans on every render cycle. Moreover, opening or interacting with the `BadgeDetail` modal re-filtered `db.users` twice for every local state change (e.g., picking a member in the dropdown).
+**Action:** Pre-aggregate badge counts in a single pass into a `badgeHolderCounts` hash object wrapped in `useMemo([db.users])`, memoize `myBadges` array filtering, and partition `holders` / `eligible` lists in `BadgeDetail` within a single-pass `useMemo` block.
