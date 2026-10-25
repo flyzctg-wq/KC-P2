@@ -159,8 +159,10 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
                 )}
 
                 <button
+                  type="button"
                   onClick={() => setSelectedUser(u)}
-                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0"
+                  aria-label={isBn ? `${u.name}-এর প্রোফাইল দেখুন` : `View profile of ${u.name}`}
+                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
                   style={{ borderColor: C.outlineVariant, color: C.onSurfaceVariant }}
                   title={isBn ? "প্রোফাইল দেখুন" : "View Profile"}
                 >
