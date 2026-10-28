@@ -573,16 +573,18 @@ _Kunjachaya Club Office, Chattogram._`;
             <button
               type="button"
               onClick={handleWhatsAppSend}
-              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors"
+              aria-label={isBn ? "হোয়াটসঅ্যাপে রসিদ বিবরণ পাঠান" : "Share receipt details via WhatsApp"}
+              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
             >
-              <MessageCircle size={15} /> WhatsApp
+              <MessageCircle size={15} aria-hidden="true" /> WhatsApp
             </button>
             <button
               type="button"
               onClick={handleDownload}
-              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl font-bold text-xs text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 border border-sky-200 dark:border-sky-800 shadow-sm transition-colors"
+              aria-label={isBn ? "অফিসিয়াল রসিদ এইচটিএমএল ডাউনলোড করুন" : "Download official receipt HTML"}
+              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl font-bold text-xs text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 border border-sky-200 dark:border-sky-800 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
             >
-              <Download size={14} /> {isBn ? "ডাউনলোড" : "Download"}
+              <Download size={14} aria-hidden="true" /> {isBn ? "ডাউনলোড" : "Download"}
             </button>
           </div>
 
@@ -590,12 +592,14 @@ _Kunjachaya Club Office, Chattogram._`;
             <Btn
               variant="outline"
               onClick={onClose}
+              aria-label={isBn ? "রসিদ উইন্ডো বন্ধ করুন" : "Close receipt modal"}
             >
               {isBn ? "বন্ধ করুন" : "Close"}
             </Btn>
             <Btn
               icon={Printer}
               onClick={handlePrint}
+              aria-label={isBn ? "অফিসিয়াল রসিদ প্রিন্ট করুন" : "Print official receipt"}
             >
               {isBn ? "প্যাড প্রিন্ট করুন" : "Print Official Receipt"}
             </Btn>
