@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
@@ -14,7 +14,18 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
     { key: "EC Lead", label: isBn ? "কার্যনির্বাহী পরিষদ নেতৃত্ব" : "EC Lead" },
     { key: "Block Lead", label: isBn ? "ব্লক ও ইউনিট সমন্বয়ক" : "Block Lead" },
   ];
-  const list = db.emergencyContacts || [];
+
+  // Bolt Optimization: Group emergency contacts into an O(1) map using useMemo to avoid re-filtering arrays on map/UI updates
+  const contactsByCategory = useMemo(() => {
+    const list = db.emergencyContacts || [];
+    const map = {};
+    for (const c of list) {
+      const cat = c.category || "Block Lead";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(c);
+    }
+    return map;
+  }, [db.emergencyContacts]);
 
   const add = (name, role, phone, category) => {
     if (!name.trim() || !phone.trim()) return;
@@ -50,7 +61,7 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
       </div>
 
       {groups.map(g => {
-        const items = list.filter(c => c.category === g.key);
+        const items = contactsByCategory[g.key] || [];
         if (!items.length) return null;
         return (
           <div key={g.key} className="mb-6">
