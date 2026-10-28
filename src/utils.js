@@ -154,3 +154,15 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/** Sanitizes CSV cell content to prevent CSV/Formula Injection attacks in Excel/Calc */
+export const sanitizeCSVCell = (val) => {
+  if (val === null || val === undefined) return '""';
+  const str = String(val);
+  const escaped = str.replace(/"/g, '""');
+  const trimmed = str.trimStart();
+  if (/^[=+\-@\t\r]/.test(trimmed)) {
+    return `"'${escaped}"`;
+  }
+  return `"${escaped}"`;
+};
