@@ -154,3 +154,14 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/** Sanitizes cell value for CSV export to prevent CSV formula injection (CWE-1236) */
+export const sanitizeCSVCell = (val = "") => {
+  let str = String(val ?? "");
+  // If value starts with formula triggers (=, +, -, @, \t, \r), prepend single quote
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+  // Escape embedded double quotes by doubling them
+  return `"${str.replace(/"/g, '""')}"`;
+};
