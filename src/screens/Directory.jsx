@@ -44,6 +44,7 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
+            aria-label={isBn ? "সদস্য অনুসন্ধান করুন" : "Search members"}
             placeholder={isBn ? "নাম, কোড, ইউনিট, মোবাইল নম্বর বা পদবী দিয়ে অনুসন্ধান…" : "Search by name, code, unit, phone or post…"}
             style={inputStyle()}
             className={inputCls + (q ? " pl-9 pr-9" : " pl-9")}
@@ -61,6 +62,7 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
         <select
           value={block}
           onChange={e => setBlock(e.target.value)}
+          aria-label={isBn ? "ব্লক অনুযায়ী ফিল্টার করুন" : "Filter by block"}
           style={inputStyle()}
           className={inputCls + " sm:w-44"}
         >
@@ -160,7 +162,8 @@ export default function Directory({ session = {}, db = {}, lang = "en", t = {} }
 
                 <button
                   onClick={() => setSelectedUser(u)}
-                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0"
+                  aria-label={isBn ? `${u.name}-এর প্রোফাইল দেখুন` : `View profile of ${u.name}`}
+                  className="p-1.5 rounded-xl border hover:bg-black/5 text-xs font-semibold shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                   style={{ borderColor: C.outlineVariant, color: C.onSurfaceVariant }}
                   title={isBn ? "প্রোফাইল দেখুন" : "View Profile"}
                 >
