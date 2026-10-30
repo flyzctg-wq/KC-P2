@@ -154,3 +154,12 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/** Sanitizes cell values to prevent CSV Formula Injection in spreadsheet software (OWASP) */
+export const sanitizeCSVCell = (val = "") => {
+  const str = String(val ?? "");
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+};
