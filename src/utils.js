@@ -154,3 +154,16 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/**
+ * Sanitizes a value for safe inclusion in a CSV cell.
+ * Prevents CSV Formula Injection (CWE-1236) by prepending a single quote
+ * if the string starts with formula trigger characters (=, +, -, @, tab, CR).
+ * Also escapes double-quotes and encloses the result in quotes.
+ */
+export const sanitizeCSVCell = (val) => {
+  if (val === null || val === undefined) return '""';
+  const str = String(val);
+  const safeStr = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  return `"${safeStr.replace(/"/g, '""')}"`;
+};
