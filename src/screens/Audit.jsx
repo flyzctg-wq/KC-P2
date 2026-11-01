@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { Btn, Card, Empty, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
-import { fmtDateTime, currentMonthYM } from "../utils";
+import { fmtDateTime, currentMonthYM, sanitizeCSVCell } from "../utils";
 
 /* ============================================================
    UNIFIED LOG — two tabs in one screen:
@@ -101,8 +101,8 @@ export default function Audit({ session, db, lang = "en", t = {} }) {
   const exportCSV = () => {
     const rows =
       tab === "audit"
-        ? [["Date", "Actor", "Category", "Action"], ...auditFiltered.map(e => [fmtDateTime(e.date), e.actor, e.cat, e.action.replace(/,/g, ";")])]
-        : [["Date", "Actor", "Action"],             ...activityEntries.map(e => [fmtDateTime(e.date), e.actor, e.action.replace(/,/g, ";")])];
+        ? [["Date", "Actor", "Category", "Action"], ...auditFiltered.map(e => [fmtDateTime(e.date), sanitizeCSVCell(e.actor), sanitizeCSVCell(e.cat), sanitizeCSVCell(e.action.replace(/,/g, ";"))])]
+        : [["Date", "Actor", "Action"],             ...activityEntries.map(e => [fmtDateTime(e.date), sanitizeCSVCell(e.actor), sanitizeCSVCell(e.action.replace(/,/g, ";"))])];
     const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
