@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Vote, Plus, Scale, CheckCircle2 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Empty, Modal, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -9,7 +9,11 @@ export default function Amendments({ session, db, persist, toast, logActivity, l
   const [form, setForm] = useState(false);
   const isCouncil = !!session.standingCouncil;
   const isTopTier = session.role === "admin" && (session.post === "President" || session.post === "General Secretary");
-  const list = [...(db.amendments || [])].sort((a, b) => (a.status === "voting" ? -1 : 1));
+
+  // Bolt Optimization: Memoize amendments array sorting by status ("voting" first) to avoid redundant array creation and sorting on state changes (e.g. form toggling, input typing)
+  const list = useMemo(() => {
+    return [...(db.amendments || [])].sort((a, b) => (a.status === "voting" ? -1 : 1));
+  }, [db.amendments]);
 
   const statusLabels = {
     proposed: isBn ? "প্রস্তাবিত" : "PROPOSED",
