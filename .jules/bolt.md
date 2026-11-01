@@ -40,3 +40,7 @@
 ## 2026-09-16 - Pre-indexing Officers by Constitutional Post in Executive Committee Roster
 **Learning:** `src/screens/Officers.jsx` performed `activeOfficers.filter(...)` inside the 15-seat `EC_CONSTITUTIONAL_STRUCTURE.map()` loop on every render, resulting in $O(N \times M)$ linear searches across `db.users`. It also re-sorted `db.inductions` and filtered `db.elections` whenever local modal inputs changed or language was toggled.
 **Action:** Wrap date-sorting, election filtering, and officer indexing into a `useMemo` block with dependencies `[db.inductions, db.elections, db.users]`, indexing officers by post to reduce roster slot lookups to $O(1)$.
+
+## 2026-09-17 - Single-Pass Category Grouping & Progress Memoization in Handover Screen
+**Learning:** `src/screens/Handover.jsx` computed handover progress percentage (`pct`), distinct category extraction (`new Set`), and nested array filtering (`list.filter(i => i.category === cat)`) on every render. Typing characters in the "New checklist item" input field caused $O(C \times N)$ array iterations and allocations per keypress.
+**Action:** Group items by category in a single pass ($O(N)$) and calculate completion percentage within `useMemo` dependent on `[db.handoverChecklist]` to skip redundant array filtering on input state updates.
