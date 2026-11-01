@@ -16,3 +16,8 @@
 **Vulnerability:** Client-side CSV export generators in administrative modules (Audit, Expenses, Payment History, Dues) directly interpolated user strings (e.g. member names, action notes, payees, transaction references) into CSV rows without formula prefix neutralization. Spreadsheet tools (Excel, Calc) execute formulas starting with `=`, `+`, `-`, `@`, `\t`, or `\r`.
 **Learning:** Quoting values in double quotes does not prevent spreadsheet programs from executing cell formulas. Cells must have formula-trigger characters neutralized by prefixing with a single quote (`'`), followed by RFC-4180 quote escaping (`""`).
 **Prevention:** Use `sanitizeCSVCell()` from `src/utils.js` on every cell rendered into CSV export files.
+
+## 2026-11-01 - Backslash Protocol-Relative Bypass and SVG Data URI XSS in URL Validation
+**Vulnerability:** `isSafeUrl()` previously allowed `/\attacker.com` or `/\\attacker.com` because it only checked `startsWith("//")` before permitting `/` relative paths; WHATWG browsers normalize `\` to `/`, routing to external origins. In addition, `data:image/` permitted `data:image/svg+xml`, which executes scripts when clicked or navigated in `<a>` link tags.
+**Learning:** Checking `/^\/[/\\\s]/.test(trimmed)` stops both backslash normalization and whitespace trickery. Explicitly rejecting `data:image/svg` prevents DOM-based script execution while keeping raster data URIs (`image/png`, `image/jpeg`, `image/webp`) functional.
+**Prevention:** In URL validators, never assume single `/` implies internal relative path without checking for backslash (`\`) or whitespace; always disallow XML/SVG image MIME types for data URIs in navigable contexts.
