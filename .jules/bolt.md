@@ -37,6 +37,11 @@
 ## 2026-09-16 - Pre-aggregating Votes & Position Results in Election Screens
 **Learning:** `Elections.jsx`, `admin/Elections.jsx`, and `electionsShared.jsx` performed redundant array filtering and percentage calculations on every render cycle and interactive radio button toggle (e.g., selecting candidates in `BallotView` or toggling audit modals in `ElectionOversight`).
 **Action:** Wrap vote tallies, candidate results by position, and voter turnout calculations in `useMemo` blocks with `[db.votes, election]` dependencies.
+
 ## 2026-09-16 - Pre-indexing Officers by Constitutional Post in Executive Committee Roster
 **Learning:** `src/screens/Officers.jsx` performed `activeOfficers.filter(...)` inside the 15-seat `EC_CONSTITUTIONAL_STRUCTURE.map()` loop on every render, resulting in $O(N \times M)$ linear searches across `db.users`. It also re-sorted `db.inductions` and filtered `db.elections` whenever local modal inputs changed or language was toggled.
 **Action:** Wrap date-sorting, election filtering, and officer indexing into a `useMemo` block with dependencies `[db.inductions, db.elections, db.users]`, indexing officers by post to reduce roster slot lookups to $O(1)$.
+
+## 2026-09-17 - Pre-indexing Emergency Contacts by Category in Hotlines Screen
+**Learning:** `src/screens/Hotlines.jsx` filtered `db.emergencyContacts` array for each hotline category on every render (`list.filter(c => c.category === g.key)`). Whenever user interacted with the map or toggled forms, contacts were repeatedly filtered.
+**Action:** Build a lookup object (`contactsByCategory`) using `useMemo` with `[db.emergencyContacts]` dependency to reduce group filtering to $O(N)$ once per dataset update.
