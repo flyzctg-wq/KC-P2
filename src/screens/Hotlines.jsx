@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
@@ -14,7 +14,20 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
     { key: "EC Lead", label: isBn ? "কার্যনির্বাহী পরিষদ নেতৃত্ব" : "EC Lead" },
     { key: "Block Lead", label: isBn ? "ব্লক ও ইউনিট সমন্বয়ক" : "Block Lead" },
   ];
-  const list = db.emergencyContacts || [];
+
+  // Bolt Optimization: Pre-group emergency contacts by category in a single pass to eliminate
+  // per-group array filter scans on every component render (e.g. language or modal toggles).
+  const contactsByCategory = useMemo(() => {
+    const contacts = db.emergencyContacts || [];
+    const grouped = {};
+    for (const c of contacts) {
+      if (!grouped[c.category]) {
+        grouped[c.category] = [];
+      }
+      grouped[c.category].push(c);
+    }
+    return grouped;
+  }, [db.emergencyContacts]);
 
   const add = (name, role, phone, category) => {
     if (!name.trim() || !phone.trim()) return;
@@ -50,7 +63,7 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
       </div>
 
       {groups.map(g => {
-        const items = list.filter(c => c.category === g.key);
+        const items = contactsByCategory[g.key] || [];
         if (!items.length) return null;
         return (
           <div key={g.key} className="mb-6">
