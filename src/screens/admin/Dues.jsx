@@ -9,7 +9,7 @@ import {
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Avatar, Empty, Modal, SectionTitle } from "../../components/primitives";
 import InvoiceReceiptModal from "../../components/InvoiceReceiptModal";
 import { C, BLOCKS, MEMBER_CLASSES } from "../../theme";
-import { uid, currency, monthLabel, currentMonthYM, fmtDate, cleanPhone, sortByMemberCode } from "../../utils";
+import { uid, currency, monthLabel, currentMonthYM, fmtDate, cleanPhone, sortByMemberCode, sanitizeCSVCell } from "../../utils";
 
 export default function AdminDues({ session, db = {}, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
@@ -331,28 +331,30 @@ export default function AdminDues({ session, db = {}, persist, toast, logActivit
       const u = activeResidentsMap.get(d.residentId) || {};
       return [
         d.id,
-        `"${u.name || "Unknown"}"`,
-        `"${u.unit || ""}"`,
-        `"${u.block || ""}"`,
-        `"${u.phone || ""}"`,
-        `"${d.chargeTitle || "Monthly Subscription"}"`,
+        u.name || "Unknown",
+        u.unit || "",
+        u.block || "",
+        u.phone || "",
+        d.chargeTitle || "Monthly Subscription",
         d.month,
         d.amount,
         d.status,
         d.paidDate || "",
         d.method || "",
-        `"${d.ref || ""}"`
-      ];
+        d.ref || ""
+      ].map(v => `"${String(sanitizeCSVCell(v) ?? "").replace(/"/g, '""')}"`).join(",");
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [headers.map(h => `"${h}"`).join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `kunjachaya_billing_ledger_${selectedMonth}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     toast(isBn ? "এক্সেল সিএসভি ফাইল ডাউনলোড সম্পন্ন হয়েছে!" : "Exported Billing Ledger CSV!");
   };
 
