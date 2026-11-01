@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Award } from "lucide-react";
 import { Btn, Card, Badge, inputCls, inputStyle, Avatar, Modal, SectionTitle } from "../components/primitives";
 import { C, BADGE_CATALOG, BADGE_ICONS } from "../theme";
@@ -7,7 +7,31 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
   const isBn = lang === "bn";
   const [openBadge, setOpenBadge] = useState(null);
   const canAward = session.role === "admin" && session.permissions?.canManageMembers;
-  const myBadges = BADGE_CATALOG.filter(b => (session.earnedBadges || []).includes(b.id));
+
+  // Bolt Optimization: Memoize myBadges array to prevent re-filtering on unrelated state updates
+  const myBadges = useMemo(
+    () => BADGE_CATALOG.filter(b => (session?.earnedBadges || []).includes(b.id)),
+    [session?.earnedBadges]
+  );
+
+  // Bolt Optimization: Pre-index badge holders in a single O(N) pass over db.users
+  // to avoid repeated O(B * N) linear scans during BADGE_CATALOG rendering loops.
+  const holdersByBadge = useMemo(() => {
+    const map = {};
+    const users = db?.users || [];
+    for (let i = 0; i < users.length; i++) {
+      const u = users[i];
+      const badges = u.earnedBadges;
+      if (badges && Array.isArray(badges)) {
+        for (let j = 0; j < badges.length; j++) {
+          const badgeId = badges[j];
+          if (!map[badgeId]) map[badgeId] = [];
+          map[badgeId].push(u);
+        }
+      }
+    }
+    return map;
+  }, [db?.users]);
 
   const badgeTranslations = {
     b_founder: { name: isBn ? "প্রতিষ্ঠাতা সদস্য ব্যাজ" : "Founding Member", desc: isBn ? "প্রতিষ্ঠাতা বছরে ক্লাব প্রতিষ্ঠায় অবদানকারী সদস্যদের প্রদান করা হয়।" : "Awarded to residents who established the club in its founding year." },
@@ -45,7 +69,7 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {BADGE_CATALOG.map(b => {
           const Icon = BADGE_ICONS[b.icon] || Award;
-          const holders = db.users.filter(u => (u.earnedBadges || []).includes(b.id));
+          const holderCount = (holdersByBadge[b.id] || []).length;
           const tr = badgeTranslations[b.id] || { name: b.name, desc: b.description };
           return (
             <Card key={b.id} className="p-4 cursor-pointer hover:border-primary transition-all" onClick={() => setOpenBadge(b)}>
@@ -55,7 +79,7 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
               <p className="font-bold text-sm">{tr.name}</p>
               <p className="text-xs mt-1 line-clamp-2" style={{ color: C.onSurfaceVariant }}>{tr.desc}</p>
               <p className="text-[11px] mt-2 font-semibold" style={{ color: C.outline }}>
-                {holders.length} {isBn ? "জন সদস্য পেয়েছেন" : `member${holders.length !== 1 ? "s" : ""}`}
+                {holderCount} {isBn ? "জন সদস্য পেয়েছেন" : `member${holderCount !== 1 ? "s" : ""}`}
               </p>
             </Card>
           );
@@ -70,8 +94,24 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
 
 export function BadgeDetail({ badge, db, session, persist, toast, logActivity, canAward, isBn = false, tr = {} }) {
   const Icon = BADGE_ICONS[badge.icon] || Award;
-  const holders = db.users.filter(u => (u.earnedBadges || []).includes(badge.id));
-  const eligible = db.users.filter(u => u.status === "active" && !(u.earnedBadges || []).includes(badge.id));
+
+  // Bolt Optimization: Consolidate badge holders and eligible active members in a single O(N) pass
+  const { holders, eligible } = useMemo(() => {
+    const users = db?.users || [];
+    const holdersList = [];
+    const eligibleList = [];
+    for (let i = 0; i < users.length; i++) {
+      const u = users[i];
+      const hasBadge = (u.earnedBadges || []).includes(badge.id);
+      if (hasBadge) {
+        holdersList.push(u);
+      } else if (u.status === "active") {
+        eligibleList.push(u);
+      }
+    }
+    return { holders: holdersList, eligible: eligibleList };
+  }, [db?.users, badge.id]);
+
   const [pick, setPick] = useState("");
 
   const award = () => {
