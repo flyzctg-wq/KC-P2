@@ -296,12 +296,19 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
         <div className="flex items-center gap-2 self-start sm:self-center">
           {/* Channel Selector */}
-          <div className="flex rounded-xl p-1 border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
+          <div
+            role="group"
+            aria-label={isBn ? "চ্যানেল নির্বাচন" : "Channel selection"}
+            className="flex rounded-xl p-1 border"
+            style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}
+          >
             {channels.map(c => (
               <button
                 key={c.k}
+                type="button"
                 onClick={() => { setChannel(c.k); setTopicFilter("all"); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                aria-pressed={c.k === channel}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                   c.k === channel
                     ? "bg-emerald-700 text-white shadow-xs"
                     : "text-gray-600 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5"
@@ -355,7 +362,11 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
       {/* Community Topic Filter Chips (for #Community channel) */}
       {channel === "community" && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0">
+        <div
+          role="group"
+          aria-label={isBn ? "বিষয় ফিল্টার" : "Topic filter"}
+          className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0"
+        >
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 shrink-0 flex items-center gap-1">
             <Filter size={11} /> {isBn ? "বিষয়:" : "Topic:"}
           </span>
@@ -365,8 +376,10 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
             return (
               <button
                 key={tp.id}
+                type="button"
                 onClick={() => setTopicFilter(tp.id)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
+                aria-pressed={active}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                   active
                     ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs"
                     : "bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
