@@ -355,7 +355,11 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
       {/* Community Topic Filter Chips (for #Community channel) */}
       {channel === "community" && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0">
+        <div
+          role="group"
+          aria-label={isBn ? "বিষয় ফিল্টার" : "Topic filter"}
+          className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0"
+        >
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 shrink-0 flex items-center gap-1">
             <Filter size={11} /> {isBn ? "বিষয়:" : "Topic:"}
           </span>
@@ -365,8 +369,10 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
             return (
               <button
                 key={tp.id}
+                type="button"
+                aria-pressed={active}
                 onClick={() => setTopicFilter(tp.id)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                   active
                     ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs"
                     : "bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
@@ -632,8 +638,10 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
                         <button
                           key={emoji}
                           type="button"
+                          aria-pressed={hasReacted}
+                          aria-label={isBn ? `${emoji} প্রতিক্রিয়া (${uids.length})` : `Reacted with ${emoji} (${uids.length})`}
                           onClick={() => toggleReaction(m.id, emoji)}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border transition-all ${
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                             hasReacted
                               ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 text-emerald-800 dark:text-emerald-200"
                               : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50"
@@ -681,13 +689,18 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
       )}
 
       {/* Quick Community Phrases Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none shrink-0">
+      <div
+        role="group"
+        aria-label={isBn ? "দ্রুত বার্তা বাক্যাংশ" : "Quick response phrases"}
+        className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none shrink-0"
+      >
         {QUICK_PHRASES.map((qp, idx) => (
           <button
             key={idx}
             type="button"
+            aria-label={isBn ? `দ্রুত বার্তা: ${qp.bn}` : `Quick phrase: ${qp.en}`}
             onClick={() => setText(prev => (prev ? `${prev} ${isBn ? qp.bn : qp.en}` : (isBn ? qp.bn : qp.en)))}
-            className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 whitespace-nowrap transition-colors border border-gray-200/60 dark:border-gray-700/60"
+            className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 whitespace-nowrap transition-colors border border-gray-200/60 dark:border-gray-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
           >
             {isBn ? qp.bn : qp.en}
           </button>
@@ -812,13 +825,15 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors"
+                    aria-label={isBn ? `${selectedMember.name}-কে হোয়াটসঅ্যাপ বার্তা পাঠান` : `Send WhatsApp message to ${selectedMember.name}`}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
                   >
                     <MessageCircle size={15} /> WhatsApp
                   </a>
                   <a
                     href={`tel:${cleanPhone(selectedMember.phone)}`}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                    aria-label={isBn ? `${selectedMember.name}-কে ফোন করুন` : `Call ${selectedMember.name}`}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
                   >
                     <Phone size={15} /> {isBn ? "কল করুন" : "Call"}
                   </a>
