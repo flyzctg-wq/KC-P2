@@ -154,3 +154,12 @@ export const escapeHtml = (str = "") => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+/** Sanitizes cell content for CSV exports to prevent CSV formula injection (DDE attacks) */
+export const sanitizeCSVCell = (val) => {
+  const str = String(val ?? "");
+  if (/^[=+@\t\r-]/.test(str.trimStart())) {
+    return `'${str}`;
+  }
+  return str;
+};
