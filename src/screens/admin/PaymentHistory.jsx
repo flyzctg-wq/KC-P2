@@ -9,7 +9,7 @@ import {
 import { Card, Badge, inputCls, inputStyle, Empty, SectionTitle } from "../../components/primitives";
 import InvoiceReceiptModal from "../../components/InvoiceReceiptModal";
 import { C, BLOCKS } from "../../theme";
-import { currency, monthLabel, fmtDate, sortByMemberCode } from "../../utils";
+import { currency, monthLabel, fmtDate, sortByMemberCode, sanitizeCSVCell } from "../../utils";
 
 const PAYMENT_METHODS = ["All", "Cash", "bKash", "Nagad", "Bank Transfer", "Cheque"];
 const CHARGE_TYPES = ["all", "monthly", "gm_levy", "special"];
@@ -174,9 +174,9 @@ export default function PaymentHistory({ session = {}, db = {}, go, lang = "en" 
       const u = d._user;
       const isPaid = d.status === "paid";
       return [i+1, d.paidDate ? fmtDate(d.paidDate) : "", u.unit||"", u.name||"", u.phone||"", u.block||"", monthLabel(d.month), CHARGE_TYPE_LABELS[d.chargeType]||d.chargeType||"Monthly", d.amount||0, d.receivedAmount||(isPaid?d.amount:0)||0, d.discount||0, d.balanceDue||(isPaid?0:d.amount)||0, isPaid?"Paid":"Pending", d.ref||"", d.method||"", d.collectedBy||"", d.note||""]
-      .map(v => `"${String(v).replace(/"/g,'""')}"`).join(",");
+      .map(v => sanitizeCSVCell(v)).join(",");
     });
-    const csv = [headers.join(","), ...rows].join("\n");
+    const csv = [headers.map(v => sanitizeCSVCell(v)).join(","), ...rows].join("\n");
     const blob = new Blob(["\uFEFF"+csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
