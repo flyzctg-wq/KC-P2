@@ -296,21 +296,32 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
         <div className="flex items-center gap-2 self-start sm:self-center">
           {/* Channel Selector */}
-          <div className="flex rounded-xl p-1 border" style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}>
-            {channels.map(c => (
-              <button
-                key={c.k}
-                onClick={() => { setChannel(c.k); setTopicFilter("all"); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  c.k === channel
-                    ? "bg-emerald-700 text-white shadow-xs"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5"
-                }`}
-              >
-                <c.icon size={13} />
-                <span>{c.l}</span>
-              </button>
-            ))}
+          <div
+            role="group"
+            aria-label={isBn ? "চ্যানেল নির্বাচন" : "Channel selection"}
+            className="flex rounded-xl p-1 border"
+            style={{ backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }}
+          >
+            {channels.map(c => {
+              const active = c.k === channel;
+              return (
+                <button
+                  key={c.k}
+                  type="button"
+                  onClick={() => { setChannel(c.k); setTopicFilter("all"); }}
+                  aria-pressed={active}
+                  aria-label={c.l}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
+                    active
+                      ? "bg-emerald-700 text-white shadow-xs"
+                      : "text-gray-600 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <c.icon size={13} aria-hidden="true" />
+                  <span>{c.l}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Search Toggle */}
@@ -355,26 +366,34 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
 
       {/* Community Topic Filter Chips (for #Community channel) */}
       {channel === "community" && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0">
+        <div
+          role="group"
+          aria-label={isBn ? "টপিক ফিল্টার" : "Topic filter"}
+          className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0"
+        >
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 shrink-0 flex items-center gap-1">
-            <Filter size={11} /> {isBn ? "বিষয়:" : "Topic:"}
+            <Filter size={11} aria-hidden="true" /> {isBn ? "বিষয়:" : "Topic:"}
           </span>
           {COMMUNITY_TOPICS.map(tp => {
             const Icon = tp.icon;
             const active = topicFilter === tp.id;
+            const labelStr = isBn ? tp.label.bn : tp.label.en;
             return (
               <button
                 key={tp.id}
+                type="button"
                 onClick={() => setTopicFilter(tp.id)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
+                aria-pressed={active}
+                aria-label={isBn ? `টপিক: ${labelStr}` : `Topic: ${labelStr}`}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                   active
                     ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs"
                     : "bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                 }`}
                 style={{ borderColor: active ? undefined : C.outlineVariant }}
               >
-                <Icon size={12} className={active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"} />
-                <span>{isBn ? tp.label.bn : tp.label.en}</span>
+                <Icon size={12} className={active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"} aria-hidden="true" />
+                <span>{labelStr}</span>
               </button>
             );
           })}
@@ -681,17 +700,25 @@ export default function Chat({ session, db = {}, persist, toast, logActivity, go
       )}
 
       {/* Quick Community Phrases Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none shrink-0">
-        {QUICK_PHRASES.map((qp, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => setText(prev => (prev ? `${prev} ${isBn ? qp.bn : qp.en}` : (isBn ? qp.bn : qp.en)))}
-            className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 whitespace-nowrap transition-colors border border-gray-200/60 dark:border-gray-700/60"
-          >
-            {isBn ? qp.bn : qp.en}
-          </button>
-        ))}
+      <div
+        role="group"
+        aria-label={isBn ? "দ্রুত বার্তা বিকল্পসমূহ" : "Quick response phrases"}
+        className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none shrink-0"
+      >
+        {QUICK_PHRASES.map((qp, idx) => {
+          const phrase = isBn ? qp.bn : qp.en;
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setText(prev => (prev ? `${prev} ${phrase}` : phrase))}
+              aria-label={isBn ? `দ্রুত বার্তা যুক্ত করুন: ${phrase}` : `Insert quick phrase: ${phrase}`}
+              className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 whitespace-nowrap transition-colors border border-gray-200/60 dark:border-gray-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
+            >
+              {phrase}
+            </button>
+          );
+        })}
       </div>
 
       {/* Composer Input Bar */}
