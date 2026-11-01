@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
+import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin, Copy, Check } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
 import { C } from "../theme";
@@ -8,7 +8,18 @@ import { cleanPhone, sanitizeUrl, uid } from "../utils";
 export default function Hotlines({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [form, setForm] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const canManage = session.role === "admin" && (session.permissions?.canManageComplaints || session.post === "President");
+
+  const copyNumber = (c) => {
+    const raw = c.phone;
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(raw);
+    }
+    setCopiedId(c.id);
+    toast(isBn ? `${c.name}-এর নম্বর কপি করা হয়েছে` : `Copied number for ${c.name}`);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
   const groups = [
     { key: "Emergency Service", label: isBn ? "জরুরি জাতীয় ও নাগরিক সেবা" : "Emergency Service" },
     { key: "EC Lead", label: isBn ? "কার্যনির্বাহী পরিষদ নেতৃত্ব" : "EC Lead" },
@@ -56,32 +67,61 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
           <div key={g.key} className="mb-6">
             <h3 className="font-bold text-sm mb-2.5" style={{ color: C.onSurfaceVariant }}>{g.label}</h3>
             <div className="grid sm:grid-cols-2 gap-2.5">
-              {items.map(c => (
-                <Card key={c.id} className="p-4 flex items-center gap-3">
-                  <div style={{ backgroundColor: C.errorContainer }} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                    <PhoneCall size={16} style={{ color: C.error }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm truncate">{c.name}</p>
-                    {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
-                    <a href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)} className="text-xs font-semibold" style={{ color: C.primary }}>
-                      {c.phone}
-                    </a>
-                  </div>
-                  {canManage && (
-                    <button
-                      type="button"
-                      onClick={() => remove(c)}
-                      aria-label={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
-                      title={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
-                      className="p-1.5 rounded-full shrink-0 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
-                      style={{ color: C.error }}
-                    >
-                      <Trash2 size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                </Card>
-              ))}
+              {items.map(c => {
+                const isCopied = copiedId === c.id;
+                return (
+                  <Card key={c.id} className="p-4 flex items-center gap-3">
+                    <div style={{ backgroundColor: C.errorContainer }} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                      <PhoneCall size={16} style={{ color: C.error }} aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm truncate">{c.name}</p>
+                      {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
+                      <a
+                        href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)}
+                        aria-label={isBn ? `${c.name}-কে কল করুন: ${c.phone}` : `Call ${c.name} at ${c.phone}`}
+                        className="text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded px-0.5"
+                        style={{ color: C.primary }}
+                      >
+                        {c.phone}
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => copyNumber(c)}
+                        aria-label={isCopied ? (isBn ? "নম্বর কপি করা হয়েছে" : "Number copied") : (isBn ? `${c.name}-এর নম্বর কপি করুন` : `Copy number for ${c.name}`)}
+                        title={isCopied ? (isBn ? "কপি করা হয়েছে!" : "Copied!") : (isBn ? "নম্বর কপি করুন" : "Copy phone number")}
+                        className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
+                        style={{ color: isCopied ? C.primary : C.onSurfaceVariant }}
+                      >
+                        {isCopied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+                      </button>
+                      <a
+                        href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)}
+                        aria-label={isBn ? `${c.name}-কে ফোন করুন` : `Call ${c.name}`}
+                        title={isBn ? `${c.name}-কে ফোন করুন` : `Call ${c.name}`}
+                        className="p-1.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-950/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
+                        style={{ color: C.primary }}
+                      >
+                        <Phone size={15} aria-hidden="true" />
+                      </a>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => remove(c)}
+                          aria-label={isBn ? `${c.name}-এর নম্বর মুছে ফেলুন` : `Delete contact ${c.name}`}
+                          title={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
+                          className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
+                          style={{ color: C.error }}
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                        </button>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         );

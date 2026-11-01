@@ -9,3 +9,7 @@
 ## 2025-05-20 - Filter Pill Groups & Interactive Action Accessibility
 **Learning:** Category filter pill bars require `role="group"`, descriptive `aria-label`, and `aria-pressed` states so screen readers announce active filters. Search inputs and action links (e.g., Call/WhatsApp/Email) require explicit bilingual `aria-label`s and `focus-visible` ring indicators for seamless keyboard and screen reader accessibility.
 **Action:** Wrap filter pill lists in `role="group"`, supply `aria-pressed={isSelected}`, and ensure all search/action controls have `aria-label`s and `focus-visible` rings.
+
+## 2025-05-21 - Emergency Hotline One-Tap Copy & Call UX
+**Learning:** Emergency contact cards require one-tap Copy and Call actions with instant visual feedback (Check icon state and toast confirmation) alongside descriptive `aria-label`s specifying the target contact name to ensure optimal accessibility under stress or when using screen readers.
+**Action:** Always provide explicit action buttons (Copy/Call) with name-specific `aria-label`s and visual feedback states on contact and hotline cards.
