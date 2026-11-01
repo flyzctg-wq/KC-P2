@@ -9,3 +9,7 @@
 ## 2025-05-20 - Filter Pill Groups & Interactive Action Accessibility
 **Learning:** Category filter pill bars require `role="group"`, descriptive `aria-label`, and `aria-pressed` states so screen readers announce active filters. Search inputs and action links (e.g., Call/WhatsApp/Email) require explicit bilingual `aria-label`s and `focus-visible` ring indicators for seamless keyboard and screen reader accessibility.
 **Action:** Wrap filter pill lists in `role="group"`, supply `aria-pressed={isSelected}`, and ensure all search/action controls have `aria-label`s and `focus-visible` rings.
+
+## 2025-05-21 - Media Attachment Grid Accessibility & Icon Button ARIA Labels
+**Learning:** Interactive media preview tiles inside cards or forms must be rendered as semantic `<button>` elements with `type="button"`, `focus-visible` focus rings, and explicit bilingual `aria-label`s. Icon-only action buttons (such as attachment delete `X`) require descriptive `aria-label`s and `focus-visible:ring-offset-1` indicators for screen reader and keyboard accessibility.
+**Action:** Always wrap attachment gallery items in `<button>` with bilingual `aria-label` and `focus-visible` ring styles.
