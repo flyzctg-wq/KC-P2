@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Btn, Card, Badge, Field, inputCls, inputStyle, Modal } from "../../components/primitives";
 import { C } from "../../theme";
-import { uid, fmtDate } from "../../utils";
+import { uid, fmtDate, sanitizeCSVCell } from "../../utils";
 
 /* ── Expense categories ── */
 const CATEGORIES = [
@@ -37,7 +37,7 @@ function exportCSV(expenses) {
     e.voucherNo, e.title, e.category, e.amount, e.payee, e.approvedBy,
     new Date(e.date).toLocaleDateString("en-GB"),
   ]);
-  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(sanitizeCSVCell(v ?? "")).replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
