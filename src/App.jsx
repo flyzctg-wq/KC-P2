@@ -260,6 +260,28 @@ export default function App() {
     setLoading(false);
 
     let unsub = null;
+    if (typeof window !== "undefined" && window.location.search.includes("demo=1")) {
+      setSession({
+        id: "demo-user",
+        name: "Demo Resident",
+        email: "demo@kunjachaya.club",
+        phone: "+880 1700-000000",
+        block: "A",
+        unit: "A-101",
+        role: "resident",
+        status: "active"
+      });
+      setView("hotlines");
+      setDb({
+        emergencyContacts: [
+          { id: "ec1", name: "Bayezid Police Station", role: "Duty Officer", phone: "+8801700000000", category: "Emergency Service" },
+          { id: "ec2", name: "Club President", role: "President", phone: "+8801800000000", category: "EC Lead" }
+        ]
+      });
+      setLoading(false);
+      return;
+    }
+
     (async () => {
       try {
         // Auto-restore active Supabase auth session if present in localStorage

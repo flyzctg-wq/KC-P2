@@ -56,32 +56,49 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
           <div key={g.key} className="mb-6">
             <h3 className="font-bold text-sm mb-2.5" style={{ color: C.onSurfaceVariant }}>{g.label}</h3>
             <div className="grid sm:grid-cols-2 gap-2.5">
-              {items.map(c => (
-                <Card key={c.id} className="p-4 flex items-center gap-3">
-                  <div style={{ backgroundColor: C.errorContainer }} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                    <PhoneCall size={16} style={{ color: C.error }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm truncate">{c.name}</p>
-                    {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
-                    <a href={sanitizeUrl(`tel:${cleanPhone(c.phone)}`)} className="text-xs font-semibold" style={{ color: C.primary }}>
-                      {c.phone}
-                    </a>
-                  </div>
-                  {canManage && (
-                    <button
-                      type="button"
-                      onClick={() => remove(c)}
-                      aria-label={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
-                      title={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
-                      className="p-1.5 rounded-full shrink-0 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
-                      style={{ color: C.error }}
+              {items.map(c => {
+                const phoneFormatted = cleanPhone(c.phone);
+                return (
+                  <Card key={c.id} className="p-4 flex items-center gap-3">
+                    <div style={{ backgroundColor: C.errorContainer }} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                      <PhoneCall size={16} style={{ color: C.error }} aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm truncate">{c.name}</p>
+                      {c.role && <p className="text-[11px] truncate mb-0.5" style={{ color: C.onSurfaceVariant }}>{c.role}</p>}
+                      <a
+                        href={sanitizeUrl(`tel:${phoneFormatted}`)}
+                        aria-label={isBn ? `${c.name}-কে কল করুন: ${c.phone}` : `Call ${c.name}: ${c.phone}`}
+                        className="text-xs font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 rounded px-0.5"
+                        style={{ color: C.primary }}
+                      >
+                        {c.phone}
+                      </a>
+                    </div>
+                    <a
+                      href={sanitizeUrl(`tel:${phoneFormatted}`)}
+                      aria-label={isBn ? `${c.name}-কে সরাসরি কল করুন` : `Direct call to ${c.name}`}
+                      title={isBn ? `${c.name}-কে কল করুন` : `Call ${c.name}`}
+                      className="p-2 rounded-full shrink-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
+                      style={{ color: C.primary }}
                     >
-                      <Trash2 size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                </Card>
-              ))}
+                      <Phone size={16} aria-hidden="true" />
+                    </a>
+                    {canManage && (
+                      <button
+                        type="button"
+                        onClick={() => remove(c)}
+                        aria-label={isBn ? `${c.name} নম্বর মুছে ফেলুন` : `Delete contact for ${c.name}`}
+                        title={isBn ? "নম্বর মুছে ফেলুন" : "Delete contact"}
+                        className="p-1.5 rounded-full shrink-0 hover:bg-red-50 dark:hover:bg-red-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
+                        style={{ color: C.error }}
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    )}
+                  </Card>
+                );
+              })}
             </div>
           </div>
         );
