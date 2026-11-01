@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Award } from "lucide-react";
 import { Btn, Card, Badge, inputCls, inputStyle, Avatar, Modal, SectionTitle } from "../components/primitives";
 import { C, BADGE_CATALOG, BADGE_ICONS } from "../theme";
@@ -7,7 +7,25 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
   const isBn = lang === "bn";
   const [openBadge, setOpenBadge] = useState(null);
   const canAward = session.role === "admin" && session.permissions?.canManageMembers;
-  const myBadges = BADGE_CATALOG.filter(b => (session.earnedBadges || []).includes(b.id));
+
+  // Bolt Optimization: Memoize user's earned badges array
+  const myBadges = useMemo(() => {
+    return BADGE_CATALOG.filter(b => (session?.earnedBadges || []).includes(b.id));
+  }, [session?.earnedBadges]);
+
+  // Bolt Optimization: Pre-aggregate holder counts across all users to eliminate O(N * M) filtering in BADGE_CATALOG.map
+  const holderCounts = useMemo(() => {
+    const counts = {};
+    const users = db?.users || [];
+    for (const u of users) {
+      if (Array.isArray(u.earnedBadges)) {
+        for (const badgeId of u.earnedBadges) {
+          counts[badgeId] = (counts[badgeId] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [db?.users]);
 
   const badgeTranslations = {
     b_founder: { name: isBn ? "প্রতিষ্ঠাতা সদস্য ব্যাজ" : "Founding Member", desc: isBn ? "প্রতিষ্ঠাতা বছরে ক্লাব প্রতিষ্ঠায় অবদানকারী সদস্যদের প্রদান করা হয়।" : "Awarded to residents who established the club in its founding year." },
@@ -45,7 +63,7 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {BADGE_CATALOG.map(b => {
           const Icon = BADGE_ICONS[b.icon] || Award;
-          const holders = db.users.filter(u => (u.earnedBadges || []).includes(b.id));
+          const count = holderCounts[b.id] || 0;
           const tr = badgeTranslations[b.id] || { name: b.name, desc: b.description };
           return (
             <Card key={b.id} className="p-4 cursor-pointer hover:border-primary transition-all" onClick={() => setOpenBadge(b)}>
@@ -55,7 +73,7 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
               <p className="font-bold text-sm">{tr.name}</p>
               <p className="text-xs mt-1 line-clamp-2" style={{ color: C.onSurfaceVariant }}>{tr.desc}</p>
               <p className="text-[11px] mt-2 font-semibold" style={{ color: C.outline }}>
-                {holders.length} {isBn ? "জন সদস্য পেয়েছেন" : `member${holders.length !== 1 ? "s" : ""}`}
+                {count} {isBn ? "জন সদস্য পেয়েছেন" : `member${count !== 1 ? "s" : ""}`}
               </p>
             </Card>
           );
@@ -70,8 +88,16 @@ export default function Badges({ session, db, persist, toast, logActivity, lang 
 
 export function BadgeDetail({ badge, db, session, persist, toast, logActivity, canAward, isBn = false, tr = {} }) {
   const Icon = BADGE_ICONS[badge.icon] || Award;
-  const holders = db.users.filter(u => (u.earnedBadges || []).includes(badge.id));
-  const eligible = db.users.filter(u => u.status === "active" && !(u.earnedBadges || []).includes(badge.id));
+
+  // Bolt Optimization: Memoize holders and eligible member arrays for the selected modal badge
+  const holders = useMemo(() => {
+    return (db?.users || []).filter(u => (u.earnedBadges || []).includes(badge.id));
+  }, [db?.users, badge.id]);
+
+  const eligible = useMemo(() => {
+    return (db?.users || []).filter(u => u.status === "active" && !(u.earnedBadges || []).includes(badge.id));
+  }, [db?.users, badge.id]);
+
   const [pick, setPick] = useState("");
 
   const award = () => {
