@@ -261,18 +261,36 @@ export default function App() {
 
     let unsub = null;
     if (typeof window !== "undefined" && window.location.search.includes("demo=1")) {
+      const isAdminDemo = window.location.search.includes("admin=1");
       setSession({
         id: "demo-user",
-        name: "Demo Resident",
+        name: isAdminDemo ? "Zakaria Hasan (Admin)" : "Demo Resident",
         email: "demo@kunjachaya.club",
         phone: "+880 1700-000000",
         block: "A",
         unit: "A-101",
-        role: "resident",
+        role: isAdminDemo ? "admin" : "resident",
+        post: isAdminDemo ? "President" : undefined,
+        permissions: isAdminDemo ? { canManageNotices: true, canDeleteItems: true } : {},
         status: "active"
       });
-      setView("hotlines");
+      setView(isAdminDemo ? "a-notices" : "hotlines");
       setDb({
+        notices: [
+          {
+            id: "n1",
+            title: "Emergency Water Supply Notice",
+            body: "WASA pipeline repair is scheduled for tomorrow from 10:00 AM to 4:00 PM.",
+            category: "Urgent",
+            isBulletin: true,
+            bulletinType: "breaking",
+            bulletinExpiresAt: new Date(Date.now() + 24 * 3600000).toISOString(),
+            date: new Date().toISOString(),
+            authorName: "Zakaria Hasan",
+            reactions: { like: ["demo-user"] },
+            comments: []
+          }
+        ],
         emergencyContacts: [
           { id: "ec1", name: "Bayezid Police Station", role: "Duty Officer", phone: "+8801700000000", category: "Emergency Service" },
           { id: "ec2", name: "Club President", role: "President", phone: "+8801800000000", category: "EC Lead" }

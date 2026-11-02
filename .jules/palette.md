@@ -13,3 +13,7 @@
 ## 2025-05-21 - Floating Banner & Disclosure Button Accessibility
 **Learning:** Floating banners require `role="region"` with `aria-label` so landmark navigation works for assistive technologies. Inline expand/collapse buttons require `aria-expanded` and `aria-controls` linked to the target element's `id` along with explicit `focus-visible:ring` styles so keyboard users can track disclosure states clearly.
 **Action:** Pair disclosure toggle controls with `aria-expanded` and `aria-controls`, set `role="region"` on floating notification overlays, and supply `focus-visible:ring-2` styles.
+
+## 2025-05-22 - Admin Item Actions & State Toggle Accessibility
+**Learning:** List item action strips with icon-only and toggle controls (e.g. TV Bulletin switch, Edit, Delete) need `role="group"` with an `aria-label`, contextual bilingual `aria-label`s specifying the target item title, `aria-pressed` for toggle states, and explicit `focus-visible:ring` styles to ensure effortless screen reader and keyboard operation.
+**Action:** Always group item action button sets in `role="group"`, provide context-rich `aria-label`s mentioning the item's title, and set `aria-pressed` on binary toggle switches.
