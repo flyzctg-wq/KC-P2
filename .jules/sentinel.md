@@ -16,3 +16,8 @@
 **Vulnerability:** Client-side CSV export generators in administrative modules (Audit, Expenses, Payment History, Dues) directly interpolated user strings (e.g. member names, action notes, payees, transaction references) into CSV rows without formula prefix neutralization. Spreadsheet tools (Excel, Calc) execute formulas starting with `=`, `+`, `-`, `@`, `\t`, or `\r`.
 **Learning:** Quoting values in double quotes does not prevent spreadsheet programs from executing cell formulas. Cells must have formula-trigger characters neutralized by prefixing with a single quote (`'`), followed by RFC-4180 quote escaping (`""`).
 **Prevention:** Use `sanitizeCSVCell()` from `src/utils.js` on every cell rendered into CSV export files.
+
+## 2026-11-01 - Backslash Protocol-Relative URL Bypass in Link Sanitization
+**Vulnerability:** `isSafeUrl()` checked `trimmed.startsWith("//")` to block protocol-relative URLs, but browsers treat `/\\`, `/\`, `\/`, or `\\` (such as `/\evil.com` or `/\\evil.com`) as protocol-relative URLs navigating to external domains. Because `/\\evil.com` starts with `/` and not `//`, it bypassed validation and evaluated as a valid relative path.
+**Learning:** Browsers normalize backslashes following leading slashes as protocol-relative host delimiters. Testing against `/^[/\\]{2,}/` and `/^\/\\/` closes backslash-based open redirect bypasses.
+**Prevention:** In `isSafeUrl()`, test both slash and backslash sequences (`/^[/\\]{2,}/.test(trimmed) || /^\/\\/.test(trimmed)`) before accepting leading `/` relative paths.
