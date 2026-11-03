@@ -261,21 +261,28 @@ export default function App() {
 
     let unsub = null;
     if (typeof window !== "undefined" && window.location.search.includes("demo=1")) {
+      const isAdminDemo = window.location.search.includes("role=admin");
       setSession({
         id: "demo-user",
-        name: "Demo Resident",
+        name: isAdminDemo ? "Demo President" : "Demo Resident",
         email: "demo@kunjachaya.club",
         phone: "+880 1700-000000",
         block: "A",
         unit: "A-101",
-        role: "resident",
+        role: isAdminDemo ? "admin" : "resident",
+        post: isAdminDemo ? "President" : undefined,
         status: "active"
       });
-      setView("hotlines");
+      setView(isAdminDemo ? "a-expenses" : "hotlines");
       setDb({
         emergencyContacts: [
           { id: "ec1", name: "Bayezid Police Station", role: "Duty Officer", phone: "+8801700000000", category: "Emergency Service" },
           { id: "ec2", name: "Club President", role: "President", phone: "+8801800000000", category: "EC Lead" }
+        ],
+        expenses: [
+          { id: "exp1", title: "Water pump repair & maintenance", category: "maintenance", amount: 14500, voucherNo: "KC/EXP/2026/0001", payee: "Bayezid Motor Works", approvedBy: "President", date: "2026-03-12" },
+          { id: "exp2", title: "Security guard uniforms & gear", category: "security", amount: 6200, voucherNo: "KC/EXP/2026/0002", payee: "National Garments", approvedBy: "General Secretary", date: "2026-03-18" },
+          { id: "exp3", title: "Community park cleaning drive", category: "cleaning", amount: 3500, voucherNo: "KC/EXP/2026/0003", payee: "Green Clean Team", approvedBy: "Treasurer", date: "2026-03-24" }
         ]
       });
       setLoading(false);
