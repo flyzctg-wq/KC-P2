@@ -16,3 +16,8 @@
 **Vulnerability:** Client-side CSV export generators in administrative modules (Audit, Expenses, Payment History, Dues) directly interpolated user strings (e.g. member names, action notes, payees, transaction references) into CSV rows without formula prefix neutralization. Spreadsheet tools (Excel, Calc) execute formulas starting with `=`, `+`, `-`, `@`, `\t`, or `\r`.
 **Learning:** Quoting values in double quotes does not prevent spreadsheet programs from executing cell formulas. Cells must have formula-trigger characters neutralized by prefixing with a single quote (`'`), followed by RFC-4180 quote escaping (`""`).
 **Prevention:** Use `sanitizeCSVCell()` from `src/utils.js` on every cell rendered into CSV export files.
+
+## 2026-11-01 - Backslash and Control-Character URL Normalization Evasion
+**Vulnerability:** `isSafeUrl()` checked for protocol-relative URLs using `trimmed.startsWith("//")`, but URLs starting with `/\\` or `\\` (such as `/\\evil.com` or `\\evil.com`) were permitted because `startsWith("/")` returned true. Modern web browsers and the WHATWG URL standard normalize backslashes in URL authorities, converting `/\\evil.com` to `http://evil.com/` and triggering open redirect or scheme execution vulnerabilities. Furthermore, embedded ASCII control characters (such as `\0`, `\r`, `\n`) can be used to evade naive prefix checks.
+**Learning:** Checking for single forward slashes is insufficient when browsers normalize backslashes. URLs must strip ASCII control characters and reject `//`, `/\\`, and `\\` prefixes before evaluating relative paths.
+**Prevention:** Ensure URL sanitizers strip ASCII control characters and validate against backslash prefix variants (`/\\` and `\\`) in addition to double slashes (`//`).
