@@ -154,12 +154,16 @@ function StatCard({ label, value, icon: Icon, tone = "neutral", small }) {
   );
 }
 
-function ActionBtn({ icon: Icon, title, onClick, danger }) {
+function ActionBtn({ icon: Icon, title, ariaLabel, onClick, danger }) {
   return (
-    <button onClick={onClick} title={title}
-      className="p-1.5 rounded-lg transition-colors hover:opacity-80 active:scale-95"
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={ariaLabel || title}
+      className="p-1.5 rounded-lg transition-colors hover:opacity-80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
       style={{ color: danger ? C.error : C.onSurfaceVariant, backgroundColor: danger ? C.errorContainer : C.surfaceContainerHigh }}>
-      <Icon size={15} strokeWidth={2} />
+      <Icon size={15} strokeWidth={2} aria-hidden="true" />
     </button>
   );
 }
@@ -358,15 +362,18 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-4">
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.outline }} />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.outline }} aria-hidden="true" />
           <input
+            aria-label={isBn ? "খরচের ভাউচার অনুসন্ধান" : "Search expense vouchers"}
             className={inputCls + " pl-9"} style={inputStyle()}
             placeholder={isBn ? "শিরোনাম, ভাউচার বা প্রাপক খুঁজুন…" : "Search title, voucher or payee…"}
             value={search} onChange={e => setSearch(e.target.value)}
           />
         </div>
         <div className="relative">
-          <select className={inputCls + " pr-8 appearance-none cursor-pointer"}
+          <select
+            aria-label={isBn ? "ব্যয়ের শ্রেণি অনুযায়ী ফিল্টার" : "Filter by expense category"}
+            className={inputCls + " pr-8 appearance-none cursor-pointer"}
             style={{ ...inputStyle(), minWidth: 160 }}
             value={catFilter} onChange={e => setCatFilter(e.target.value)}>
             <option value="all">{isBn ? "সকল শ্রেণি" : "All Categories"}</option>
@@ -374,7 +381,7 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
               <option key={c.key} value={c.key}>{c.icon} {isBn ? c.labelBn : c.labelEn}</option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: C.outline }} />
+          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: C.outline }} aria-hidden="true" />
         </div>
       </div>
 
@@ -419,10 +426,35 @@ export default function AdminExpenses({ session = {}, db = {}, persist, toast, l
                   </span>
                 </div>
                 <div className="flex items-center gap-1 justify-end">
-                  <ActionBtn icon={Eye} title="View" onClick={() => setViewExp(exp)} />
-                  <ActionBtn icon={Printer} title="Print" onClick={() => printVoucher(exp)} />
-                  {canManage && <ActionBtn icon={Edit3} title="Edit" onClick={() => openEdit(exp)} />}
-                  {canManage && <ActionBtn icon={Trash2} title="Delete" danger onClick={() => setDeleteConfirm(exp)} />}
+                  <ActionBtn
+                    icon={Eye}
+                    title={isBn ? "বিবরণ দেখুন" : "View"}
+                    ariaLabel={isBn ? `${exp.voucherNo} ভাউচারের বিবরণ দেখুন` : `View details for voucher ${exp.voucherNo}`}
+                    onClick={() => setViewExp(exp)}
+                  />
+                  <ActionBtn
+                    icon={Printer}
+                    title={isBn ? "প্রিন্ট করুন" : "Print"}
+                    ariaLabel={isBn ? `${exp.voucherNo} ভাউচার প্রিন্ট করুন` : `Print voucher ${exp.voucherNo}`}
+                    onClick={() => printVoucher(exp)}
+                  />
+                  {canManage && (
+                    <ActionBtn
+                      icon={Edit3}
+                      title={isBn ? "সম্পাদনা" : "Edit"}
+                      ariaLabel={isBn ? `${exp.voucherNo} ভাউচার সম্পাদনা করুন` : `Edit voucher ${exp.voucherNo}`}
+                      onClick={() => openEdit(exp)}
+                    />
+                  )}
+                  {canManage && (
+                    <ActionBtn
+                      icon={Trash2}
+                      title={isBn ? "মুছে ফেলুন" : "Delete"}
+                      ariaLabel={isBn ? `${exp.voucherNo} ভাউচার মুছে ফেলুন` : `Delete voucher ${exp.voucherNo}`}
+                      danger
+                      onClick={() => setDeleteConfirm(exp)}
+                    />
+                  )}
                 </div>
               </div>
             );
