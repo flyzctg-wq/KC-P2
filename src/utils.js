@@ -127,12 +127,14 @@ export const sortByMemberCode = (a, b) => {
   return (a?.name || "").localeCompare(b?.name || "");
 };
 
-/** Validates if a URL uses a safe protocol (prevents XSS via javascript: or data: schemes) */
+/** Validates if a URL uses a safe protocol (prevents XSS via javascript: or data: schemes and open redirects via backslash / protocol-relative bypasses) */
 export const isSafeUrl = (url = "") => {
   if (!url || typeof url !== "string") return false;
-  const trimmed = url.trim().toLowerCase();
-  // Prevent protocol-relative URL bypass (e.g., //attacker.com)
-  if (trimmed.startsWith("//")) return false;
+  // Security: Strip ASCII control characters and whitespace to prevent obfuscation bypasses (e.g., java\0script: or java\nscript:)
+  const clean = url.replace(/[\u0000-\u001F\u007F-\u009F\s]/g, "");
+  const trimmed = clean.toLowerCase();
+  // Security: Reject protocol-relative URLs (//) and backslash redirects (/\\ or \\) which browsers normalize to external origins
+  if (trimmed.startsWith("//") || trimmed.startsWith("/\\") || trimmed.startsWith("\\")) return false;
   if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
   if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;
