@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
@@ -9,12 +9,25 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
   const isBn = lang === "bn";
   const [form, setForm] = useState(false);
   const canManage = session.role === "admin" && (session.permissions?.canManageComplaints || session.post === "President");
-  const groups = [
+
+  // Bolt Optimization: Pre-group emergency contacts by category in a memoized dictionary.
+  // Prevents re-filtering the entire emergencyContacts array on each map interaction, GPS update, or modal toggle.
+  const contactsByCategory = useMemo(() => {
+    const list = db.emergencyContacts || [];
+    const grouped = {};
+    for (const c of list) {
+      const cat = c.category || "Emergency Service";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(c);
+    }
+    return grouped;
+  }, [db.emergencyContacts]);
+
+  const groups = useMemo(() => [
     { key: "Emergency Service", label: isBn ? "জরুরি জাতীয় ও নাগরিক সেবা" : "Emergency Service" },
     { key: "EC Lead", label: isBn ? "কার্যনির্বাহী পরিষদ নেতৃত্ব" : "EC Lead" },
     { key: "Block Lead", label: isBn ? "ব্লক ও ইউনিট সমন্বয়ক" : "Block Lead" },
-  ];
-  const list = db.emergencyContacts || [];
+  ], [isBn]);
 
   const add = (name, role, phone, category) => {
     if (!name.trim() || !phone.trim()) return;
@@ -50,7 +63,7 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
       </div>
 
       {groups.map(g => {
-        const items = list.filter(c => c.category === g.key);
+        const items = contactsByCategory[g.key] || [];
         if (!items.length) return null;
         return (
           <div key={g.key} className="mb-6">

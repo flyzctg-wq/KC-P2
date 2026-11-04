@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Check } from "lucide-react";
 import { Btn, Card, inputCls, inputStyle, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -9,9 +9,31 @@ export default function Handover({ session, db, persist, toast, logActivity, lan
   const [text, setText] = useState("");
   const [category, setCategory] = useState("Operations");
   const canManage = session.role === "admin" && (session.permissions?.canManageMembers || session.post === "President");
-  const list = db.handoverChecklist || [];
-  const done = list.filter(i => i.done).length;
-  const pct = list.length ? Math.round((done / list.length) * 100) : 0;
+
+  // Bolt Optimization: Pre-aggregate completion stats and group checklist items by category in a single pass.
+  // Prevents re-filtering and Set construction on every keystroke when typing into the new item input.
+  const { done, pct, categories, itemsByCategory } = useMemo(() => {
+    const list = db.handoverChecklist || [];
+    let completedCount = 0;
+    const catSet = new Set();
+    const grouped = {};
+
+    for (const item of list) {
+      if (item.done) completedCount++;
+      const cat = item.category || "Operations";
+      catSet.add(cat);
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(item);
+    }
+
+    const pctVal = list.length ? Math.round((completedCount / list.length) * 100) : 0;
+    return {
+      done: completedCount,
+      pct: pctVal,
+      categories: Array.from(catSet),
+      itemsByCategory: grouped
+    };
+  }, [db.handoverChecklist]);
 
   const categoryLabels = {
     Financial: isBn ? "আর্থিক ও ব্যাংক হস্তান্তর" : "Financial",
@@ -29,8 +51,6 @@ export default function Handover({ session, db, persist, toast, logActivity, lan
     toast(isBn ? "চেকলিস্ট আইটেম যুক্ত হয়েছে।" : "Handover item added.");
     setText("");
   };
-
-  const categories = [...new Set(list.map(i => i.category))];
 
   return (
     <div>
@@ -50,7 +70,7 @@ export default function Handover({ session, db, persist, toast, logActivity, lan
             {categoryLabels[cat] || cat}
           </h3>
           <div className="flex flex-col gap-2">
-            {list.filter(i => i.category === cat).map(item => (
+            {(itemsByCategory[cat] || []).map(item => (
               <Card key={item.id} className="p-3.5 flex items-center gap-3 cursor-pointer" onClick={() => canManage && toggle(item)}>
                 <div style={{ backgroundColor: item.done ? C.primary : C.surfaceContainerHigh }} className="w-6 h-6 rounded-full flex items-center justify-center shrink-0">
                   {item.done && <Check size={14} color="#fff" />}
