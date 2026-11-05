@@ -127,16 +127,25 @@ export const sortByMemberCode = (a, b) => {
   return (a?.name || "").localeCompare(b?.name || "");
 };
 
-/** Validates if a URL uses a safe protocol (prevents XSS via javascript: or data: schemes) */
+/** Validates if a URL uses a safe protocol (prevents XSS via javascript: or unsafe data: schemes) */
 export const isSafeUrl = (url = "") => {
   if (!url || typeof url !== "string") return false;
-  const trimmed = url.trim().toLowerCase();
+  // Strip control characters and whitespace
+  const trimmed = url.replace(/[\u0000-\u001F\u007F-\u009F\s]+/g, "").toLowerCase();
   // Prevent protocol-relative URL bypass (e.g., //attacker.com)
   if (trimmed.startsWith("//")) return false;
   if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
   if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;
-  if (trimmed.startsWith("blob:") || trimmed.startsWith("data:image/") || trimmed.startsWith("data:video/") || trimmed.startsWith("data:audio/")) return true;
+  if (trimmed.startsWith("blob:")) return true;
+
+  // Safe data image formats - SVGs explicitly disallowed because they can contain executable scripts
+  const isSafeDataImage =
+    trimmed.startsWith("data:image/") &&
+    !trimmed.startsWith("data:image/svg") &&
+    /^(png|jpeg|jpg|webp|gif|bmp);base64,/i.test(trimmed.slice("data:image/".length));
+
+  if (isSafeDataImage || trimmed.startsWith("data:video/") || trimmed.startsWith("data:audio/")) return true;
   return false;
 };
 
