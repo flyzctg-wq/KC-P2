@@ -178,6 +178,15 @@ export default function Shell({
 
   return (
     <div className="flex min-h-screen w-full max-w-full overflow-x-hidden" style={{ backgroundColor: C.surface }}>
+      {/* WCAG 2.4.1 Bypass Blocks: Skip to main content link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-xl focus:font-bold focus:text-xs focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all"
+        style={{ backgroundColor: C.primary, color: C.onPrimary }}
+      >
+        {lang === "bn" ? "মূল বিষয়বস্তুতে যান" : "Skip to main content"}
+      </a>
+
       {/* Desktop sidebar = "Web Platform" with pinned footer (Issue #10) */}
       <aside className="hidden lg:flex lg:w-64 flex-col shrink-0 h-screen sticky top-0 border-r px-3.5 py-4 overflow-hidden" style={{ borderColor: C.outlineVariant, backgroundColor: C.surface }}>
         <div className="flex items-center gap-2 px-2 mb-4 shrink-0">
@@ -216,7 +225,7 @@ export default function Shell({
                   type="button"
                   onClick={() => toggleGroup(gi)}
                   aria-expanded={isOpen}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-left transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-left transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
                   style={{ color: hasActiveItem ? C.primary : C.outline }}
                 >
                   <span>{groupName}</span>
@@ -237,7 +246,7 @@ export default function Shell({
                           key={item.key}
                           onClick={() => setView(item.key)}
                           aria-current={active ? "page" : undefined}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full min-h-[38px]"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left w-full min-h-[38px] focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
                           style={active ? { backgroundColor: C.secondaryContainer, color: C.onSecondaryContainer } : { color: C.onSurfaceVariant }}
                         >
                           <Icon size={16} strokeWidth={active ? 2.4 : 2} className="shrink-0" />
@@ -480,7 +489,7 @@ export default function Shell({
                         type="button"
                         onClick={() => toggleGroup(gi)}
                         aria-expanded={isOpen}
-                        className="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-left transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-left transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
                         style={{ color: hasActiveItem ? C.primary : C.outline }}
                       >
                         <span>{groupName}</span>
@@ -590,7 +599,11 @@ export default function Shell({
         {/* TV Bulletin / News Ticker Bar (Mobile & Web) */}
         <TvBulletin notices={db?.notices || []} lang={lang} setView={setView} session={session} />
 
-        <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 max-w-6xl w-full mx-auto">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 max-w-6xl w-full mx-auto outline-none"
+        >
           {/* #6: Every page must have an H1 for accessibility & SEO. Visually hidden but present in the DOM. */}
           <h1 className="sr-only">Kunjachaya Club — {isAdmin ? "Admin Portal" : "Resident Portal"}</h1>
           {children}
