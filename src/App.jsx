@@ -261,21 +261,29 @@ export default function App() {
 
     let unsub = null;
     if (typeof window !== "undefined" && window.location.search.includes("demo=1")) {
+      const isAdmin = window.location.search.includes("role=admin");
       setSession({
         id: "demo-user",
-        name: "Demo Resident",
+        name: isAdmin ? "Demo Admin" : "Demo Resident",
         email: "demo@kunjachaya.club",
         phone: "+880 1700-000000",
         block: "A",
         unit: "A-101",
-        role: "resident",
+        role: isAdmin ? "admin" : "resident",
+        post: isAdmin ? "President" : undefined,
+        permissions: isAdmin ? { canManageMembers: true, canManageNotices: true, canManageFinancials: true } : {},
         status: "active"
       });
-      setView("hotlines");
+      setView(isAdmin ? "a-handover" : "hotlines");
       setDb({
         emergencyContacts: [
           { id: "ec1", name: "Bayezid Police Station", role: "Duty Officer", phone: "+8801700000000", category: "Emergency Service" },
           { id: "ec2", name: "Club President", role: "President", phone: "+8801800000000", category: "EC Lead" }
+        ],
+        handoverChecklist: [
+          { id: "ho1", item: "Handover club bank account chequebook & signatory credentials", category: "Financial", done: true, doneBy: "President", doneDate: new Date().toISOString() },
+          { id: "ho2", item: "Transfer physical keys to clubhouse & equipment store", category: "Operations", done: false, doneBy: null, doneDate: null },
+          { id: "ho3", item: "Present club presidential charter & official seal", category: "Ceremonial", done: false, doneBy: null, doneDate: null }
         ]
       });
       setLoading(false);
