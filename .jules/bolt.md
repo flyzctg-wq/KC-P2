@@ -44,3 +44,7 @@
 ## 2026-09-17 - Memoizing Constitutional Amendments Sorting in Amendments Screen
 **Learning:** `src/screens/Amendments.jsx` re-sorted `db.amendments` directly in the component render body on every render pass. Local component state updates, such as toggling the proposal modal or typing in form fields, caused redundant array cloning and sorting.
 **Action:** Wrap `list` sorting in `useMemo` with `[db.amendments]` dependency to skip unnecessary array allocation and sorting on internal state changes.
+
+## 2026-09-18 - Single-Pass Grouping & Stats Aggregation in Handover Checklist
+**Learning:** `src/screens/Handover.jsx` executed multiple unmemoized full-array passes on every keystroke in the checklist input: `list.filter(i => i.done)`, `new Set(list.map(i => i.category))`, and per-category `list.filter(i => i.category === cat)`.
+**Action:** Consolidate progress counting and category partitioning into a single-pass `useMemo` loop with `[db.handoverChecklist]` dependency, avoiding repeated allocations and $O(C \times N)$ filtering on local form input.
