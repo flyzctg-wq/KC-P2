@@ -178,6 +178,15 @@ export default function Shell({
 
   return (
     <div className="flex min-h-screen w-full max-w-full overflow-x-hidden" style={{ backgroundColor: C.surface }}>
+      {/* Skip-to-content accessible bypass link for keyboard & assistive technology users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+        style={{ backgroundColor: C.primary, color: C.onPrimary }}
+      >
+        {lang === "bn" ? "সরাসরি মূল বিষয়বস্তুতে যান" : "Skip to main content"}
+      </a>
+
       {/* Desktop sidebar = "Web Platform" with pinned footer (Issue #10) */}
       <aside className="hidden lg:flex lg:w-64 flex-col shrink-0 h-screen sticky top-0 border-r px-3.5 py-4 overflow-hidden" style={{ borderColor: C.outlineVariant, backgroundColor: C.surface }}>
         <div className="flex items-center gap-2 px-2 mb-4 shrink-0">
@@ -590,7 +599,11 @@ export default function Shell({
         {/* TV Bulletin / News Ticker Bar (Mobile & Web) */}
         <TvBulletin notices={db?.notices || []} lang={lang} setView={setView} session={session} />
 
-        <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 max-w-6xl w-full mx-auto">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 max-w-6xl w-full mx-auto focus:outline-none"
+        >
           {/* #6: Every page must have an H1 for accessibility & SEO. Visually hidden but present in the DOM. */}
           <h1 className="sr-only">Kunjachaya Club — {isAdmin ? "Admin Portal" : "Resident Portal"}</h1>
           {children}
