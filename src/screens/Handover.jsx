@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Check } from "lucide-react";
 import { Btn, Card, inputCls, inputStyle, SectionTitle } from "../components/primitives";
 import { C } from "../theme";
@@ -9,9 +9,38 @@ export default function Handover({ session, db, persist, toast, logActivity, lan
   const [text, setText] = useState("");
   const [category, setCategory] = useState("Operations");
   const canManage = session.role === "admin" && (session.permissions?.canManageMembers || session.post === "President");
-  const list = db.handoverChecklist || [];
-  const done = list.filter(i => i.done).length;
-  const pct = list.length ? Math.round((done / list.length) * 100) : 0;
+
+  // Bolt Optimization: Group items by category and compute completion metrics in a single pass.
+  // Memoized with [db.handoverChecklist] dependency to prevent O(C * N) filtering and Set
+  // allocations on every keystroke when typing in the input field or changing form selection.
+  const { done, pct, groupedCategories } = useMemo(() => {
+    const list = db.handoverChecklist || [];
+    let doneCount = 0;
+    const catMap = new Map();
+
+    for (const item of list) {
+      if (item.done) doneCount++;
+      const cat = item.category;
+      let group = catMap.get(cat);
+      if (!group) {
+        group = [];
+        catMap.set(cat, group);
+      }
+      group.push(item);
+    }
+
+    const pctVal = list.length ? Math.round((doneCount / list.length) * 100) : 0;
+    const groups = Array.from(catMap.entries()).map(([cat, items]) => ({
+      category: cat,
+      items
+    }));
+
+    return {
+      done: doneCount,
+      pct: pctVal,
+      groupedCategories: groups
+    };
+  }, [db.handoverChecklist]);
 
   const categoryLabels = {
     Financial: isBn ? "আর্থিক ও ব্যাংক হস্তান্তর" : "Financial",
@@ -30,8 +59,6 @@ export default function Handover({ session, db, persist, toast, logActivity, lan
     setText("");
   };
 
-  const categories = [...new Set(list.map(i => i.category))];
-
   return (
     <div>
       <SectionTitle>{isBn ? "দায়িত্ব ও ক্ষমতা হস্তান্তর চেকলিস্ট" : "Committee handover"}</SectionTitle>
@@ -44,13 +71,13 @@ export default function Handover({ session, db, persist, toast, logActivity, lan
           <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "#fff" }} />
         </div>
       </Card>
-      {categories.map(cat => (
+      {groupedCategories.map(({ category: cat, items }) => (
         <div key={cat} className="mb-5">
           <h3 className="font-bold text-sm mb-2.5" style={{ color: C.onSurfaceVariant }}>
             {categoryLabels[cat] || cat}
           </h3>
           <div className="flex flex-col gap-2">
-            {list.filter(i => i.category === cat).map(item => (
+            {items.map(item => (
               <Card key={item.id} className="p-3.5 flex items-center gap-3 cursor-pointer" onClick={() => canManage && toggle(item)}>
                 <div style={{ backgroundColor: item.done ? C.primary : C.surfaceContainerHigh }} className="w-6 h-6 rounded-full flex items-center justify-center shrink-0">
                   {item.done && <Check size={14} color="#fff" />}
