@@ -13,3 +13,7 @@
 ## 2025-05-21 - Floating Banner & Disclosure Button Accessibility
 **Learning:** Floating banners require `role="region"` with `aria-label` so landmark navigation works for assistive technologies. Inline expand/collapse buttons require `aria-expanded` and `aria-controls` linked to the target element's `id` along with explicit `focus-visible:ring` styles so keyboard users can track disclosure states clearly.
 **Action:** Pair disclosure toggle controls with `aria-expanded` and `aria-controls`, set `role="region"` on floating notification overlays, and supply `focus-visible:ring-2` styles.
+
+## 2025-05-22 - Document Canvas Preview Modals & Toolbar Accessibility
+**Learning:** Canvas-based document previewers (like letterhead and invoice generators) require full-screen modal overlays to allow users to review layout fidelity before printing/issuing. Control toolbars managing zoom, fit, and fullscreen must be grouped with `role="toolbar"`, give explicit accessible names via `aria-label`, and show distinct keyboard focus indicators (`focus-visible:ring-2`) to avoid confusing assistive tech and keyboard-only users.
+**Action:** Ensure canvas preview action controls have corresponding modal dialog implementations and wrap toolbar buttons with `role="toolbar"`, `aria-label`, and `focus-visible` ring indicators.

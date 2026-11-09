@@ -261,17 +261,20 @@ export default function App() {
 
     let unsub = null;
     if (typeof window !== "undefined" && window.location.search.includes("demo=1")) {
+      const isAdminDemo = window.location.search.includes("role=admin");
       setSession({
         id: "demo-user",
-        name: "Demo Resident",
+        name: isAdminDemo ? "Demo President" : "Demo Resident",
         email: "demo@kunjachaya.club",
         phone: "+880 1700-000000",
         block: "A",
         unit: "A-101",
-        role: "resident",
+        role: isAdminDemo ? "admin" : "resident",
+        post: isAdminDemo ? "President" : undefined,
+        permissions: isAdminDemo ? { canManageNotices: true, canManageComplaints: true, canManageMembers: true } : {},
         status: "active"
       });
-      setView("hotlines");
+      setView(isAdminDemo ? (window.location.search.includes("view=") ? new URLSearchParams(window.location.search).get("view") : "a-letters") : "hotlines");
       setDb({
         emergencyContacts: [
           { id: "ec1", name: "Bayezid Police Station", role: "Duty Officer", phone: "+8801700000000", category: "Emergency Service" },
