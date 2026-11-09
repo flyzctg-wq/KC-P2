@@ -136,7 +136,13 @@ export const isSafeUrl = (url = "") => {
   if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
   if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;
-  if (trimmed.startsWith("blob:") || trimmed.startsWith("data:image/") || trimmed.startsWith("data:video/") || trimmed.startsWith("data:audio/")) return true;
+  if (trimmed.startsWith("blob:") || trimmed.startsWith("data:video/") || trimmed.startsWith("data:audio/")) return true;
+  // Disallow SVG/XML data URIs (e.g. data:image/svg+xml) to prevent script execution / XSS
+  if (trimmed.startsWith("data:image/")) {
+    const mime = trimmed.slice(5).split(";")[0].split(",")[0].trim();
+    if (mime.includes("svg") || mime.includes("xml")) return false;
+    return true;
+  }
   return false;
 };
 
