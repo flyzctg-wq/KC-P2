@@ -1,20 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
 import { C } from "../theme";
 import { cleanPhone, sanitizeUrl, uid } from "../utils";
 
+const HOTLINE_GROUPS = [
+  { key: "Emergency Service", labelBn: "জরুরি জাতীয় ও নাগরিক সেবা", labelEn: "Emergency Service" },
+  { key: "EC Lead", labelBn: "কার্যনির্বাহী পরিষদ নেতৃত্ব", labelEn: "EC Lead" },
+  { key: "Block Lead", labelBn: "ব্লক ও ইউনিট সমন্বয়ক", labelEn: "Block Lead" },
+];
+
 export default function Hotlines({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [form, setForm] = useState(false);
   const canManage = session.role === "admin" && (session.permissions?.canManageComplaints || session.post === "President");
-  const groups = [
-    { key: "Emergency Service", label: isBn ? "জরুরি জাতীয় ও নাগরিক সেবা" : "Emergency Service" },
-    { key: "EC Lead", label: isBn ? "কার্যনির্বাহী পরিষদ নেতৃত্ব" : "EC Lead" },
-    { key: "Block Lead", label: isBn ? "ব্লক ও ইউনিট সমন্বয়ক" : "Block Lead" },
-  ];
-  const list = db.emergencyContacts || [];
+
+  // Bolt Optimization: Pre-group emergency contacts by category in a single O(N) pass,
+  // replacing repeated O(K * N) array filtering on every render or CommunityMap interaction.
+  const contactsByCategory = useMemo(() => {
+    const map = {};
+    for (const c of db.emergencyContacts || []) {
+      const cat = c.category || "Block Lead";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(c);
+    }
+    return map;
+  }, [db.emergencyContacts]);
 
   const add = (name, role, phone, category) => {
     if (!name.trim() || !phone.trim()) return;
@@ -49,12 +61,12 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
         <CommunityMap lang={lang} toast={toast} session={session} />
       </div>
 
-      {groups.map(g => {
-        const items = list.filter(c => c.category === g.key);
-        if (!items.length) return null;
+      {HOTLINE_GROUPS.map(g => {
+        const items = contactsByCategory[g.key];
+        if (!items || !items.length) return null;
         return (
           <div key={g.key} className="mb-6">
-            <h3 className="font-bold text-sm mb-2.5" style={{ color: C.onSurfaceVariant }}>{g.label}</h3>
+            <h3 className="font-bold text-sm mb-2.5" style={{ color: C.onSurfaceVariant }}>{isBn ? g.labelBn : g.labelEn}</h3>
             <div className="grid sm:grid-cols-2 gap-2.5">
               {items.map(c => {
                 const phoneFormatted = cleanPhone(c.phone);
