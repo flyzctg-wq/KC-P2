@@ -44,3 +44,7 @@
 ## 2026-09-17 - Memoizing Constitutional Amendments Sorting in Amendments Screen
 **Learning:** `src/screens/Amendments.jsx` re-sorted `db.amendments` directly in the component render body on every render pass. Local component state updates, such as toggling the proposal modal or typing in form fields, caused redundant array cloning and sorting.
 **Action:** Wrap `list` sorting in `useMemo` with `[db.amendments]` dependency to skip unnecessary array allocation and sorting on internal state changes.
+
+## 2026-09-18 - Pre-indexing Emergency Contacts by Category in Hotlines Screen
+**Learning:** `src/screens/Hotlines.jsx` ran unmemoized `list.filter(c => c.category === g.key)` within each category render loop ($O(K \times N)$). Any modal form input or interactive map event triggered repeated array scans and sub-array allocations across `db.emergencyContacts`.
+**Action:** Pre-group emergency contacts into a category dictionary via `useMemo` with `[db.emergencyContacts]` dependency, reducing per-category lookups in JSX to $O(1)$.
