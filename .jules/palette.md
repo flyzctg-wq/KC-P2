@@ -13,3 +13,7 @@
 ## 2025-05-21 - Floating Banner & Disclosure Button Accessibility
 **Learning:** Floating banners require `role="region"` with `aria-label` so landmark navigation works for assistive technologies. Inline expand/collapse buttons require `aria-expanded` and `aria-controls` linked to the target element's `id` along with explicit `focus-visible:ring` styles so keyboard users can track disclosure states clearly.
 **Action:** Pair disclosure toggle controls with `aria-expanded` and `aria-controls`, set `role="region"` on floating notification overlays, and supply `focus-visible:ring-2` styles.
+
+## 2025-05-22 - Media Attachment Grid & Modal Download Accessibility
+**Learning:** Image/video media attachment cards rendered as interactive `<div>`s exclude screen reader and keyboard users from previewing submitted evidence. Using semantic `<button type="button">` wrappers with explicit bilingual `aria-label`s and `focus-visible:ring-2` styling ensures keyboard operability and assistive discovery across complaint/ticket inspection flows.
+**Action:** Wrap clickable attachment tiles in `<button type="button">` with descriptive bilingual `aria-label` and `focus-visible:ring-2` styles, and ensure media download links include explicit `aria-label`s.

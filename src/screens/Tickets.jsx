@@ -96,10 +96,12 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {tk.attachments.map((att, idx) => (
-                    <div
+                    <button
                       key={att.id || idx}
+                      type="button"
                       onClick={() => setMediaPreviewModal(att)}
-                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm"
+                      aria-label={isBn ? `${att.name || 'ফাইল'} প্রাকদর্শন করুন` : `Preview ${att.name || 'attachment'}`}
+                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 text-left w-full"
                       style={{ borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }}
                     >
                       {att.type === "video" ? (
@@ -129,7 +131,7 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                           </div>
                         </div>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -187,10 +189,11 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                 <a
                   href={sanitizeUrl(mediaPreviewModal.url)}
                   download={mediaPreviewModal.name || "attachment"}
-                  className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-colors"
+                  aria-label={isBn ? "সংযুক্ত ফাইলটি ডাউনলোড করুন" : "Download attached file"}
+                  className="flex items-center gap-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
                   style={{ backgroundColor: C.primaryContainer, color: C.onPrimaryContainer }}
                 >
-                  <Download size={13} /> {isBn ? "ডাউনলোড" : "Download"}
+                  <Download size={13} aria-hidden="true" /> {isBn ? "ডাউনলোড" : "Download"}
                 </a>
               )}
               <Btn variant="outline" size="sm" onClick={() => setMediaPreviewModal(null)}>
@@ -390,20 +393,22 @@ export function TicketForm({ onSubmit, submitting = false, lang = "en", isBn = f
           <button
             type="button"
             onClick={() => cameraInputRef.current?.click()}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm"
+            aria-label={isBn ? "ক্যামেরা দিয়ে ছবি বা ভিডিও তুলুন" : "Take photo or video with camera"}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
             style={{ backgroundColor: C.surface, borderColor: C.outlineVariant, color: C.onSurface }}
           >
-            <Camera size={16} className="text-emerald-500" />
+            <Camera size={16} className="text-emerald-500" aria-hidden="true" />
             <span>{isBn ? "ক্যামেরা (ছবি/ভিডিও)" : "Take Photo / Video"}</span>
           </button>
 
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm"
+            aria-label={isBn ? "গ্যালারি বা ফাইল স্টোরেজ থেকে আপলোড করুন" : "Upload photo or video from gallery"}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
             style={{ backgroundColor: C.surface, borderColor: C.outlineVariant, color: C.onSurface }}
           >
-            <Image size={16} className="text-sky-500" />
+            <Image size={16} className="text-sky-500" aria-hidden="true" />
             <span>{isBn ? "গ্যালারি / স্টোরেজ" : "Upload from Gallery"}</span>
           </button>
         </div>
@@ -427,10 +432,11 @@ export function TicketForm({ onSubmit, submitting = false, lang = "en", isBn = f
                 <button
                   type="button"
                   onClick={() => removeAttachment(att.id)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors"
-                  title="Remove"
+                  aria-label={isBn ? `${att.name || "সংযুক্ত ফাইল"} মুছে ফেলুন` : `Remove ${att.name || "attachment"}`}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                  title={isBn ? "মুছে ফেলুন" : "Remove"}
                 >
-                  <X size={10} />
+                  <X size={10} aria-hidden="true" />
                 </button>
               </div>
             ))}
