@@ -133,6 +133,8 @@ export const isSafeUrl = (url = "") => {
   const trimmed = url.trim().toLowerCase();
   // Prevent protocol-relative URL bypass (e.g., //attacker.com)
   if (trimmed.startsWith("//")) return false;
+  // Disallow SVG data URIs which can execute arbitrary script/XSS
+  if (trimmed.startsWith("data:image/svg")) return false;
   if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
   if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;

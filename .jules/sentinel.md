@@ -16,3 +16,8 @@
 **Vulnerability:** Client-side CSV export generators in administrative modules (Audit, Expenses, Payment History, Dues) directly interpolated user strings (e.g. member names, action notes, payees, transaction references) into CSV rows without formula prefix neutralization. Spreadsheet tools (Excel, Calc) execute formulas starting with `=`, `+`, `-`, `@`, `\t`, or `\r`.
 **Learning:** Quoting values in double quotes does not prevent spreadsheet programs from executing cell formulas. Cells must have formula-trigger characters neutralized by prefixing with a single quote (`'`), followed by RFC-4180 quote escaping (`""`).
 **Prevention:** Use `sanitizeCSVCell()` from `src/utils.js` on every cell rendered into CSV export files.
+
+## 2026-11-12 - SVG Data URI Cross-Site Scripting (XSS) in URL Sanitizer
+**Vulnerability:** `isSafeUrl()` permitted all `data:image/` URIs including `data:image/svg+xml`. SVG data URIs can execute embedded JavaScript (`<svg onload=alert(1)>`, `<script>`) when opened or rendered as dynamic links in `<a>` tags.
+**Learning:** Allowlisting `data:image/` indiscriminately permits XML/SVG payloads that can execute scripts in the browser origin. Disallowing `data:image/svg` ensures only safe raster images (PNG, JPEG, WebP, GIF) are allowed via data URIs.
+**Prevention:** Explicitly check and reject `data:image/svg` prefixes in `isSafeUrl()` before allowing `data:image/` URIs.
