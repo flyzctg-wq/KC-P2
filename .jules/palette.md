@@ -14,6 +14,14 @@
 **Learning:** Floating banners require `role="region"` with `aria-label` so landmark navigation works for assistive technologies. Inline expand/collapse buttons require `aria-expanded` and `aria-controls` linked to the target element's `id` along with explicit `focus-visible:ring` styles so keyboard users can track disclosure states clearly.
 **Action:** Pair disclosure toggle controls with `aria-expanded` and `aria-controls`, set `role="region"` on floating notification overlays, and supply `focus-visible:ring-2` styles.
 
+## 2025-05-22 - Media Attachment Grid & Thumbnail Action Accessibility
+**Learning:** Photo and video thumbnail grids used for evidence previews often use unstyled `<div>` wrappers with click handlers, leaving them unreachable via keyboard. Converting them to `<button type="button">` with descriptive bilingual `aria-label`s and `focus-visible:ring-2 focus-visible:ring-offset-2` allows keyboard and screen reader users to browse and expand attachments naturally. Floating delete buttons on attachment thumbnails also require explicit `aria-label` and `focus-visible` styles.
+**Action:** Always render media attachment previews as native `<button>`s with explicit bilingual `aria-label`s and offset focus rings, and provide `aria-hidden="true"` on decorative preview overlays/icons.
+
+## 2025-05-22 - Admin Item Actions & State Toggle Accessibility
+**Learning:** List item action strips with icon-only and toggle controls (e.g. TV Bulletin switch, Edit, Delete) need `role="group"` with an `aria-label`, contextual bilingual `aria-label`s specifying the target item title, `aria-pressed` for toggle states, and explicit `focus-visible:ring` styles to ensure effortless screen reader and keyboard operation.
+**Action:** Always group item action button sets in `role="group"`, provide context-rich `aria-label`s mentioning the item's title, and set `aria-pressed` on binary toggle switches.
+
 ## 2025-05-22 - Document Canvas Preview Modals & Toolbar Accessibility
 **Learning:** Canvas-based document previewers (like letterhead and invoice generators) require full-screen modal overlays to allow users to review layout fidelity before printing/issuing. Control toolbars managing zoom, fit, and fullscreen must be grouped with `role="toolbar"`, give explicit accessible names via `aria-label`, and show distinct keyboard focus indicators (`focus-visible:ring-2`) to avoid confusing assistive tech and keyboard-only users.
 **Action:** Ensure canvas preview action controls have corresponding modal dialog implementations and wrap toolbar buttons with `role="toolbar"`, `aria-label`, and `focus-visible` ring indicators.
