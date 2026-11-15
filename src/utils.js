@@ -131,11 +131,15 @@ export const sortByMemberCode = (a, b) => {
 export const isSafeUrl = (url = "") => {
   if (!url || typeof url !== "string") return false;
   const trimmed = url.trim().toLowerCase();
-  // Prevent protocol-relative URL bypass (e.g., //attacker.com)
-  if (trimmed.startsWith("//")) return false;
+  // Security: Prevent protocol-relative URL bypasses. Browsers normalize backslashes (\)
+  // to forward slashes (/), meaning /\attacker.com or /\\attacker.com navigate off-site.
+  if (/^\/[/\\\s]/.test(trimmed)) return false;
   if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return true;
   if (trimmed.startsWith("mailto:") || trimmed.startsWith("tel:")) return true;
+  // Security: Disallow SVG data URIs (data:image/svg+xml) as SVG allows active script execution
+  if (trimmed.startsWith("data:image/svg")) return false;
+  // Allow safe binary media blobs and raster image/audio/video data URIs
   if (trimmed.startsWith("blob:") || trimmed.startsWith("data:image/") || trimmed.startsWith("data:video/") || trimmed.startsWith("data:audio/")) return true;
   return false;
 };

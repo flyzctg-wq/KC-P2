@@ -96,10 +96,12 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {tk.attachments.map((att, idx) => (
-                    <div
+                    <button
                       key={att.id || idx}
+                      type="button"
                       onClick={() => setMediaPreviewModal(att)}
-                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm"
+                      aria-label={isBn ? `সংযুক্তি "${att.name || "মিডিয়া"}" প্রিভিউ দেখুন` : `Preview attachment ${att.name || "media"}`}
+                      className="relative group rounded-xl overflow-hidden border aspect-video flex items-center justify-center cursor-pointer hover:opacity-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
                       style={{ borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }}
                     >
                       {att.type === "video" ? (
@@ -107,11 +109,11 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                           <video src={sanitizeUrl(att.url)} className="w-full h-full object-cover opacity-85" />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-colors">
                             <div className="w-9 h-9 rounded-full bg-emerald-600/90 flex items-center justify-center text-white shadow-lg">
-                              <Play size={16} className="ml-0.5" />
+                              <Play size={16} className="ml-0.5" aria-hidden="true" />
                             </div>
                           </div>
                           <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 text-[9px] font-bold text-white flex items-center gap-0.5">
-                            <Film size={10} /> Video
+                            <Film size={10} aria-hidden="true" /> Video
                           </span>
                         </div>
                       ) : (
@@ -125,11 +127,11 @@ export default function Tickets({ session, db, persist, toast, logActivity, lang
                             }}
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                            <Eye size={18} className="text-white drop-shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Eye size={18} className="text-white drop-shadow opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
                           </div>
                         </div>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -390,20 +392,22 @@ export function TicketForm({ onSubmit, submitting = false, lang = "en", isBn = f
           <button
             type="button"
             onClick={() => cameraInputRef.current?.click()}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm"
+            aria-label={isBn ? "ক্যামেরা দিয়ে ছবি অথবা ভিডিও তুলুন" : "Take photo or video with camera"}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
             style={{ backgroundColor: C.surface, borderColor: C.outlineVariant, color: C.onSurface }}
           >
-            <Camera size={16} className="text-emerald-500" />
+            <Camera size={16} className="text-emerald-500" aria-hidden="true" />
             <span>{isBn ? "ক্যামেরা (ছবি/ভিডিও)" : "Take Photo / Video"}</span>
           </button>
 
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm"
+            aria-label={isBn ? "গ্যালারি বা ফাইল স্টোরেজ থেকে ছবি/ভিডিও আপলোড করুন" : "Upload photo or video from gallery"}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border active:scale-95 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
             style={{ backgroundColor: C.surface, borderColor: C.outlineVariant, color: C.onSurface }}
           >
-            <Image size={16} className="text-sky-500" />
+            <Image size={16} className="text-sky-500" aria-hidden="true" />
             <span>{isBn ? "গ্যালারি / স্টোরেজ" : "Upload from Gallery"}</span>
           </button>
         </div>
@@ -416,21 +420,22 @@ export function TicketForm({ onSubmit, submitting = false, lang = "en", isBn = f
                 {att.type === "video" ? (
                   <div className="w-full h-full flex items-center justify-center bg-slate-900 text-white relative">
                     <video src={sanitizeUrl(att.url)} className="w-full h-full object-cover opacity-70" />
-                    <Play size={14} className="absolute text-white drop-shadow" />
+                    <Play size={14} className="absolute text-white drop-shadow" aria-hidden="true" />
                     <span className="absolute bottom-1 right-1 text-[8px] font-bold px-1 rounded bg-black/60 text-white">Video</span>
                   </div>
                 ) : (
-                  <img src={sanitizeUrl(att.url)} alt={att.name} className="w-full h-full object-cover" />
+                  <img src={sanitizeUrl(att.url)} alt={att.name || "Attachment"} className="w-full h-full object-cover" />
                 )}
                 
                 {/* Delete button */}
                 <button
                   type="button"
                   onClick={() => removeAttachment(att.id)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors"
-                  title="Remove"
+                  aria-label={isBn ? `সংযুক্তি "${att.name || "ফাইল"}" মুছে ফেলুন` : `Remove attachment "${att.name || "file"}"`}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  title={isBn ? "সংযুক্তি মুছে ফেলুন" : "Remove attachment"}
                 >
-                  <X size={10} />
+                  <X size={10} aria-hidden="true" />
                 </button>
               </div>
             ))}
