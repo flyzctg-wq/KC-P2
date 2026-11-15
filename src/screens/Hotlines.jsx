@@ -1,20 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus, Phone, Trash2, PhoneCall, Siren, MapPin } from "lucide-react";
 import { Btn, Card, Field, inputCls, inputStyle, Modal, SectionTitle } from "../components/primitives";
 import CommunityMap from "../components/CommunityMap";
 import { C } from "../theme";
 import { cleanPhone, sanitizeUrl, uid } from "../utils";
 
+const HOTLINE_GROUPS = [
+  { key: "Emergency Service", labelEn: "Emergency Service", labelBn: "জরুরি জাতীয় ও নাগরিক সেবা" },
+  { key: "EC Lead", labelEn: "EC Lead", labelBn: "কার্যনির্বাহী পরিষদ নেতৃত্ব" },
+  { key: "Block Lead", labelEn: "Block Lead", labelBn: "ব্লক ও ইউনিট সমন্বয়ক" },
+];
+
 export default function Hotlines({ session, db, persist, toast, logActivity, lang = "en", t = {} }) {
   const isBn = lang === "bn";
   const [form, setForm] = useState(false);
   const canManage = session.role === "admin" && (session.permissions?.canManageComplaints || session.post === "President");
-  const groups = [
-    { key: "Emergency Service", label: isBn ? "জরুরি জাতীয় ও নাগরিক সেবা" : "Emergency Service" },
-    { key: "EC Lead", label: isBn ? "কার্যনির্বাহী পরিষদ নেতৃত্ব" : "EC Lead" },
-    { key: "Block Lead", label: isBn ? "ব্লক ও ইউনিট সমন্বয়ক" : "Block Lead" },
-  ];
-  const list = db.emergencyContacts || [];
+
+  // Bolt Optimization: Pre-group contacts by category in a single O(N) pass and pre-format
+  // phone numbers using useMemo. This avoids O(G * N) array filtering passes and repeated
+  // cleanPhone regex operations on every re-render (e.g. from CommunityMap live tracking ticks or modal opens).
+  const groupedContacts = useMemo(() => {
+    const list = db.emergencyContacts || [];
+    const map = {};
+    for (let i = 0; i < HOTLINE_GROUPS.length; i++) {
+      map[HOTLINE_GROUPS[i].key] = [];
+    }
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      const cat = c.category || "Emergency Service";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push({
+        ...c,
+        phoneFormatted: cleanPhone(c.phone),
+      });
+    }
+    return map;
+  }, [db.emergencyContacts]);
 
   const add = (name, role, phone, category) => {
     if (!name.trim() || !phone.trim()) return;
@@ -49,15 +70,15 @@ export default function Hotlines({ session, db, persist, toast, logActivity, lan
         <CommunityMap lang={lang} toast={toast} session={session} />
       </div>
 
-      {groups.map(g => {
-        const items = list.filter(c => c.category === g.key);
+      {HOTLINE_GROUPS.map(g => {
+        const items = groupedContacts[g.key] || [];
         if (!items.length) return null;
         return (
           <div key={g.key} className="mb-6">
-            <h3 className="font-bold text-sm mb-2.5" style={{ color: C.onSurfaceVariant }}>{g.label}</h3>
+            <h3 className="font-bold text-sm mb-2.5" style={{ color: C.onSurfaceVariant }}>{isBn ? g.labelBn : g.labelEn}</h3>
             <div className="grid sm:grid-cols-2 gap-2.5">
               {items.map(c => {
-                const phoneFormatted = cleanPhone(c.phone);
+                const phoneFormatted = c.phoneFormatted;
                 return (
                   <Card key={c.id} className="p-4 flex items-center gap-3">
                     <div style={{ backgroundColor: C.errorContainer }} className="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
