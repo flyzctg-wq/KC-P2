@@ -45,6 +45,10 @@
 **Learning:** `src/screens/Amendments.jsx` re-sorted `db.amendments` directly in the component render body on every render pass. Local component state updates, such as toggling the proposal modal or typing in form fields, caused redundant array cloning and sorting.
 **Action:** Wrap `list` sorting in `useMemo` with `[db.amendments]` dependency to skip unnecessary array allocation and sorting on internal state changes.
 
+## 2026-11-01 - Pre-grouping Checklist Items & Single-Pass Progress Metrics in Handover Screen
+**Learning:** `src/screens/Handover.jsx` executed multiple array iterations on every component render (including each character typed into the "New checklist item" input field): filtering `list` for completed count, calculating `pct`, creating a Set of categories, and then doing `list.filter(...)` inside the category mapping loop ($O(K \times N)$).
+**Action:** Consolidate progress percentage computation and category grouping into a single $O(N)$ `useMemo` block with `[db.handoverChecklist]` dependency, rendering categories via direct dictionary lookup.
+
 ## 2026-11-11 - Pre-grouping Emergency Hotlines by Category & Pre-formatting Phones in Hotlines Screen
 **Learning:** In `src/screens/Hotlines.jsx`, `CommunityMap` runs alongside the hotline directory, frequently dispatching state updates on presence events, GPS coordinates, or live tracking tickers. During each re-render, `Hotlines` was filtering `db.emergencyContacts` repeatedly for each group ($O(G \times N)$) and running `cleanPhone` regexes twice per contact.
 **Action:** Move static group arrays outside the component and pre-group contacts into an indexed object via `useMemo([db.emergencyContacts])` in a single $O(N)$ pass while pre-formatting phone strings.
