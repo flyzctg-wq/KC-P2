@@ -271,10 +271,10 @@ export default function App() {
         unit: "A-101",
         role: isAdminDemo ? "admin" : "resident",
         post: isAdminDemo ? "President" : undefined,
-        permissions: isAdminDemo ? { canManageNotices: true, canDeleteItems: true, canManageFinancials: true } : {},
+        permissions: isAdminDemo ? { canManageNotices: true, canDeleteItems: true, canManageFinancials: true, canManageComplaints: true, canManageMembers: true } : {},
         status: "active"
       });
-      setView(isAdminDemo ? (window.location.search.includes("view=") ? new URLSearchParams(window.location.search).get("view") : "a-notices") : "hotlines");
+      setView(isAdminDemo ? (window.location.search.includes("view=") ? new URLSearchParams(window.location.search).get("view") : "a-letters") : "hotlines");
       setDb({
         notices: [
           {

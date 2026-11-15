@@ -941,38 +941,42 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
                   {isBn ? "অফিসিয়াল প্যাড প্রিভিউ (A4 Format)" : "Official A4 Letterhead Preview"}
                 </span>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" role="toolbar" aria-label={isBn ? "প্রিভিউ জুম ও ডিসপ্লে টুলবার" : "Preview zoom and display toolbar"}>
                   <button
                     type="button"
                     onClick={() => setCustomZoom(z => Math.max(0.6, z - 0.1))}
-                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-700"
-                    title="Zoom Out"
+                    aria-label={isBn ? "প্রিভিউ ছোট করুন (Zoom Out)" : "Zoom out letter preview"}
+                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
+                    title={isBn ? "ছোট করুন" : "Zoom Out"}
                   >
-                    <ZoomOut size={13} />
+                    <ZoomOut size={13} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setCustomZoom(1.0)}
-                    className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-gray-700"
-                    title="Fit to screen"
+                    aria-label={isBn ? "পর্দায় মানানসই করুন (Fit to Screen)" : "Fit preview to screen width"}
+                    className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
+                    title={isBn ? "স্ক্রিনে ফিট করুন" : "Fit to screen"}
                   >
                     {Math.round(effectiveScale * 100)}% Fit
                   </button>
                   <button
                     type="button"
                     onClick={() => setCustomZoom(z => Math.min(1.8, z + 0.1))}
-                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-700"
-                    title="Zoom In"
+                    aria-label={isBn ? "প্রিভিউ বড় করুন (Zoom In)" : "Zoom in letter preview"}
+                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
+                    title={isBn ? "বড় করুন" : "Zoom In"}
                   >
-                    <ZoomIn size={13} />
+                    <ZoomIn size={13} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setFullscreenPreview(true)}
-                    className="p-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800"
-                    title="Full Screen Preview"
+                    aria-label={isBn ? "পূর্ণাঙ্গ প্রিভিউ খুলুন (Full Screen Preview)" : "Open fullscreen letter preview"}
+                    className="p-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
+                    title={isBn ? "পূর্ণাঙ্গ প্রিভিউ" : "Full Screen Preview"}
                   >
-                    <Maximize2 size={13} />
+                    <Maximize2 size={13} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -1083,6 +1087,7 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
                 <div className="pt-2 border-t flex items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-1">
                     <button
+                      type="button"
                       onClick={() => {
                         setMemoNo(l.memoNo);
                         setLetterDate(l.date);
@@ -1104,17 +1109,20 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
                         if (l.fontSizeScale) setFontSizeScale(l.fontSizeScale);
                         setViewMode("editor");
                       }}
-                      className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold"
+                      aria-label={isBn ? `স্মারক ${l.memoNo} সম্পাদনা ও প্রিভিউ করুন` : `Edit and preview memo ${l.memoNo}`}
+                      className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
                       title={isBn ? "সম্পাদনা ও প্রিভিউ" : "Edit & Preview"}
                     >
-                      <Edit3 size={14} />
+                      <Edit3 size={14} aria-hidden="true" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleWhatsAppSend(l.recipientPhone, l)}
-                      className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold"
+                      aria-label={isBn ? `হোয়াটসঅ্যাপে স্মারক ${l.memoNo} পাঠান` : `Share memo ${l.memoNo} on WhatsApp`}
+                      className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors"
                       title="WhatsApp"
                     >
-                      <MessageCircle size={14} />
+                      <MessageCircle size={14} aria-hidden="true" />
                     </button>
                   </div>
 
@@ -1137,6 +1145,35 @@ export default function AdminLetters({ session = {}, db = {}, persist, toast, lo
           )}
         </div>
       )}
+
+      {/* Fullscreen Letterhead Preview Modal */}
+      <Modal
+        open={fullscreenPreview}
+        onClose={() => setFullscreenPreview(false)}
+        title={isBn ? "অফিসিয়াল প্যাড পূর্ণাঙ্গ দর্শন" : "Fullscreen Letterhead Preview"}
+        width="max-w-4xl"
+      >
+        <div className="flex flex-col items-center space-y-4 py-2">
+          <div className="w-full flex justify-center overflow-x-auto p-2 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div className="shadow-2xl rounded-sm overflow-hidden shrink-0">
+              {renderA4LetterCanvas()}
+            </div>
+          </div>
+          <div className="w-full flex items-center justify-between gap-2 pt-2 border-t" style={{ borderColor: C.outlineVariant }}>
+            <div className="flex items-center gap-2">
+              <Btn size="sm" icon={Printer} onClick={handlePrint}>
+                {isBn ? "প্রিন্ট" : "Print"}
+              </Btn>
+              <Btn size="sm" variant="secondary" icon={Download} onClick={handleDownloadDocument}>
+                {isBn ? "ডাউনলোড" : "Download"}
+              </Btn>
+            </div>
+            <Btn size="sm" variant="outline" onClick={() => setFullscreenPreview(false)}>
+              {isBn ? "বন্ধ করুন" : "Close"}
+            </Btn>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -21,3 +21,7 @@
 ## 2025-05-22 - Admin Item Actions & State Toggle Accessibility
 **Learning:** List item action strips with icon-only and toggle controls (e.g. TV Bulletin switch, Edit, Delete) need `role="group"` with an `aria-label`, contextual bilingual `aria-label`s specifying the target item title, `aria-pressed` for toggle states, and explicit `focus-visible:ring` styles to ensure effortless screen reader and keyboard operation.
 **Action:** Always group item action button sets in `role="group"`, provide context-rich `aria-label`s mentioning the item's title, and set `aria-pressed` on binary toggle switches.
+
+## 2025-05-22 - Document Canvas Preview Modals & Toolbar Accessibility
+**Learning:** Canvas-based document previewers (like letterhead and invoice generators) require full-screen modal overlays to allow users to review layout fidelity before printing/issuing. Control toolbars managing zoom, fit, and fullscreen must be grouped with `role="toolbar"`, give explicit accessible names via `aria-label`, and show distinct keyboard focus indicators (`focus-visible:ring-2`) to avoid confusing assistive tech and keyboard-only users.
+**Action:** Ensure canvas preview action controls have corresponding modal dialog implementations and wrap toolbar buttons with `role="toolbar"`, `aria-label`, and `focus-visible` ring indicators.
