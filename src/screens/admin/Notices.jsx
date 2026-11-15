@@ -3,7 +3,7 @@ import {
   Plus, Trash2, Edit3, Zap, Siren, AlertTriangle,
   Clock, Radio, CheckCircle2, XCircle
 } from "lucide-react";
-import { Btn, Card, Badge, Field, inputCls, inputStyle, Modal, SectionTitle } from "../../components/primitives";
+import { Btn, Card, Badge, Field, inputCls, inputStyle, Modal, SectionTitle, Empty } from "../../components/primitives";
 import { C } from "../../theme";
 import { uid, nowISO, fmtDateTime, fmtDate } from "../../utils";
 
@@ -170,9 +170,11 @@ export default function AdminNotices({ session, db, persist, toast, logActivity,
       {/* Notices List */}
       <div className="flex flex-col gap-3">
         {sorted.length === 0 ? (
-          <div className="text-center py-10 opacity-60 text-xs">
-            {isBn ? "কোনো নোটিশ পাওয়া যায়নি।" : "No notices found."}
-          </div>
+          <Empty
+            icon={Radio}
+            title={isBn ? "কোনো নোটিশ পাওয়া যায়নি" : "No notices found"}
+            subtitle={isBn ? "নতুন নোটিশ বা লাইভ টিভি বুলেটিন প্রকাশ করতে উপরের বাটনে ক্লিক করুন।" : "Click the button above to publish a notice or live TV bulletin."}
+          />
         ) : (
           sorted.map(n => {
             const activeB = isBulletinActive(n);
@@ -223,38 +225,50 @@ export default function AdminNotices({ session, db, persist, toast, logActivity,
 
                 {/* Right Action Controls */}
                 {canManage && (
-                  <div className="flex items-center gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 justify-end" style={{ borderColor: C.outlineVariant }}>
+                  <div
+                    role="group"
+                    aria-label={isBn ? "নোটিশ ব্যবস্থাপনা অ্যাকশন" : "Notice management actions"}
+                    className="flex items-center gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 justify-end"
+                    style={{ borderColor: C.outlineVariant }}
+                  >
                     {/* Fast TV Bulletin Toggle Switch */}
                     <button
+                      type="button"
                       onClick={() => toggleBulletin(n)}
-                      className={`px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors ${
+                      aria-pressed={activeB}
+                      aria-label={activeB ? (isBn ? `"${n.title}" নোটিশের টিভি বুলেটিন বন্ধ করুন` : `Turn off TV bulletin for "${n.title}"`) : (isBn ? `"${n.title}" নোটিশটি টিভি বুলেটিনে প্রদর্শন করুন` : `Broadcast "${n.title}" on TV bulletin`)}
+                      className={`px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                         activeB
                           ? "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300/40"
                           : "bg-black/5 dark:bg-white/5 text-gray-500 hover:bg-black/10"
                       }`}
                       title={activeB ? (isBn ? "টিভি বুলেটিন বন্ধ করুন" : "Turn off bulletin") : (isBn ? "টিভি বুলেটিনে যুক্ত করুন" : "Display on TV Bulletin")}
                     >
-                      <Zap size={13} fill={activeB ? "currentColor" : "none"} />
+                      <Zap size={13} fill={activeB ? "currentColor" : "none"} aria-hidden="true" />
                       {activeB ? (isBn ? "বুলেটিন অন" : "TV ON") : (isBn ? "বুলেটিন অফ" : "TV OFF")}
                     </button>
 
                     {/* Edit Button */}
                     <button
+                      type="button"
                       onClick={() => { setEditingNotice(n); setFormOpen(true); }}
-                      className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer text-slate-600 dark:text-slate-300"
+                      aria-label={isBn ? `"${n.title}" নোটিশ সম্পাদনা করুন` : `Edit notice "${n.title}"`}
+                      className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer text-slate-600 dark:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                       title={isBn ? "নোটিশ ও সময়সীমা সম্পাদনা" : "Edit Notice & Duration"}
                     >
-                      <Edit3 size={15} />
+                      <Edit3 size={15} aria-hidden="true" />
                     </button>
 
                     {/* Delete Button */}
                     <button
+                      type="button"
                       onClick={() => remove(n.id, n.title)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                      aria-label={isBn ? `"${n.title}" নোটিশ মুছে ফেলুন` : `Delete notice "${n.title}"`}
+                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                       style={{ color: C.error }}
                       title={isBn ? "নোটিশ মুছুন" : "Delete notice"}
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={15} aria-hidden="true" />
                     </button>
                   </div>
                 )}
